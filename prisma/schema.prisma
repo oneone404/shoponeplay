@@ -1,0 +1,325 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model CategoryGroup {
+  id         String     @id @default(cuid())
+  name       String
+  slug       String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  categories Category[]
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  image         String?
+  groupId       String
+  startingPrice Float?
+  totalSold     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  group         CategoryGroup @relation(fields: [groupId], references: [id])
+  products      Product[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  title       String
+  price       Float
+  oldPrice    Float?
+  type        ProductType @default(PLAY)
+  images            String[]
+  thumbnail         String?
+  description       String[]
+  categoryId        String
+  stats       Json?
+  sold        Boolean     @default(false)
+  stock       Int         @default(1)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  category    Category    @relation(fields: [categoryId], references: [id])
+  cartItems   CartItem[]
+  secrets     AccountSecret[]
+  orderItems  OrderItem[]
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           Role      @default(USER)
+  balance          Float     @default(0)
+  totalDeposited   Float     @default(0)
+  twoFactorEnabled Boolean   @default(false)
+  twoFactorSecret  String?
+  lastIP           String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  accounts         Account[]
+  sessions         Session[]
+  cartItems        CartItem[]
+  orders           Order[]
+  posts            Post[]
+  activities       UserActivity[]
+  deposits         Deposit[]
+  accountExportBatches AccountExportBatch[]
+}
+
+model Deposit {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  status    String   @default("COMPLETED")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum ProductType {
+  PLAY
+  RANDOM
+  SERVICE
+}
+
+enum Role {
+  USER
+  SELLER
+  ADMIN
+}
+
+model EmailVerificationCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, code])
+}
+
+model BankInfo {
+  id            String   @id @default(cuid())
+  bankName      String
+  accountNumber String
+  accountName   String
+  logo          String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  selected  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model AccountSecret {
+  id            String              @id @default(cuid())
+  productId     String
+  accountId     String?
+  username      String
+  password      String
+  extraInfo     String?             // Ví dụ: Mã 2FA, Email khôi phục
+  status        AccountSecretStatus @default(AVAILABLE)
+  isSold        Boolean             @default(false)
+  soldAt        DateTime?
+  exportedAt    DateTime?
+  exportedById  String?
+  exportBatchId String?
+  exportFormat  AccountExportFormat?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  product       Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItemId   String?
+  orderItem     OrderItem?          @relation(fields: [orderItemId], references: [id])
+  exportBatch   AccountExportBatch? @relation(fields: [exportBatchId], references: [id])
+
+  @@index([productId])
+  @@index([accountId])
+  @@index([status])
+  @@index([exportBatchId])
+}
+
+model AccountExportBatch {
+  id          String              @id @default(cuid())
+  productId   String?
+  exportedById String
+  format      AccountExportFormat
+  action      AccountExportAction @default(EXPORT_ONLY)
+  quantity    Int
+  fileName    String?
+  createdAt   DateTime            @default(now())
+  exportedBy  User                @relation(fields: [exportedById], references: [id])
+  secrets     AccountSecret[]
+
+  @@index([exportedById])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  totalAmount Float
+  status      OrderStatus @default(COMPLETED)
+  createdAt   DateTime    @default(now())
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id              String          @id @default(cuid())
+  orderId         String
+  productId       String
+  quantity        Int
+  priceAtPurchase Float
+  titleSnapshot   String          // Lưu tiêu đề tại thời điểm mua
+  typeSnapshot    String          // Lưu loại tại thời điểm mua
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  deliveredSecrets AccountSecret[] // Liên kết tới các tài khoản đã bàn giao
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum AccountSecretStatus {
+  AVAILABLE
+  SOLD
+  EXPORTED
+  DISABLED
+}
+
+enum AccountExportFormat {
+  CSV
+  TXT
+  JSON
+}
+
+enum AccountExportAction {
+  EXPORT_ONLY
+  EXPORT_AND_DISABLE
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  excerpt     String?  @db.Text
+  category    String   @default("news")
+  image       String?
+  featured    Boolean  @default(false)
+  published   Boolean  @default(false)
+  views       Int      @default(0)
+  readTime    String?
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([slug])
+}
+
+model Config {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VisitorLog {
+  id        String   @id @default(cuid())
+  ip        String
+  userAgent String?
+  path      String
+  method    String
+  createdAt DateTime @default(now())
+
+  @@index([ip])
+  @@index([createdAt])
+}
+
+model BannedIP {
+  id        String    @id @default(cuid())
+  ip        String    @unique
+  reason    String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([ip])
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // LOGIN, LOGOUT, PURCHASE, etc.
+  ip        String?
+  userAgent String?
+  details   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}

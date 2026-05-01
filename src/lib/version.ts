@@ -1,0 +1,2 @@
+// Lấy version từ file .env. Cập nhật số ở .env mỗi khi có thay đổi lớn.
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0";

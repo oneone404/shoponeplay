@@ -1,0 +1,36 @@
+export const chat = {
+  vi: {
+    welcome: "Chào Bạn, ShopOnePlay Có Thể Giúp Gì Cho Bạn?",
+    invite: "Tham Gia Cộng Đồng Zalo Giao Lưu Mua Bán:",
+    auto_reply: "Liên Hệ Qua Zalo Hoặc Telegram Để Được Hỗ Trợ Nhanh Hơn...",
+    agent_name: "Hỗ Trợ Viên #1",
+    online: "Trực Tuyến",
+    quick_contact: "Liên hệ hỗ trợ nhanh chóng",
+    groups: {
+      social: "Giao Lưu",
+      trade: "Mua Bán",
+      notif: "Thông Báo",
+      support: "Hỗ Trợ",
+    },
+    box: "Box {n}",
+    placeholder: "Nhập Nội Dung...",
+    minimized_tip: "Chat đang mở...",
+  },
+  en: {
+    welcome: "Hello, How can ShopOnePlay help you today?",
+    invite: "Join our community for trading & updates:",
+    auto_reply: "Contact us via Zalo or Telegram for faster support...",
+    agent_name: "Support Agent #1",
+    online: "Online",
+    quick_contact: "Contact support quickly",
+    groups: {
+      social: "Community",
+      trade: "Trading",
+      notif: "News",
+      support: "Support",
+    },
+    box: "Box {n}",
+    placeholder: "Enter message...",
+    minimized_tip: "Chatting is active...",
+  },
+};

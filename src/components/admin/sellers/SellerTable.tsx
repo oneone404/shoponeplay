@@ -1,0 +1,131 @@
+"use client"
+
+import { useState } from "react"
+import { Search, Shield, User, Wallet, Edit, SearchX, Trash2, History, ShoppingBag } from "lucide-react"
+import { format } from "date-fns"
+import { vi } from "date-fns/locale"
+import Image from "next/image"
+import Link from "next/link"
+import EditUserModal from "../users/EditUserModal" // Reusing the same edit modal
+
+export default function SellerTable({ initialSellers }: { initialSellers: any[] }) {
+  const [sellers, setSellers] = useState(initialSellers)
+  const [search, setSearch] = useState("")
+  const [editingSeller, setEditingSeller] = useState<any | null>(null)
+
+  const filteredSellers = sellers.filter(seller =>
+    (seller.email && seller.email.toLowerCase().includes(search.toLowerCase())) ||
+    (seller.name && seller.name.toLowerCase().includes(search.toLowerCase())) ||
+    seller.id.toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="flex flex-col h-full bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+      {/* Toolbar */}
+      <div className="p-4 border-b border-border flex items-center justify-between bg-secondary/30">
+        <div className="relative w-full max-w-sm">
+          <input
+            type="text"
+            placeholder="Tìm Kiếm Tên, Email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="px-4 py-2 bg-background border border-border rounded-xl w-full outline-none focus:border-primary/50 text-sm font-bold"
+          />
+        </div>
+        <div className="text-[10px] md:text-sm font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap ml-4 shrink-0">
+          Tổng: {filteredSellers.length}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm whitespace-nowrap">
+          <thead className="bg-secondary/50 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-border">
+            <tr>
+              <th className="px-6 py-4 font-bold">Người bán</th>
+              <th className="px-6 py-4 font-bold">Doanh số</th>
+              <th className="px-6 py-4 font-bold">Số dư</th>
+              <th className="px-6 py-4 font-bold">Địa chỉ IP</th>
+              <th className="px-6 py-4 font-bold text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {filteredSellers.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <SearchX className="w-12 h-12 mb-2 opacity-20" />
+                    <p className="font-bold uppercase text-[10px] tracking-widest">CHƯA CÓ NGƯỜI BÁN NÀO</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredSellers.map((seller) => (
+                <tr key={seller.id} className="hover:bg-secondary/20 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden bg-secondary shrink-0 border border-border">
+                        {seller.image ? (
+                          <Image src={seller.image} alt={seller.name || "Seller"} width={40} height={40} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <User className="w-5 h-5" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-bold text-foreground">{seller.name || "Chưa cập nhật tên"}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">{seller.email || seller.id}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center text-muted-foreground">
+                      <ShoppingBag className="w-3 h-3 mr-1.5 text-blue-500" />
+                      <span className="font-bold">{new Intl.NumberFormat('vi-VN').format(seller.totalDeposited)} VND</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-primary">
+                      {new Intl.NumberFormat('vi-VN').format(seller.balance)} VND
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-muted-foreground/60 text-[10px]">
+                      {seller.lastIP || "N/A"}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right space-x-2 flex items-center justify-end">
+                    <Link
+                      href={`/admin/users/${seller.id}/activity`}
+                      className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors inline-flex items-center justify-center"
+                      title="Lịch sử hoạt động"
+                    >
+                      <History className="w-4 h-4" />
+                    </Link>
+                    <button
+                      onClick={() => setEditingSeller(seller)}
+                      className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors inline-flex items-center justify-center"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {editingSeller && (
+        <EditUserModal
+          user={editingSeller}
+          onClose={() => setEditingSeller(null)}
+          onUpdate={(updated) => {
+            setSellers(sellers.map(s => s.id === updated.id ? updated : s))
+          }}
+        />
+      )}
+    </div>
+  )
+}

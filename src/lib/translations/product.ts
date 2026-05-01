@@ -1,0 +1,28 @@
+export const product = {
+  vi: {
+    copy_success: "Đã sao chép link sản phẩm!",
+    zoom: "Phóng to",
+    updating_info: "Thông tin đang được cập nhật",
+    updating_features: "Đang cập nhật đặc điểm...",
+    share_acc: "Chia sẻ tài khoản này",
+    view_acc: "Xem tài khoản {title} tại ShopOnePlay",
+    confirm_checkout: "Xác nhận thanh toán",
+    insufficient_balance: "Số dư không đủ. Vui lòng nạp thêm tiền!",
+    current_balance: "Số dư hiện tại",
+    insufficient_label: "Số Dư Không Đủ",
+    confirm_buy_now: "Xác nhận mua ngay",
+  },
+  en: {
+    copy_success: "Product link copied!",
+    zoom: "Zoom",
+    updating_info: "Information is being updated",
+    updating_features: "Updating features...",
+    share_acc: "Share this account",
+    view_acc: "View account {title} at ShopOnePlay",
+    confirm_checkout: "Confirm Checkout",
+    insufficient_balance: "Insufficient balance. Please deposit more!",
+    current_balance: "Current Balance",
+    insufficient_label: "Insufficient Balance",
+    confirm_buy_now: "Confirm Buy Now",
+  },
+};

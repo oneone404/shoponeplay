@@ -1,0 +1,48 @@
+export const nav = {
+  vi: {
+    home: "Trang Chủ",
+    shop: "Cửa Hàng",
+    tools: "Công Cụ",
+    history: "Lịch Sử",
+    hacks: "Hacks",
+    blog: "Tin Tức",
+    blog_news: "BÀI VIẾT & TIN TỨC",
+    user_profile: "HỒ SƠ NGƯỜI DÙNG",
+    purchased_orders: "ĐƠN HÀNG ĐÃ MUA",
+    admin: "QUẢN TRỊ VIÊN",
+    settings: "CÀI ĐẶT",
+    bottom: {
+      services: "Dịch vụ",
+      settings: "Cài đặt",
+      topup_packages: "Gói nạp",
+      keys: "Key",
+      tx_history: "Lịch sử GD",
+      buy_history: "Lịch sử mua",
+      track_order: "Tra cứu đơn",
+      support: "Hỗ trợ",
+    }
+  },
+  en: {
+    home: "Home",
+    shop: "Shop",
+    tools: "Tools",
+    history: "History",
+    hacks: "Hacks",
+    blog: "News",
+    blog_news: "BLOG & NEWS",
+    user_profile: "USER PROFILE",
+    purchased_orders: "PURCHASED ORDERS",
+    admin: "ADMIN PANEL",
+    settings: "SETTINGS",
+    bottom: {
+      services: "Services",
+      settings: "Settings",
+      topup_packages: "Topup",
+      keys: "Keys",
+      tx_history: "TX History",
+      buy_history: "Orders",
+      track_order: "Track",
+      support: "Support",
+    }
+  },
+};

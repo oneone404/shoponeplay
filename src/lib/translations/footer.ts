@@ -1,0 +1,28 @@
+export const footer = {
+  vi: {
+    desc: "Hệ thống cung cấp tài khoản Game số 1 Việt Nam. Uy tín - Bảo mật - Nhanh chóng.",
+    about_us: "Về Chúng Tôi",
+    terms: "Điều khoản dịch vụ",
+    privacy: "Chính sách bảo mật",
+    faq: "Câu hỏi thường gặp",
+    customer_support: "Hỗ Trợ Khách Hàng",
+    topup_guide: "Hướng dẫn nạp tiền",
+    buying_guide: "Hướng dẫn mua hàng",
+    contact_support: "Liên hệ hỗ trợ",
+    contact: "Liên Hệ",
+    support_247: "CSKH 24/7",
+  },
+  en: {
+    desc: "Vietnam's #1 Gaming Account Provider. Reliable - Secure - Fast.",
+    about_us: "About Us",
+    terms: "Terms of Service",
+    privacy: "Privacy Policy",
+    faq: "FAQ",
+    customer_support: "Customer Support",
+    topup_guide: "Topup Guide",
+    buying_guide: "Buying Guide",
+    contact_support: "Contact Support",
+    contact: "Contact",
+    support_247: "24/7 Support",
+  },
+};
