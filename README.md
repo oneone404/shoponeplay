@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ShopOnePlay - Hệ Thống Bán Tài Khoản Game Chuyên Nghiệp
 
-## Getting Started
+Chào mừng bạn đến với ShopOnePlay, nền tảng thương mại điện tử chuyên biệt cho việc mua bán tài khoản game với đầy đủ tính năng dành cho Admin, Seller (Cộng tác viên) và Khách hàng.
 
-First, run the development server:
+## 🚀 Tính năng nổi bật vừa cập nhật
 
+- **Seller Dashboard Modernization**: Giao diện quản lý dành cho người bán được đồng bộ 100% UI/UX với Admin dashboard (Premium glassmorphism design).
+- **Hệ thống thanh toán tự động**: Tự động trừ tiền người mua, cộng tiền cho người bán và trích xuất phí sàn vào quỹ hệ thống.
+- **Tối ưu hình ảnh**: Tự động chuyển đổi sang WebP và nén ảnh bằng Sharp để tăng tốc độ tải trang.
+- **Dọn dẹp tài nguyên**: Tự động xóa file ảnh vật lý trên server khi sản phẩm bị xóa hoặc cập nhật ảnh mới.
+- **Quản lý lợi nhuận**: Dashboard dành cho Admin theo dõi chi tiết lợi nhuận thu được từ từng đơn hàng.
+
+---
+
+## 🛠️ Hướng dẫn cài đặt & Chạy dự án
+
+### 1. Yêu cầu hệ thống
+- **Node.js**: Phiên bản 18.x trở lên.
+- **Database**: PostgreSQL (Đã cấu hình trong Prisma).
+
+### 2. Cài đặt Dependencies
+Mở terminal tại thư mục gốc của dự án và chạy:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Cấu hình Database (Prisma)
+Dự án sử dụng Prisma để quản lý cơ sở dữ liệu. Để đồng bộ Schema và khởi tạo Database, hãy chạy các lệnh sau:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Khởi tạo Database & Sync Schema:**
+```bash
+npx prisma db push
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Khởi tạo dữ liệu mẫu (Seed data - Nếu cần):**
+```bash
+npx prisma db seed
+```
 
-## Learn More
+**Mở giao diện quản lý DB (Prisma Studio):**
+```bash
+npx prisma studio
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Chạy dự án ở chế độ phát triển
+```bash
+npm run dev
+```
+Sau đó truy cập: `http://localhost:3000`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📂 Cấu trúc dự án quan trọng
 
-## Deploy on Vercel
+- `/src/app/admin`: Các trang quản trị hệ thống.
+- `/src/app/seller`: Các trang dành cho người bán/cộng tác viên.
+- `/src/app/api`: Hệ thống API Routes (Xử lý thanh toán, upload, quản lý sản phẩm).
+- `/prisma/schema.prisma`: Định nghĩa cấu trúc dữ liệu toàn hệ thống.
+- `/src/components`: Thư viện component UI (Tailwind CSS).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⚠️ Lưu ý khi triển khai (Production)
+
+- Đảm bảo các biến môi trường trong file `.env` (DATABASE_URL, NEXTAUTH_SECRET, v.v.) được cấu hình chính xác.
+- Chạy `npm run build` và `npm run start` để đạt hiệu năng tối ưu.
+
+---
+*Chúc bạn có trải nghiệm tuyệt vời với ShopOnePlay!*
