@@ -20,7 +20,6 @@ const FORMAT_CONTENT_TYPES: Record<AccountExportFormat, string> = {
 
 type ExportedAccountSecret = AccountSecret & {
   product: {
-    title: string
     type: ProductType
     category: { name: string }
   }
@@ -56,7 +55,6 @@ export async function POST(request: NextRequest) {
     include: {
       product: {
         select: {
-          title: true,
           type: true,
           category: { select: { name: true } },
         },
@@ -109,7 +107,7 @@ export async function POST(request: NextRequest) {
 
 function formatExportContent(secrets: ExportedAccountSecret[], format: AccountExportFormat) {
   const rows = secrets.map((secret) => ({
-    productTitle: secret.product.title,
+    productTitle: secret.product.category.name,
     productType: secret.product.type,
     category: secret.product.category.name,
     accountId: secret.accountId ?? "",

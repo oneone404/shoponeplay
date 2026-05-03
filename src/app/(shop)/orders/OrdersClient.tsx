@@ -114,7 +114,13 @@ export default function OrdersClient() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                            <div className="w-10 h-6 relative rounded-lg overflow-hidden border border-border/40">
-                             <Image src={item.product?.thumbnail || "/images/product.png"} fill alt="TH" className="object-cover" />
+                             <Image 
+                               src={item.product?.thumbnail || "/images/product.png"} 
+                               fill 
+                               sizes="40px"
+                               alt="TH" 
+                               className="object-cover" 
+                             />
                            </div>
                            <div>
                              <h3 className="text-xs font-bold uppercase tracking-tight">{item.titleSnapshot}</h3>

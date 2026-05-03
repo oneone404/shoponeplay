@@ -151,6 +151,7 @@ export default function BlogDetailContent({ post, relatedPosts }: BlogDetailCont
             src={post.image || "/images/categories/cat_play.png"}
             alt={post.title}
             fill
+            sizes="(max-width: 1024px) 100vw, 1200px"
             className="object-cover"
             priority
           />

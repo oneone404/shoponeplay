@@ -44,6 +44,8 @@ export default function AdminSidebar({
       icon: Settings,
       subItems: [
         { href: "/admin/settings", label: "Cấu Hình Chung" },
+        { href: "/admin/settings/notifications", label: "Cấu Hình Thông Báo" },
+        { href: "/admin/settings/seller", label: "Cấu Hình Seller" },
         { href: "/admin/settings/branding", label: "Giao diện & Branding" },
         { href: "/admin/settings/system", label: "Trạng thái hệ thống" }
       ]

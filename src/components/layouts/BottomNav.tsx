@@ -7,6 +7,7 @@ import {
 } from "lucide-react"
 import { useState, useCallback } from "react"
 import { cn } from "@/lib/utils"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { useSession } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
@@ -23,12 +24,8 @@ export default function BottomNav() {
   const { toolsOpen, setToolsOpen, setProfileOpen, setChatOpen, setDepositOpen } = useUI()
 
   const toggleTools = useCallback(() => {
-    if (status === "unauthenticated") {
-      router.push("/signin")
-      return
-    }
     setToolsOpen(!toolsOpen)
-  }, [status, router, toolsOpen, setToolsOpen])
+  }, [toolsOpen, setToolsOpen])
 
   const closeTools = useCallback(() => {
     setToolsOpen(false)
@@ -45,33 +42,34 @@ export default function BottomNav() {
     { icon: <Headphones className="w-[20px] h-[20px]" />, label: t.bottom_nav.support, action: () => setChatOpen(true) },
   ]
 
-  // If in admin panel, do not render BottomNav
-  if (pathname?.startsWith('/admin')) return null;
+  // If in admin or seller panel, do not render BottomNav
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/seller')) return null;
 
   return (
     <>
+      {/* Overlay & Panel with High-Performance CSS Transitions */}
       {/* Overlay - Dimmed click catcher */}
       <div
         onClick={closeTools}
         className={cn(
-          "fixed inset-0 z-30 bg-black/20 md:hidden",
-          "transition-opacity duration-300 ease-out will-change-[opacity]",
-          toolsOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+          "fixed inset-0 z-30 bg-black/50 md:hidden transition-opacity duration-300 ease-out",
+          toolsOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
       />
 
       {/* Panel */}
       <div
         className={cn(
-          "fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40",
-          "rounded-t-[32px] bg-background px-4 pb-8 pt-3",
-          "border-t border-border shadow-2xl md:hidden",
-          "transition-transform duration-[350ms] ease-[cubic-bezier(0.32,0.72,0,1)]",
-          "will-change-transform"
+          "fixed inset-x-0 bottom-0 z-40",
+          "rounded-t-[32px] bg-background px-4 pt-3 shadow-2xl md:hidden",
+          "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]",
+          "border-t border-border",
+          "transition-transform duration-[400ms] will-change-transform"
         )}
-        style={{ transform: toolsOpen ? 'translate3d(0,0,0)' : 'translate3d(0,105%,0)' }}
+        style={{ 
+          transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)',
+          transform: toolsOpen ? 'translate3d(0, 0, 0)' : 'translate3d(0, 100%, 0)' 
+        }}
       >
         {/* Drag Handle */}
         <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-muted-foreground/20" />
@@ -124,9 +122,11 @@ export default function BottomNav() {
             )}
           >
             <div className={cn(
-              "transition-transform duration-[400ms] will-change-transform",
+              "transition-transform will-change-transform",
               toolsOpen && "rotate-180"
-            )}>
+            )}
+            style={{ transitionDuration: '400ms', transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' }}
+            >
               <Terminal className="w-5 h-5" />
             </div>
             <span className="text-[10px] font-medium">{t.nav.tools}</span>

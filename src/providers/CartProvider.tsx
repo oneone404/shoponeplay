@@ -26,8 +26,10 @@ interface CartContextType {
   removeFromCart: (id: string) => Promise<void>
   updateQuantity: (id: string, quantity: number) => Promise<void>
   toggleItemSelection: (id: string) => Promise<void>
+  toggleGroupSelection: (type: string, selected: boolean) => Promise<void>
   toggleAllSelection: (selected: boolean) => Promise<void>
   clearCart: () => void
+  buyNow: (product: any) => Promise<void>
   totalAmount: number
   selectedCount: number
   loading: boolean
@@ -164,7 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         const newItem: CartItem = {
           id: product.id,
-          title: product.title,
+          title: product.categoryName || product.category?.name || "",
           price: product.price,
           thumbnail: product.thumbnail || product.images?.[0],
           type: product.type,
@@ -246,6 +248,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const toggleGroupSelection = async (type: string, selected: boolean) => {
+    // Determine IDs for this group
+    const groupItems = items.filter(item => {
+      const isRandom = item.type === "RANDOM"
+      const matchesType = type === "RANDOM" ? isRandom : !isRandom
+      return matchesType && !item.sold
+    })
+    
+    if (groupItems.length === 0) return
+    const productIds = groupItems.map(i => i.id)
+
+    // Optimistic update
+    setItems(prev => prev.map(item => {
+      const isRandom = item.type === "RANDOM"
+      const matchesType = type === "RANDOM" ? isRandom : !isRandom
+      if (matchesType && !item.sold) {
+        return { ...item, selected }
+      }
+      return item
+    }))
+
+    if (status === "authenticated") {
+      try {
+        await fetch(ROUTES.API.BAG, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productIds, selected })
+        })
+      } catch (error) {
+        console.error("Lỗi khi đồng bộ chọn theo nhóm:", error)
+      }
+    }
+  }
+
   const toggleAllSelection = async (selected: boolean) => {
     setItems((prev) => prev.map((item) => ({ ...item, selected })))
 
@@ -258,6 +294,71 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         })
       } catch (error) {
         console.error("Lỗi sync all selection DB:", error)
+      }
+    }
+  }
+
+  const buyNow = async (product: any) => {
+    // 1. Deselect all other items first (Optimistic)
+    const deselectOthers = (prev: CartItem[]) => prev.map(item => ({ ...item, selected: item.id === product.id }))
+    
+    // 2. Check if already exists
+    const existingIndex = items.findIndex(i => i.id === product.id)
+    
+    if (existingIndex > -1) {
+      // Move to top and select
+      const existingItem = items[existingIndex]
+      const otherItems = items.filter(i => i.id !== product.id).map(i => ({ ...i, selected: false }))
+      setItems([{ ...existingItem, selected: true }, ...otherItems])
+      
+      if (status === "authenticated") {
+        try {
+          // Deselect all then select this one
+          await fetch(ROUTES.API.BAG, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ all: false })
+          })
+          await fetch(ROUTES.API.BAG, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: product.id, selected: true })
+          })
+        } catch (e) { console.error(e) }
+      }
+    } else {
+      // Add new, move to top, and select
+      const newItem: CartItem = {
+        id: product.id,
+        title: product.categoryName || product.category?.name || "",
+        price: product.price,
+        thumbnail: product.thumbnail || product.images?.[0],
+        type: product.type,
+        categoryName: product.categoryName,
+        selected: true,
+        quantity: 1,
+        stock: product.stock || 1,
+        description: product.description
+      }
+      
+      const otherItems = items.map(i => ({ ...i, selected: false }))
+      setItems([newItem, ...otherItems])
+
+      if (status === "authenticated") {
+        try {
+          // Deselect all
+          await fetch(ROUTES.API.BAG, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ all: false })
+          })
+          // Add this one (POST logic usually sets selected: true or we follow up)
+          await fetch(ROUTES.API.BAG, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: product.id, quantity: 1, selected: true })
+          })
+        } catch (e) { console.error(e) }
       }
     }
   }
@@ -285,8 +386,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         updateQuantity,
         toggleItemSelection,
+        toggleGroupSelection,
         toggleAllSelection,
         clearCart,
+        buyNow,
         totalAmount,
         selectedCount,
         loading

@@ -46,7 +46,7 @@ export default async function Home() {
 
   const notifications = [
     "User *******123 vừa nạp 100.000 VND thành công",
-    "Chúc mừng user *******789 vừa mua Tài khoản PlayTogether [VIP]",
+    "Chúc mừng user *******789 vừa mua Tài khoản PlayTogether [PLAY TOGETHER VNG]",
     "User *******456 vừa nạp 500.000 VND qua ATM",
     "Giao dịch mới: Tài khoản Random Kim Cương đã được bán",
   ]

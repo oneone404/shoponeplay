@@ -28,3 +28,7 @@ export function generateUniqueSlug(title: string, id: string) {
   const shortId = id.slice(-4); 
   return `${baseSlug}-${shortId}`;
 }
+
+export function formatCurrency(value: number) {
+  return new Intl.NumberFormat("vi-VN").format(value) + " VND";
+}

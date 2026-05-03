@@ -36,7 +36,7 @@ export default function Footer({ logoUrl }: { logoUrl?: string }) {
   const { t } = useLanguage();
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin')) return null;
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/seller')) return null;
 
   return (
     <footer className="bg-card border-t border-border pt-20 pb-10 px-4">

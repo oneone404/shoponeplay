@@ -22,7 +22,25 @@ async function main() {
   await prisma.category.deleteMany({})
   await prisma.categoryGroup.deleteMany({})
 
-  // 2. Create Category Groups
+  // 2. Find or create an Admin user for Blog Posts and Product Uploads
+  console.log('--- ĐANG TẠO TÀI KHOẢN ADMIN ---')
+  let admin = await prisma.user.findFirst({
+    where: { role: 'ADMIN' }
+  })
+
+  if (!admin) {
+    const hashedPassword = await bcrypt.hash("111111", 10);
+    admin = await prisma.user.create({
+      data: {
+        name: "Admin ShopOnePlay",
+        email: "admin@shoponeplay.com",
+        password: hashedPassword,
+        role: 'ADMIN',
+      }
+    })
+  }
+
+  // 3. Create Category Groups
   const groupPlay = await prisma.categoryGroup.create({
     data: {
       name: "TÀI KHOẢN PLAY",
@@ -96,10 +114,10 @@ async function main() {
     // Tạo Sản phẩm
     const product = await prisma.product.create({
       data: {
-        title: `${cat.name.toUpperCase()} SAMPLE PRODUCT`,
         price: cat.startingPrice || 50000,
         type: isRandom ? ProductType.RANDOM : ProductType.PLAY,
         categoryId: cat.id,
+        uploaderId: admin.id, // Gán admin làm người đăng mặc định
         thumbnail: "/images/product.png",
         images: ["/images/product.png", "/images/product.png"],
         description: [
@@ -117,6 +135,7 @@ async function main() {
     for (let i = 1; i <= stockToCreate; i++) {
       secretsData.push({
         productId: product.id,
+        uploaderId: admin.id, // Gán admin làm người đăng mặc định
         username: `user_${cat.slug}_${i}`,
         password: `pass_${Math.random().toString(36).substring(7)}`,
         extraInfo: `Code: ${Math.floor(100000 + Math.random() * 900000)}`
@@ -143,24 +162,7 @@ async function main() {
     ]
   })
 
-  console.log('--- ĐANG TẠO BÀI VIẾT BLOG ---')
-
-  // Find or create an Admin user for Blog Posts
-  let admin = await prisma.user.findFirst({
-    where: { role: 'ADMIN' }
-  })
-
-  if (!admin) {
-    const hashedPassword = await bcrypt.hash("111111", 10);
-    admin = await prisma.user.create({
-      data: {
-        name: "Admin ShopOnePlay",
-        email: "admin@shoponeplay.com",
-        password: hashedPassword,
-        role: 'ADMIN',
-      }
-    })
-  }
+  // 6. Create Bank Info
 
   const postsData = [
     {

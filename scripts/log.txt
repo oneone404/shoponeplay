@@ -1,0 +1,195 @@
+--- STARTING FOLDER-BASED IMAGE OPTIMIZATION ---
+Found 16 files in C:\Users\LEGION\Documents\App\shoponeplay\public\uploads\products
+Processing: detail_1777659491863_dznxy.png...
+  [ERROR] Failed to process detail_1777659491863_dznxy.png: PrismaClientValidationError: 
+Invalid `prisma.product.findMany()` invocation in
+C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:57
+
+  49 // 3. Update DB references (Images array)
+  50 // Note: images is Json, we need to handle it carefully. 
+  51 // Simplest way is to find all products and update locally if needed
+→ 52 const productsWithImages = await prisma.product.findMany({
+       where: {
+         images: {
+           array_contains: "/uploads/products/detail_1777659491863_dznxy.png",
+           ~~~~~~~~~~~~~~
+     ?     equals?: String[] | ListStringFieldRefInput | Null,
+     ?     has?: String | StringFieldRefInput | Null,
+     ?     hasEvery?: String[] | ListStringFieldRefInput,
+     ?     hasSome?: String[] | ListStringFieldRefInput,
+     ?     isEmpty?: Boolean
+         }
+       }
+     })
+
+Unknown argument `array_contains`. Available options are marked with ?.
+    at throwValidationException (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:46:9)
+    at Gr.handleRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:211:7)
+    at Gr.handleAndLogRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at Gr.request (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:938:24)
+    at async main (C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:36) {
+  clientVersion: '7.7.0'
+}
+Processing: detail_1777659499263_pl585.jpg...
+  [ERROR] Failed to process detail_1777659499263_pl585.jpg: PrismaClientValidationError: 
+Invalid `prisma.product.findMany()` invocation in
+C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:57
+
+  49 // 3. Update DB references (Images array)
+  50 // Note: images is Json, we need to handle it carefully. 
+  51 // Simplest way is to find all products and update locally if needed
+→ 52 const productsWithImages = await prisma.product.findMany({
+       where: {
+         images: {
+           array_contains: "/uploads/products/detail_1777659499263_pl585.jpg",
+           ~~~~~~~~~~~~~~
+     ?     equals?: String[] | ListStringFieldRefInput | Null,
+     ?     has?: String | StringFieldRefInput | Null,
+     ?     hasEvery?: String[] | ListStringFieldRefInput,
+     ?     hasSome?: String[] | ListStringFieldRefInput,
+     ?     isEmpty?: Boolean
+         }
+       }
+     })
+
+Unknown argument `array_contains`. Available options are marked with ?.
+    at throwValidationException (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:46:9)
+    at Gr.handleRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:211:7)
+    at Gr.handleAndLogRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at Gr.request (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:938:24)
+    at async main (C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:36) {
+  clientVersion: '7.7.0'
+}
+Processing: detail_1777659502987_iz9tf.png...
+  [ERROR] Failed to process detail_1777659502987_iz9tf.png: PrismaClientValidationError: 
+Invalid `prisma.product.findMany()` invocation in
+C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:57
+
+  49 // 3. Update DB references (Images array)
+  50 // Note: images is Json, we need to handle it carefully. 
+  51 // Simplest way is to find all products and update locally if needed
+→ 52 const productsWithImages = await prisma.product.findMany({
+       where: {
+         images: {
+           array_contains: "/uploads/products/detail_1777659502987_iz9tf.png",
+           ~~~~~~~~~~~~~~
+     ?     equals?: String[] | ListStringFieldRefInput | Null,
+     ?     has?: String | StringFieldRefInput | Null,
+     ?     hasEvery?: String[] | ListStringFieldRefInput,
+     ?     hasSome?: String[] | ListStringFieldRefInput,
+     ?     isEmpty?: Boolean
+         }
+       }
+     })
+
+Unknown argument `array_contains`. Available options are marked with ?.
+    at throwValidationException (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:46:9)
+    at Gr.handleRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:211:7)
+    at Gr.handleAndLogRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at Gr.request (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:938:24)
+    at async main (C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:36) {
+  clientVersion: '7.7.0'
+}
+Processing: detail_1777659505568_xzk22.png...
+  [ERROR] Failed to process detail_1777659505568_xzk22.png: PrismaClientValidationError: 
+Invalid `prisma.product.findMany()` invocation in
+C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:57
+
+  49 // 3. Update DB references (Images array)
+  50 // Note: images is Json, we need to handle it carefully. 
+  51 // Simplest way is to find all products and update locally if needed
+→ 52 const productsWithImages = await prisma.product.findMany({
+       where: {
+         images: {
+           array_contains: "/uploads/products/detail_1777659505568_xzk22.png",
+           ~~~~~~~~~~~~~~
+     ?     equals?: String[] | ListStringFieldRefInput | Null,
+     ?     has?: String | StringFieldRefInput | Null,
+     ?     hasEvery?: String[] | ListStringFieldRefInput,
+     ?     hasSome?: String[] | ListStringFieldRefInput,
+     ?     isEmpty?: Boolean
+         }
+       }
+     })
+
+Unknown argument `array_contains`. Available options are marked with ?.
+    at throwValidationException (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:46:9)
+    at Gr.handleRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:211:7)
+    at Gr.handleAndLogRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at Gr.request (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:938:24)
+    at async main (C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:36) {
+  clientVersion: '7.7.0'
+}
+Processing: thumbnail_1777656671257_uu045.jpg...
+  [ERROR] Failed to process thumbnail_1777656671257_uu045.jpg: PrismaClientValidationError: 
+Invalid `prisma.product.findMany()` invocation in
+C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:57
+
+  49 // 3. Update DB references (Images array)
+  50 // Note: images is Json, we need to handle it carefully. 
+  51 // Simplest way is to find all products and update locally if needed
+→ 52 const productsWithImages = await prisma.product.findMany({
+       where: {
+         images: {
+           array_contains: "/uploads/products/thumbnail_1777656671257_uu045.jpg",
+           ~~~~~~~~~~~~~~
+     ?     equals?: String[] | ListStringFieldRefInput | Null,
+     ?     has?: String | StringFieldRefInput | Null,
+     ?     hasEvery?: String[] | ListStringFieldRefInput,
+     ?     hasSome?: String[] | ListStringFieldRefInput,
+     ?     isEmpty?: Boolean
+         }
+       }
+     })
+
+Unknown argument `array_contains`. Available options are marked with ?.
+    at throwValidationException (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:46:9)
+    at Gr.handleRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:211:7)
+    at Gr.handleAndLogRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at Gr.request (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:938:24)
+    at async main (C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:36) {
+  clientVersion: '7.7.0'
+}
+Processing: thumbnail_1777659488871_bxh7d.jpg...
+  [ERROR] Failed to process thumbnail_1777659488871_bxh7d.jpg: PrismaClientValidationError: 
+Invalid `prisma.product.findMany()` invocation in
+C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:57
+
+  49 // 3. Update DB references (Images array)
+  50 // Note: images is Json, we need to handle it carefully. 
+  51 // Simplest way is to find all products and update locally if needed
+→ 52 const productsWithImages = await prisma.product.findMany({
+       where: {
+         images: {
+           array_contains: "/uploads/products/thumbnail_1777659488871_bxh7d.jpg",
+           ~~~~~~~~~~~~~~
+     ?     equals?: String[] | ListStringFieldRefInput | Null,
+     ?     has?: String | StringFieldRefInput | Null,
+     ?     hasEvery?: String[] | ListStringFieldRefInput,
+     ?     hasSome?: String[] | ListStringFieldRefInput,
+     ?     isEmpty?: Boolean
+         }
+       }
+     })
+
+Unknown argument `array_contains`. Available options are marked with ?.
+    at throwValidationException (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\core\errorRendering\throwValidationException.ts:46:9)
+    at Gr.handleRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:211:7)
+    at Gr.handleAndLogRequestError (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at Gr.request (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async a (C:\Users\LEGION\Documents\App\shoponeplay\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:938:24)
+    at async main (C:\Users\LEGION\Documents\App\shoponeplay\scripts\optimize-products-images.ts:52:36) {
+  clientVersion: '7.7.0'
+}
+--- OPTIMIZATION COMPLETE ---

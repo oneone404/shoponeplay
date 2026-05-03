@@ -12,6 +12,9 @@ export default async function AdminAllProductsPage() {
   const products = await prisma.product.findMany({
     include: {
       category: true,
+      uploader: {
+        select: { name: true, email: true, id: true }
+      },
       _count: {
         select: { secrets: { where: { isSold: false } } }
       }

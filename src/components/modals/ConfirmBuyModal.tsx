@@ -1,12 +1,13 @@
 "use client"
 
-import { AlertCircle, Wallet, X, ShoppingCart, Loader2 } from "lucide-react"
+import { AlertCircle, Wallet, X, ShoppingCart, Loader2, Minus, Plus } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useUI } from "@/providers/UIProvider"
 import { ROUTES } from "@/lib/routes"
 import { useLanguage } from "@/providers/LanguageProvider"
+import { cn } from "@/lib/utils"
 
 interface ConfirmBuyModalProps {
   isOpen: boolean
@@ -19,14 +20,45 @@ export default function ConfirmBuyModal({ isOpen, onClose, product, quantity }: 
   const { data: session } = useSession()
   const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
+  const [localQuantity, setLocalQuantity] = useState(quantity)
   const { addMessage, setDepositOpen } = useUI()
   const router = useRouter()
 
+  useEffect(() => {
+    setLocalQuantity(quantity)
+  }, [quantity, isOpen])
+
   if (!isOpen) return null
 
-  const totalAmount = product.price * quantity
+  const totalAmount = product.price * localQuantity
   const currentBalance = (session?.user as any)?.balance || 0
   const isEnough = currentBalance >= totalAmount
+
+  const handleMinus = () => {
+    if (localQuantity > 1) setLocalQuantity(prev => prev - 1)
+  }
+
+  const handlePlus = () => {
+    const maxStock = product.stock || 999
+    if (localQuantity < maxStock) setLocalQuantity(prev => prev + 1)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (value === "") {
+      setLocalQuantity(0)
+      return
+    }
+    const num = parseInt(value)
+    if (!isNaN(num)) {
+      const maxStock = product.stock || 999
+      setLocalQuantity(Math.min(num, maxStock))
+    }
+  }
+
+  const handleBlur = () => {
+    if (localQuantity < 1) setLocalQuantity(1)
+  }
 
   const handleConfirm = async () => {
     if (!session) {
@@ -48,7 +80,7 @@ export default function ConfirmBuyModal({ isOpen, onClose, product, quantity }: 
         body: JSON.stringify({
           directPurchase: {
             productId: product.id,
-            quantity
+            quantity: localQuantity
           }
         })
       })
@@ -78,7 +110,7 @@ export default function ConfirmBuyModal({ isOpen, onClose, product, quantity }: 
       {/* Backdrop with CSS Animation */}
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-modal-backdrop"
+        className="absolute inset-0 bg-black/60 animate-modal-backdrop-clean"
       />
 
       {/* Modal Content with CSS Animation */}
@@ -105,10 +137,37 @@ export default function ConfirmBuyModal({ isOpen, onClose, product, quantity }: 
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">{t.common.product}</span>
                 <div className="flex flex-col space-y-0.5">
-                  <h3 className="text-[14px] font-bold uppercase leading-tight line-clamp-2">{product.title}</h3>
-                  <div className="flex items-center space-x-1.5">
+                  <h3 className="text-[14px] font-bold uppercase leading-tight line-clamp-2">{product.categoryName}</h3>
+                  <div className="flex items-center justify-between mt-1">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">{t.common.quantity}:</span>
-                    <span className="text-[13px] font-bold text-primary tracking-tighter">×{quantity.toString().padStart(2, '0')}</span>
+                    
+                    {product.type === "RANDOM" ? (
+                      <div className="flex items-center bg-background border border-border/60 rounded-xl p-1 shadow-inner">
+                        <button
+                          onClick={handleMinus}
+                          disabled={localQuantity <= 1}
+                          className="w-7 h-7 flex items-center justify-center hover:bg-secondary rounded-lg transition-colors disabled:opacity-30"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <input
+                          type="number"
+                          value={localQuantity === 0 ? "" : localQuantity}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          className="w-12 bg-transparent text-center text-[13px] font-bold outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <button
+                          onClick={handlePlus}
+                          disabled={localQuantity >= (product.stock || 999)}
+                          className="w-7 h-7 flex items-center justify-center hover:bg-secondary rounded-lg transition-colors disabled:opacity-30"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[13px] font-bold text-primary tracking-tighter">×{localQuantity.toString().padStart(2, '0')}</span>
+                    )}
                   </div>
                 </div>
               </div>

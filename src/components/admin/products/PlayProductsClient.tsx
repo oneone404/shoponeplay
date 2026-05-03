@@ -16,9 +16,13 @@ import {
   ZoomIn,
 } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import ExportAccountsModal from "./ExportAccountsModal"
 import QuickViewAccountsModal from "./QuickViewAccountsModal"
 import ImageLightbox from "./ImageLightbox"
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+import { useUI } from "@/providers/UIProvider"
+import ConfirmModal from "@/components/utils/ConfirmModal"
 
 interface Product {
   id: string
@@ -35,6 +39,11 @@ interface Product {
   _count?: {
     secrets: number
   }
+  uploader: {
+    name: string | null
+    email: string | null
+    id: string
+  }
 }
 
 interface PlayProductsClientProps {
@@ -48,6 +57,37 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
   const [exportingProduct, setExportingProduct] = useState<Product | null>(null)
   const [isBulkExportOpen, setIsBulkExportOpen] = useState(false)
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const { addMessage } = useUI()
+
+  const handleDelete = async () => {
+    if (!deletingProduct) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/products/${deletingProduct.id}`, {
+        method: 'DELETE'
+      })
+      if (!res.ok) throw new Error('Xóa thất bại')
+      addMessage({
+        type: "success",
+        text: "Đã xóa sản phẩm và giải phóng bộ nhớ ảnh"
+      })
+      // Refresh logic or filter out
+      window.location.reload()
+    } catch (err) {
+      addMessage({
+        type: "error",
+        text: "Có lỗi xảy ra khi xóa"
+      })
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteModalOpen(false)
+      setDeletingProduct(null)
+    }
+  }
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null)
@@ -61,7 +101,7 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
 
     return initialProducts.filter((product) => {
       const matchesSearch = !keyword ||
-        product.title.toLowerCase().includes(keyword) ||
+        product.category.name.toLowerCase().includes(keyword) ||
         product.id.toLowerCase().includes(keyword) ||
         product.category.name.toLowerCase().includes(keyword)
       const matchesCategory = selectedCategory === "all" || product.category.slug === selectedCategory
@@ -113,7 +153,7 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SummaryCard label="Tài khoản Play" value={initialProducts.length.toLocaleString("vi-VN")} icon={<ShoppingBag className="w-5 h-5" />} color="text-primary" />
         <SummaryCard label="Đang bán" value={activeProducts.toLocaleString("vi-VN")} icon={<ShieldCheck className="w-5 h-5" />} color="text-green-500" />
-        <SummaryCard label="Kho tài khoản" value={totalStock.toLocaleString("vi-VN")} icon={<PackageCheck className="w-5 h-5" />} color="text-amber-500" />
+        <SummaryCard label="Tổng kho" value={totalStock.toLocaleString("vi-VN")} icon={<PackageCheck className="w-5 h-5" />} color="text-amber-500" />
       </div>
 
       <div className="flex flex-col h-full bg-card border border-border rounded-2xl overflow-visible shadow-sm">
@@ -215,7 +255,8 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
                 <th className="px-6 py-4 font-bold">Danh mục</th>
                 <th className="px-6 py-4 font-bold">Giá bán</th>
                 <th className="px-6 py-4 font-bold">Trạng thái</th>
-                <th className="px-6 py-4 font-bold">Kho hàng</th>
+                <th className="px-6 py-4 font-bold text-center">Kho hàng</th>
+                <th className="px-6 py-4 font-bold text-right">Seller</th>
                 <th className="px-6 py-4 font-bold text-right">Thao tác</th>
               </tr>
             </thead>
@@ -229,13 +270,13 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
                       disabled={(product._count?.secrets || 0) <= 0}
                       onChange={() => toggleProductSelection(product)}
                       className="h-4 w-4 rounded border-border accent-primary disabled:opacity-40"
-                      aria-label={`Chọn ${product.title}`}
+                      aria-label={`Chọn ${product.category.name}`}
                     />
                   </td>
                   <td className="px-6 py-4">
                     <ProductIdentity 
                       product={product} 
-                      onImageClick={() => setPreviewImage({ src: product.thumbnail || "/images/product.png", alt: product.title })} 
+                      onImageClick={() => setPreviewImage({ src: product.thumbnail || "/images/product.png", alt: product.category.name })} 
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -254,8 +295,29 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
                       <StatusBadge icon={<ShieldCheck className="w-3 h-3" />} label="Đang bán" className="text-green-500 bg-green-500/10" />
                     )}
                   </td>
-                  <td className="px-6 py-4 font-bold">{(product._count?.secrets || 0).toLocaleString("vi-VN")} <span className="text-[10px] text-muted-foreground font-medium uppercase">Tài Khoản</span></td>
-                  <td className="px-6 py-4 text-right"><RowActions product={product} onExport={setExportingProduct} onQuickView={setQuickViewProduct} /></td>
+                  <td className="px-6 py-4 font-bold text-center">
+                    {(product._count?.secrets || 0).toLocaleString("vi-VN")}
+                    <span className="block text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Tài khoản</span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="font-bold text-foreground text-xs">{product.uploader.name || "N/A"}</span>
+                      <span className="text-[10px] text-muted-foreground/60 font-medium lowercase truncate max-w-[120px]">
+                        {product.uploader.email || product.uploader.id.slice(-8)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <RowActions 
+                      product={product} 
+                      onExport={setExportingProduct} 
+                      onQuickView={setQuickViewProduct}
+                      onDelete={(p) => {
+                        setDeletingProduct(p)
+                        setIsDeleteModalOpen(true)
+                      }}
+                    />
+                  </td>
                 </tr>
               )) : <EmptyRow colSpan={7} />}
             </tbody>
@@ -272,7 +334,7 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
       )}
       {quickViewProduct && (
         <QuickViewAccountsModal
-          product={{ id: quickViewProduct.id, title: quickViewProduct.title }}
+          product={{ id: quickViewProduct.id, title: quickViewProduct.category.name }}
           onClose={() => setQuickViewProduct(null)}
         />
       )}
@@ -291,12 +353,23 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
         <ExportAccountsModal
           product={{
             id: exportingProduct.id,
-            title: exportingProduct.title,
+            title: exportingProduct.category.name,
             available: exportingProduct._count?.secrets || 0,
           }}
           onClose={() => setExportingProduct(null)}
         />
       )}
+
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+        title="Xác Nhận Xóa"
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct?.category.name}"? Hành động này sẽ xóa vĩnh viễn dữ liệu tài khoản và các ảnh liên quan trên server.`}
+        confirmText="XÓA VĨNH VIỄN"
+        type="danger"
+      />
     </div>
   )
 }
@@ -309,24 +382,42 @@ function ProductIdentity({ product, onImageClick }: { product: Product; onImageC
         onClick={onImageClick}
         className="relative w-20 aspect-video rounded-lg overflow-hidden border border-border bg-secondary shrink-0 group/img hover:border-primary/50 transition-colors cursor-zoom-in"
       >
-        <Image src={product.thumbnail || "/images/product.png"} alt={product.title} fill className="object-cover group-hover/img:scale-110 transition-transform duration-300" />
+        <Image 
+          src={product.thumbnail || "/images/product.png"} 
+          alt={product.category.name} 
+          fill 
+          sizes="80px"
+          className="object-cover group-hover/img:scale-110 transition-transform duration-300" 
+        />
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
           <ZoomIn className="w-4 h-4 text-white" />
         </div>
       </button>
       <div className="min-w-0">
-        <p className="font-bold text-foreground truncate max-w-[240px]">{product.title}</p>
+        <p className="font-bold text-foreground truncate max-w-[240px]">{product.category.name}</p>
         <p className="text-[10px] text-muted-foreground font-medium uppercase">ID: {product.id.slice(-8)}</p>
       </div>
     </div>
   )
 }
 
-function RowActions({ product, onExport, onQuickView }: { product: Product; onExport: (product: Product) => void; onQuickView: (product: Product) => void }) {
+function RowActions({ product, onExport, onQuickView, onDelete }: { product: Product; onExport: (product: Product) => void; onQuickView: (product: Product) => void; onDelete: (product: Product) => void }) {
   return (
     <div className="flex items-center justify-end gap-2">
-      <button className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors inline-flex items-center justify-center" title="Sửa"><Edit className="w-4 h-4" /></button>
-      <button className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors inline-flex items-center justify-center" title="Xóa"><Trash2 className="w-4 h-4" /></button>
+      <Link 
+        href={ADMIN_ROUTES.PRODUCTS_PLAY_EDIT(product.id).path} 
+        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors inline-flex items-center justify-center" 
+        title="Sửa"
+      >
+        <Edit className="w-4 h-4" />
+      </Link>
+      <button 
+        onClick={() => onDelete(product)}
+        className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors inline-flex items-center justify-center" 
+        title="Xóa"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
       <button
         className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors inline-flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-40"
         title="Xem acc nhanh"

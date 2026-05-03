@@ -31,49 +31,53 @@ model Category {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  title       String
+  id          String          @id @default(cuid())
   price       Float
   oldPrice    Float?
-  type        ProductType @default(PLAY)
-  images            String[]
-  thumbnail         String?
-  description       String[]
-  categoryId        String
+  type        ProductType     @default(PLAY)
+  images      String[]
+  thumbnail   String?
+  description String[]
+  categoryId  String
   stats       Json?
-  sold        Boolean     @default(false)
-  stock       Int         @default(1)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  category    Category    @relation(fields: [categoryId], references: [id])
-  cartItems   CartItem[]
+  sold        Boolean         @default(false)
+  stock       Int             @default(1)
+  uploaderId  String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   secrets     AccountSecret[]
+  cartItems   CartItem[]
   orderItems  OrderItem[]
+  category    Category        @relation(fields: [categoryId], references: [id])
+  uploader    User            @relation("ProductUploader", fields: [uploaderId], references: [id])
 }
 
 model User {
-  id             String    @id @default(cuid())
-  name           String?
-  email          String?   @unique
-  emailVerified  DateTime?
-  image          String?
-  password       String?
-  role           Role      @default(USER)
-  balance          Float     @default(0)
-  totalDeposited   Float     @default(0)
-  twoFactorEnabled Boolean   @default(false)
-  twoFactorSecret  String?
-  lastIP           String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  accounts         Account[]
-  sessions         Session[]
-  cartItems        CartItem[]
-  orders           Order[]
-  posts            Post[]
-  activities       UserActivity[]
-  deposits         Deposit[]
+  id                   String               @id @default(cuid())
+  name                 String?
+  email                String?              @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  role                 Role                 @default(USER)
+  balance              Float                @default(0)
+  totalDeposited       Float                @default(0)
+  twoFactorEnabled     Boolean              @default(false)
+  twoFactorSecret      String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  lastIP               String?
+  accounts             Account[]
   accountExportBatches AccountExportBatch[]
+  cartItems            CartItem[]
+  deposits             Deposit[]
+  orders               Order[]
+  posts                Post[]
+  sessions             Session[]
+  activities           UserActivity[]
+  uploadedProducts     Product[]            @relation("ProductUploader")
+  uploadedSecrets      AccountSecret[]      @relation("SecretUploader")
+  withdrawals          Withdrawal[]
 }
 
 model Deposit {
@@ -122,18 +126,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-enum ProductType {
-  PLAY
-  RANDOM
-  SERVICE
-}
-
-enum Role {
-  USER
-  SELLER
-  ADMIN
-}
-
 model EmailVerificationCode {
   id        String   @id @default(cuid())
   email     String
@@ -162,32 +154,34 @@ model CartItem {
   quantity  Int      @default(1)
   selected  Boolean  @default(true)
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
 }
 
 model AccountSecret {
-  id            String              @id @default(cuid())
+  id            String               @id @default(cuid())
   productId     String
-  accountId     String?
   username      String
   password      String
-  extraInfo     String?             // Ví dụ: Mã 2FA, Email khôi phục
-  status        AccountSecretStatus @default(AVAILABLE)
-  isSold        Boolean             @default(false)
+  extraInfo     String?
+  isSold        Boolean              @default(false)
   soldAt        DateTime?
-  exportedAt    DateTime?
-  exportedById  String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  orderItemId   String?
+  accountId     String?
   exportBatchId String?
   exportFormat  AccountExportFormat?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  product       Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItemId   String?
-  orderItem     OrderItem?          @relation(fields: [orderItemId], references: [id])
-  exportBatch   AccountExportBatch? @relation(fields: [exportBatchId], references: [id])
+  exportedAt    DateTime?
+  exportedById  String?
+  uploaderId    String?
+  status        AccountSecretStatus  @default(AVAILABLE)
+  exportBatch   AccountExportBatch?  @relation(fields: [exportBatchId], references: [id])
+  orderItem     OrderItem?           @relation(fields: [orderItemId], references: [id])
+  product       Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  uploader      User?                @relation("SecretUploader", fields: [uploaderId], references: [id])
 
   @@index([productId])
   @@index([accountId])
@@ -196,16 +190,16 @@ model AccountSecret {
 }
 
 model AccountExportBatch {
-  id          String              @id @default(cuid())
-  productId   String?
+  id           String              @id @default(cuid())
+  productId    String?
   exportedById String
-  format      AccountExportFormat
-  action      AccountExportAction @default(EXPORT_ONLY)
-  quantity    Int
-  fileName    String?
-  createdAt   DateTime            @default(now())
-  exportedBy  User                @relation(fields: [exportedById], references: [id])
-  secrets     AccountSecret[]
+  format       AccountExportFormat
+  action       AccountExportAction @default(EXPORT_ONLY)
+  quantity     Int
+  fileName     String?
+  createdAt    DateTime            @default(now())
+  exportedBy   User                @relation(fields: [exportedById], references: [id])
+  secrets      AccountSecret[]
 
   @@index([exportedById])
   @@index([productId])
@@ -218,63 +212,40 @@ model Order {
   totalAmount Float
   status      OrderStatus @default(COMPLETED)
   createdAt   DateTime    @default(now())
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       OrderItem[]
+  profit      SystemProfit?
 }
 
 model OrderItem {
-  id              String          @id @default(cuid())
-  orderId         String
-  productId       String
-  quantity        Int
-  priceAtPurchase Float
-  titleSnapshot   String          // Lưu tiêu đề tại thời điểm mua
-  typeSnapshot    String          // Lưu loại tại thời điểm mua
-  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product         Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
-  deliveredSecrets AccountSecret[] // Liên kết tới các tài khoản đã bàn giao
-}
-
-enum OrderStatus {
-  PENDING
-  COMPLETED
-  CANCELLED
-}
-
-enum AccountSecretStatus {
-  AVAILABLE
-  SOLD
-  EXPORTED
-  DISABLED
-}
-
-enum AccountExportFormat {
-  CSV
-  TXT
-  JSON
-}
-
-enum AccountExportAction {
-  EXPORT_ONLY
-  EXPORT_AND_DISABLE
+  id               String          @id @default(cuid())
+  orderId          String
+  productId        String
+  quantity         Int
+  priceAtPurchase  Float
+  titleSnapshot    String
+  typeSnapshot     String
+  deliveredSecrets AccountSecret[]
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product         @relation(fields: [productId], references: [id], onDelete: SetNull)
 }
 
 model Post {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  content     String   @db.Text
-  excerpt     String?  @db.Text
-  category    String   @default("news")
-  image       String?
-  featured    Boolean  @default(false)
-  published   Boolean  @default(false)
-  views       Int      @default(0)
-  readTime    String?
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  content   String
+  excerpt   String?
+  category  String   @default("news")
+  image     String?
+  featured  Boolean  @default(false)
+  published Boolean  @default(false)
+  views     Int      @default(0)
+  readTime  String?
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
 
   @@index([authorId])
   @@index([slug])
@@ -283,7 +254,7 @@ model Post {
 model Config {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     String   @db.Text
+  value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -313,7 +284,7 @@ model BannedIP {
 model UserActivity {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // LOGIN, LOGOUT, PURCHASE, etc.
+  type      String
   ip        String?
   userAgent String?
   details   String?
@@ -322,4 +293,72 @@ model UserActivity {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+enum ProductType {
+  PLAY
+  RANDOM
+  SERVICE
+}
+
+enum Role {
+  USER
+  SELLER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum AccountSecretStatus {
+  AVAILABLE
+  SOLD
+  EXPORTED
+  DISABLED
+}
+
+enum AccountExportFormat {
+  CSV
+  TXT
+  JSON
+}
+
+enum AccountExportAction {
+  EXPORT_ONLY
+  EXPORT_AND_DISABLE
+}
+
+model Withdrawal {
+  id            String         @id @default(cuid())
+  userId        String
+  amount        Float
+  bankName      String
+  accountNumber String
+  accountName   String
+  status        WithdrawStatus @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SystemProfit {
+  id        String   @id @default(cuid())
+  amount    Float
+  type      String   @default("ORDER_FEE")
+  orderId   String?  @unique
+  order     Order?   @relation(fields: [orderId], references: [id])
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+enum WithdrawStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  REJECTED
 }

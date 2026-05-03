@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: PageProps) {
     categoryName: product.category.name,
     groupName: product.category.group.name,
     images: product.images.length > 0 ? product.images : ["/images/product.png"],
-    tags: product.type === 'PLAY' ? ['VIP', 'AN TOÀN'] : ['SIÊU TỐC'],
+    tags: product.type === 'PLAY' ? ['PLAY TOGETHER VNG'] : [],
     stats: (product.stats as any) || {}
   }
 

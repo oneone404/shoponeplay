@@ -15,6 +15,9 @@ export default async function AdminPlayProductsPage() {
     where: { type: 'PLAY' },
     include: {
       category: true,
+      uploader: {
+        select: { name: true, email: true, id: true }
+      },
       _count: {
         select: { secrets: { where: { isSold: false } } }
       }

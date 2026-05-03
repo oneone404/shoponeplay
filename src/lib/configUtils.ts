@@ -20,6 +20,10 @@ export interface SiteConfig {
   heroBottomText: string;
   introLinks: string; // JSON string of [{ label, url, icon }]
   menuLabels: string; // JSON string of { key: label }
+  TELEGRAM_TOKEN: string;
+  TELEGRAM_ID: string;
+  TELEGRAM_ENABLED: string;
+  SELLER_FEE: string; // Phí sàn (%)
 }
 
 const defaultConfig: SiteConfig = {
@@ -44,7 +48,11 @@ const defaultConfig: SiteConfig = {
     { label: "CHAT ZALO", url: "https://zalo.me", type: "zalo" },
     { label: "FACEBOOK", url: "https://facebook.com", type: "facebook" }
   ]),
-  menuLabels: JSON.stringify({})
+  menuLabels: JSON.stringify({}),
+  TELEGRAM_TOKEN: "",
+  TELEGRAM_ID: "",
+  TELEGRAM_ENABLED: "false",
+  SELLER_FEE: "10" // Mặc định 10%
 };
 
 export async function getSiteConfig(): Promise<SiteConfig> {

@@ -15,6 +15,9 @@ export default async function AdminRandomProductsPage() {
     where: { type: 'RANDOM' },
     include: {
       category: true,
+      uploader: {
+        select: { name: true, email: true, id: true }
+      },
       _count: {
         select: { secrets: { where: { isSold: false } } }
       }

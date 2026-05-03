@@ -11,7 +11,9 @@ import {
   ShoppingBag,
   Trash2,
   ZoomIn,
+  Plus,
 } from "lucide-react"
+import Link from "next/link"
 import Image from "next/image"
 import ImageLightbox from "./ImageLightbox"
 
@@ -55,6 +57,23 @@ export default function CategoriesClient({ initialCategories, groups }: Categori
     0
   )
 
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa danh mục "${name}"? Thao tác này không thể hoàn tác.`)) return
+
+    try {
+      const res = await fetch(`/api/admin/categories/${id}`, {
+        method: "DELETE",
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Lỗi khi xóa danh mục")
+
+      window.location.reload()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Có lỗi xảy ra")
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Summary */}
@@ -92,8 +111,10 @@ export default function CategoriesClient({ initialCategories, groups }: Categori
               className="pl-10 pr-4 py-2 bg-background border border-border rounded-xl w-full outline-none focus:border-primary/50 text-sm font-bold"
             />
           </div>
-          <div className="text-[10px] md:text-sm font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap shrink-0">
-            Tổng: {filteredCategories.length}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-[10px] md:text-sm font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
+              Tổng: {filteredCategories.length}
+            </div>
           </div>
         </div>
 
@@ -141,7 +162,7 @@ export default function CategoriesClient({ initialCategories, groups }: Categori
                           {category.name}
                         </p>
                         <p className="text-[10px] text-muted-foreground font-medium truncate max-w-[220px]">
-                          ID: {category.id.slice(-8)}
+                          ID: {category.id.slice(-8).toUpperCase()}
                         </p>
                       </div>
                     </div>
@@ -165,13 +186,15 @@ export default function CategoriesClient({ initialCategories, groups }: Categori
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button
+                      <Link
+                        href={`/admin/categories/${category.id}/edit`}
                         className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors inline-flex items-center justify-center"
                         title="Sửa danh mục"
                       >
                         <Edit className="w-4 h-4" />
-                      </button>
+                      </Link>
                       <button
+                        onClick={() => handleDelete(category.id, category.name)}
                         className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors inline-flex items-center justify-center"
                         title="Xóa danh mục"
                       >

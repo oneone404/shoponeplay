@@ -99,8 +99,8 @@ function ShopInner({
       const matchCategory = activeCategory === "all" || p.categorySlug === activeCategory || p.groupSlug === activeCategory
 
       // Search Filter
-      const matchSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.id.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchSearch = (p.categoryName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.id || "").toLowerCase().includes(searchQuery.toLowerCase())
 
       // Price Filter
       const priceValue = p.price
@@ -479,7 +479,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
       <div className="aspect-[16/9] relative overflow-hidden bg-secondary shrink-0">
         <Image
           src={product.thumbnail || product.images?.[0] || "/images/product.png"}
-          alt={product.title}
+          alt={product.categoryName}
           fill
           priority
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
@@ -512,7 +512,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onPreview(product.thumbnail || product.images?.[0] || "/images/product.png", product.title);
+            onPreview(product.thumbnail || product.images?.[0] || "/images/product.png", product.categoryName);
           }}
           className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-6 cursor-zoom-in"
         >

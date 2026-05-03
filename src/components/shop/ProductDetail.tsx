@@ -20,7 +20,7 @@ import { useLanguage } from "@/providers/LanguageProvider"
 export default function ProductDetail({ product }: { product: any }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const { addMessage } = useUI()
-  const { addToCart } = useCart()
+  const { buyNow, addToCart } = useCart()
   const { t } = useLanguage()
   const router = useRouter()
 
@@ -32,8 +32,8 @@ export default function ProductDetail({ product }: { product: any }) {
 
   const handleShare = async () => {
     const shareData = {
-      title: product.title,
-      text: t.product.view_acc.replace("{title}", product.title),
+      title: product.categoryName,
+      text: t.product.view_acc.replace("{title}", product.categoryName),
       url: window.location.href
     }
 
@@ -79,7 +79,7 @@ export default function ProductDetail({ product }: { product: any }) {
                 >
                   <Image
                     src={img}
-                    alt={`${product.title} - ${t.common.image} ${idx + 1}`}
+                    alt={`${product.categoryName} - ${t.common.image} ${idx + 1}`}
                     fill
                     priority={idx < 2}
                     sizes={
@@ -117,7 +117,7 @@ export default function ProductDetail({ product }: { product: any }) {
               </div>
 
               <h1 className="text-xl md:text-2xl font-bold uppercase tracking-tighter leading-tight mb-4">
-                {product.title}
+                {product.categoryName}
               </h1>
 
               <div className="flex items-end gap-2 mb-6 pb-6 border-b border-border">
@@ -168,7 +168,7 @@ export default function ProductDetail({ product }: { product: any }) {
               <div className="flex flex-col sm:flex-row gap-2.5 mb-5">
                 <button 
                   onClick={async () => {
-                    await addToCart(product);
+                    await buyNow(product);
                     router.push(ROUTES.BAG);
                   }}
                   className="flex-[2] py-3.5 bg-accent text-white rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2 shadow-lg shadow-accent/20 hover:scale-[1.02] hover:shadow-accent/40 active:scale-95 transition-all"
@@ -178,10 +178,10 @@ export default function ProductDetail({ product }: { product: any }) {
                 </button>
                 <button 
                   onClick={() => addToCart(product)}
-                  className="flex-1 py-3.5 bg-secondary border border-border text-foreground rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2 hover:bg-secondary/80 hover:text-primary transition-all"
+                  className="px-5 py-3.5 bg-secondary border border-border text-foreground rounded-xl flex items-center justify-center hover:bg-secondary/80 hover:text-primary transition-all shadow-sm"
+                  title={t.nav.shop}
                 >
                   <ShoppingCart className="w-4 h-4" />
-                  <span>{t.nav.shop.split(" ")[0]}</span>
                 </button>
               </div>
 

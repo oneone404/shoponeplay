@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { Check, Trash2, AlertCircle, Minus, Plus } from "lucide-react"
+import { Check, Trash2, AlertCircle, Minus, Plus, ZoomIn } from "lucide-react"
+import ImageLightbox from "@/components/admin/products/ImageLightbox"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useCart } from "@/providers/CartProvider"
@@ -39,6 +40,7 @@ export default function CartItemCard({
 }: CartItemCardProps) {
   const { updateQuantity } = useCart()
   const { t } = useLanguage()
+  const [previewImage, setPreviewImage] = useState<{ src: string, alt: string } | null>(null)
 
   const handleMinus = () => {
     if (item.quantity > 1) {
@@ -93,8 +95,8 @@ export default function CartItemCard({
       className={cn(
         "group relative bg-card/60 border rounded-xl transition-all duration-300",
         item.selected 
-          ? "border-primary/30 bg-primary/[0.02]" 
-          : "border-border/40 opacity-90",
+          ? "border-primary/40 bg-primary/[0.02]" 
+          : "border-border/80",
         item.sold && "grayscale opacity-50"
       )}
     >
@@ -113,36 +115,57 @@ export default function CartItemCard({
           {item.selected && <Check className="w-3 h-3 stroke-[5]" />}
         </button>
 
-        {/* Image Area with Conditional Link */}
         {item.type === "PLAY" ? (
-          <Link 
-            href={ROUTES.PRODUCT_DETAIL(item.id)}
-            className="relative w-16 h-10 md:w-20 md:h-12 rounded-lg overflow-hidden bg-secondary/30 shrink-0 border border-border/30 group/img"
-          >
-            <Image
-              src={item.thumbnail || "/images/product.png"}
-              alt={item.title}
-              fill
-              className="object-cover transition-transform duration-700 group-hover/img:scale-110"
-            />
-            {item.sold && (
-              <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-[1px]">
-                <span className="text-[7px] font-bold text-white uppercase tracking-tighter">Hết</span>
-              </div>
+          <div className="relative group/img shrink-0">
+            <Link 
+              href={ROUTES.PRODUCT_DETAIL(item.id)}
+              className="relative block w-16 h-10 md:w-20 md:h-12 rounded-lg overflow-hidden bg-secondary/30 border border-border/30"
+            >
+              <Image
+                src={item.thumbnail || "/images/product.png"}
+                alt={item.title}
+                fill
+                sizes="80px"
+                className="object-cover transition-transform duration-700 group-hover/img:scale-110"
+              />
+              {item.sold && (
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-[1px]">
+                  <span className="text-[7px] font-bold text-white uppercase tracking-tighter">Hết</span>
+                </div>
+              )}
+            </Link>
+            {!item.sold && (
+              <button
+                onClick={() => setPreviewImage({ src: item.thumbnail || "/images/product.png", alt: item.title })}
+                className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center z-10"
+              >
+                <ZoomIn className="w-4 h-4 text-white" />
+              </button>
             )}
-          </Link>
+          </div>
         ) : (
-          <div className="relative w-16 h-10 md:w-20 md:h-12 rounded-lg overflow-hidden bg-secondary/30 shrink-0 border border-border/30">
-            <Image
-              src={item.thumbnail || "/images/product.png"}
-              alt={item.title}
-              fill
-              className="object-cover"
-            />
-            {item.sold && (
-              <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-[1px]">
-                <span className="text-[7px] font-bold text-white uppercase tracking-tighter">Hết</span>
-              </div>
+          <div className="relative group/img shrink-0">
+            <div className="relative w-16 h-10 md:w-20 md:h-12 rounded-lg overflow-hidden bg-secondary/30 border border-border/30">
+              <Image
+                src={item.thumbnail || "/images/product.png"}
+                alt={item.title}
+                fill
+                sizes="80px"
+                className="object-cover transition-transform duration-700 group-hover/img:scale-110"
+              />
+              {item.sold && (
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-[1px]">
+                  <span className="text-[7px] font-bold text-white uppercase tracking-tighter">Hết</span>
+                </div>
+              )}
+            </div>
+            {!item.sold && (
+              <button
+                onClick={() => setPreviewImage({ src: item.thumbnail || "/images/product.png", alt: item.title })}
+                className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center z-10"
+              >
+                <ZoomIn className="w-4 h-4 text-white" />
+              </button>
             )}
           </div>
         )}
@@ -150,15 +173,7 @@ export default function CartItemCard({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-col h-full justify-center">
-            <div className="flex items-center space-x-1.5 mb-0.5">
-              <span className="text-[7px] md:text-[8px] font-bold text-primary uppercase tracking-widest opacity-80">
-                {item.categoryName}
-              </span>
-              <span className="w-0.5 h-0.5 rounded-full bg-border opacity-50" />
-              <span className="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase opacity-40">
-                {item.type}
-              </span>
-            </div>
+
             {item.type === "PLAY" ? (
               <Link 
                 href={ROUTES.PRODUCT_DETAIL(item.id)}
@@ -237,6 +252,13 @@ export default function CartItemCard({
           </button>
         </div>
       </div>
+      {previewImage && (
+        <ImageLightbox
+          src={previewImage.src}
+          alt={previewImage.alt}
+          onClose={() => setPreviewImage(null)}
+        />
+      )}
     </motion.div>
   )
 }

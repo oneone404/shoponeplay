@@ -25,7 +25,7 @@ export default function HomeClient({
   // Map notifications to translations if they match patterns, or use defaults from t.home.notif
   const displayNotifications = [
     t.home.notif.deposit_success.replace("{user}", "*******123").replace("{amount}", "100.000"),
-    t.home.notif.buy_success.replace("{user}", "*******789").replace("{product}", "Tài khoản PlayTogether [VIP]"),
+    t.home.notif.buy_success.replace("{user}", "*******789").replace("{product}", "Tài khoản PlayTogether [PLAY TOGETHER VNG]"),
     t.home.notif.atm_success.replace("{user}", "*******456").replace("{amount}", "500.000"),
     t.home.notif.new_trade.replace("{product}", "Tài khoản Random Kim Cương"),
   ];

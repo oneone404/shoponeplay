@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { mkdir, writeFile } from "fs/promises"
 import path from "path"
+import sharp from "sharp"
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 const IMAGE_EXTENSIONS: Record<string, string> = {
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
   try {
     const session = await auth()
     
-    if (!session || (session.user as any).role !== "ADMIN") {
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SELLER")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -38,14 +39,19 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer())
     
+    // Process with Sharp: Convert to WebP and compress
+    const optimizedBuffer = await sharp(buffer)
+      .webp({ quality: 80 }) // 80 is sweet spot for web
+      .toBuffer()
+    
     // Save to public/uploads/products
     const uploadDir = path.join(process.cwd(), "public", "uploads", "products")
     await mkdir(uploadDir, { recursive: true })
 
-    const fileName = `${type || 'product'}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${extension}`
+    const fileName = `${type || 'product'}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.webp`
     const filePath = path.join(uploadDir, fileName)
     
-    await writeFile(filePath, buffer)
+    await writeFile(filePath, optimizedBuffer)
 
     return NextResponse.json({ 
       url: `/uploads/products/${fileName}`

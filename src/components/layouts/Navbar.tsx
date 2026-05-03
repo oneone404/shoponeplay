@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn } from "lucide-react"
+import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn, Store } from "lucide-react"
 import { useTheme } from "@/providers/ThemeProvider"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
@@ -139,21 +139,28 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                   </button>
                 )}
 
+                {/* Backdrop & Dropdown with High-Performance CSS Transitions */}
                 {/* Backdrop - Dimmed click catcher */}
-                {profileOpen && (
-                  <div
-                    className="fixed inset-0 z-10 bg-black/20 transition-opacity duration-200 animate-in fade-in"
-                    onClick={() => setProfileOpen(false)}
-                  />
-                )}
-
                 <div
                   className={cn(
-                    "absolute right-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-20 py-1 transition-all duration-200 ease-out origin-top-right",
-                    profileOpen
-                      ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                      : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                    "fixed inset-0 z-10 bg-black/50 transition-opacity duration-300 ease-out",
+                    profileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                   )}
+                  onClick={() => setProfileOpen(false)}
+                />
+
+                {/* Dropdown Menu */}
+                <div
+                  className={cn(
+                    "absolute right-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-20 py-1 origin-top-right overflow-hidden transition-all duration-[400ms] will-change-transform",
+                    profileOpen 
+                      ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" 
+                      : "opacity-0 -translate-y-2 scale-95 pointer-events-none"
+                  )}
+                  style={{ 
+                    transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)',
+                    transform: profileOpen ? 'translate3d(0, 0, 0)' : 'translate3d(0, -8px, 0) scale(0.95)'
+                  }}
                 >
                   {isAuthenticated ? (
                     /* Authenticated User Info */
@@ -214,6 +221,11 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                     {/* Admin Actions */}
                     {isAuthenticated && session?.user?.role === "ADMIN" && (
                       <DropdownItem href="/admin" icon={<LayoutGrid className="w-4 h-4" />} onClick={closeAll}>{t.nav.admin}</DropdownItem>
+                    )}
+                    
+                    {/* Seller Actions */}
+                    {isAuthenticated && (session?.user?.role === "ADMIN" || session?.user?.role === "SELLER") && (
+                      <DropdownItem href="/seller" icon={<Store className="w-4 h-4" />} onClick={closeAll}>Kênh Người Bán</DropdownItem>
                     )}
 
                     {/* Standard User Actions */}

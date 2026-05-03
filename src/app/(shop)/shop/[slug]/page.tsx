@@ -63,7 +63,7 @@ export default async function CategoryPage({
     categorySlug: p.category.slug,
     groupSlug: p.category.group.slug,
     groupName: p.category.group.name,
-    tags: p.type === 'PLAY' ? ['VIP', 'AN TOÀN'] : (p.type === 'RANDOM' ? ['HOT', '99% TRÚNG'] : ['SIÊU TỐC'])
+    tags: p.type === 'PLAY' ? ['PLAY TOGETHER VNG'] : []
   }))
 
   return (

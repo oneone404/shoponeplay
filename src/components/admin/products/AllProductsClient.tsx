@@ -1,16 +1,19 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Download, Edit, ExternalLink, PackageCheck, Search, ShoppingBag, ZoomIn } from "lucide-react"
+import { Download, Edit, ExternalLink, PackageCheck, Search, ShoppingBag, Trash2, ZoomIn } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import ExportAccountsModal from "./ExportAccountsModal"
 import QuickViewAccountsModal from "./QuickViewAccountsModal"
 import ImageLightbox from "./ImageLightbox"
+import { useUI } from "@/providers/UIProvider"
+import ConfirmModal from "@/components/utils/ConfirmModal"
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+import Link from "next/link"
 
 interface Product {
   id: string
-  title: string
   price: number
   type: string
   thumbnail?: string | null
@@ -22,6 +25,11 @@ interface Product {
   _count?: {
     secrets: number
   }
+  uploader: {
+    name: string | null
+    email: string | null
+    id: string
+  }
 }
 
 export default function AllProductsClient({ initialProducts }: { initialProducts: Product[] }) {
@@ -29,13 +37,43 @@ export default function AllProductsClient({ initialProducts }: { initialProducts
   const [exportingProduct, setExportingProduct] = useState<Product | null>(null)
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
   const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null)
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const { addMessage } = useUI()
+
+  const handleDelete = async () => {
+    if (!deletingProduct) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/products/${deletingProduct.id}`, {
+        method: 'DELETE'
+      })
+      if (!res.ok) throw new Error('Xóa thất bại')
+      addMessage({
+        type: "success",
+        text: "Đã xóa sản phẩm và giải phóng bộ nhớ ảnh"
+      })
+      window.location.reload()
+    } catch (err) {
+      addMessage({
+        type: "error",
+        text: "Có lỗi xảy ra khi xóa"
+      })
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteModalOpen(false)
+      setDeletingProduct(null)
+    }
+  }
 
   const filteredProducts = useMemo(() => {
     const keyword = search.trim().toLowerCase()
     if (!keyword) return initialProducts
 
     return initialProducts.filter((product) =>
-      product.title.toLowerCase().includes(keyword) ||
+      product.category.name.toLowerCase().includes(keyword) ||
       product.id.toLowerCase().includes(keyword) ||
       product.type.toLowerCase().includes(keyword) ||
       product.category.name.toLowerCase().includes(keyword)
@@ -48,7 +86,7 @@ export default function AllProductsClient({ initialProducts }: { initialProducts
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SummaryCard label="Tổng sản phẩm" value={initialProducts.length.toLocaleString("vi-VN")} icon={<ShoppingBag className="w-5 h-5" />} color="text-primary" />
-        <SummaryCard label="Tài khoản tồn kho" value={totalStock.toLocaleString("vi-VN")} icon={<PackageCheck className="w-5 h-5" />} color="text-green-500" />
+        <SummaryCard label="Tổng kho" value={totalStock.toLocaleString("vi-VN")} icon={<PackageCheck className="w-5 h-5" />} color="text-amber-500" />
         <SummaryCard label="Kết quả hiển thị" value={filteredProducts.length.toLocaleString("vi-VN")} icon={<Search className="w-5 h-5" />} color="text-amber-500" />
       </div>
 
@@ -77,7 +115,8 @@ export default function AllProductsClient({ initialProducts }: { initialProducts
                 <th className="px-6 py-4 font-bold">Loại</th>
                 <th className="px-6 py-4 font-bold">Danh mục</th>
                 <th className="px-6 py-4 font-bold">Giá bán</th>
-                <th className="px-6 py-4 font-bold">Tồn kho</th>
+                <th className="px-6 py-4 font-bold text-center">Kho hàng</th>
+                <th className="px-6 py-4 font-bold text-right">Seller</th>
                 <th className="px-6 py-4 font-bold text-right">Thao tác</th>
               </tr>
             </thead>
@@ -88,16 +127,22 @@ export default function AllProductsClient({ initialProducts }: { initialProducts
                     <div className="flex items-center gap-3">
                       <button 
                         type="button"
-                        onClick={() => setPreviewImage({ src: product.thumbnail || "/images/product.png", alt: product.title })}
+                        onClick={() => setPreviewImage({ src: product.thumbnail || "/images/product.png", alt: product.category.name })}
                         className="relative w-20 aspect-video rounded-lg overflow-hidden border border-border bg-secondary shrink-0 group/img hover:border-primary/50 transition-colors cursor-zoom-in"
                       >
-                        <Image src={product.thumbnail || "/images/product.png"} alt={product.title} fill className="object-cover group-hover/img:scale-110 transition-transform duration-300" />
+                        <Image 
+                          src={product.thumbnail || "/images/product.png"} 
+                          alt={product.category.name} 
+                          fill 
+                          sizes="80px"
+                          className="object-cover group-hover/img:scale-110 transition-transform duration-300" 
+                        />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                           <ZoomIn className="w-5 h-5 text-white" />
                         </div>
                       </button>
                       <div className="min-w-0">
-                        <p className="font-bold text-foreground truncate max-w-[240px]">{product.title}</p>
+                        <p className="font-bold text-foreground truncate max-w-[240px]">{product.category.name}</p>
                         <p className="text-[10px] text-muted-foreground font-medium uppercase">ID: {product.id.slice(-8)}</p>
                       </div>
                     </div>
@@ -118,10 +163,37 @@ export default function AllProductsClient({ initialProducts }: { initialProducts
                     </span>
                   </td>
                   <td className="px-6 py-4 font-bold text-primary">{product.price.toLocaleString("vi-VN")} VND</td>
-                  <td className="px-6 py-4 font-bold">{(product._count?.secrets || 0).toLocaleString("vi-VN")}</td>
+                  <td className="px-6 py-4 font-bold text-center">
+                    {(product._count?.secrets || 0).toLocaleString("vi-VN")}
+                    <span className="block text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Tài khoản</span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex flex-col items-end">
+                      <span className="font-bold text-foreground text-xs">{product.uploader.name || "N/A"}</span>
+                      <span className="text-[10px] text-muted-foreground/60 font-medium lowercase truncate max-w-[120px]">
+                        {product.uploader.email || product.uploader.id.slice(-8)}
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors inline-flex items-center justify-center" title="Sửa"><Edit className="w-4 h-4" /></button>
+                      <Link 
+                        href={product.type === "PLAY" ? ADMIN_ROUTES.PRODUCTS_PLAY_EDIT(product.id).path : ADMIN_ROUTES.PRODUCTS_RANDOM_EDIT(product.id).path}
+                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors inline-flex items-center justify-center" 
+                        title="Sửa"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+                      <button 
+                        onClick={() => {
+                          setDeletingProduct(product)
+                          setIsDeleteModalOpen(true)
+                        }}
+                        className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors inline-flex items-center justify-center" 
+                        title="Xóa"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                       <button
                         className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors inline-flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-40"
                         title="Xem acc nhanh"
@@ -142,7 +214,7 @@ export default function AllProductsClient({ initialProducts }: { initialProducts
                   </td>
                 </tr>
               )) : (
-                <EmptyRow colSpan={6} />
+                <EmptyRow colSpan={7} />
               )}
             </tbody>
           </table>
@@ -171,6 +243,17 @@ export default function AllProductsClient({ initialProducts }: { initialProducts
           onClose={() => setPreviewImage(null)}
         />
       )}
+
+      <ConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+        title="Xác Nhận Xóa"
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct?.category.name}"? Hành động này sẽ xóa vĩnh viễn dữ liệu tài khoản và các ảnh liên quan trên server.`}
+        confirmText="XÓA VĨNH VIỄN"
+        type="danger"
+      />
     </div>
   )
 }

@@ -82,9 +82,32 @@ export async function DELETE(
       return NextResponse.json({ error: "You cannot delete yourself" }, { status: 400 });
     }
 
+    // 1. Tìm user để lấy thông tin ảnh đại diện
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { image: true }
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // 2. Xóa trong DB
     await prisma.user.delete({
       where: { id }
     });
+
+    // 3. Xóa ảnh vật lý nếu là ảnh upload cục bộ
+    if (user.image && user.image.startsWith("/uploads/")) {
+      try {
+        const { unlink } = await import("fs/promises");
+        const path = await import("path");
+        const filePath = path.join(process.cwd(), "public", user.image);
+        await unlink(filePath);
+      } catch (e) {
+        console.error("[DELETE_USER_IMAGE_ERROR]:", e);
+      }
+    }
 
     return NextResponse.json({ message: "User deleted successfully" });
   } catch (error: any) {

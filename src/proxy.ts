@@ -39,7 +39,20 @@ export default auth(async function proxy(req) {
     }
   }
 
-  // 4. Security Shield — Only Rate Limit + Ban Check
+  // 4. Seller Route Protection
+  if (nextUrl.pathname.startsWith("/seller")) {
+    if (!auth) {
+      const signinUrl = new URL("/signin", nextUrl.origin);
+      return NextResponse.redirect(signinUrl);
+    }
+    const role = (auth?.user as any)?.role;
+    if (role !== "SELLER" && role !== "ADMIN") {
+      const homeUrl = new URL("/", nextUrl.origin);
+      return NextResponse.redirect(homeUrl);
+    }
+  }
+
+  // 5. Security Shield — Only Rate Limit + Ban Check
   const isProtectedPage = !nextUrl.pathname.startsWith("/api") &&
                           !nextUrl.pathname.startsWith("/admin") &&
                           !nextUrl.pathname.startsWith("/signin") &&

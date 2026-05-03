@@ -5,7 +5,7 @@ import Navbar from "@/components/layouts/Navbar"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingBag, ChevronLeft, Check } from "lucide-react"
+import { ShoppingBag, ChevronLeft, Check, Zap, Package } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUI } from "@/providers/UIProvider"
@@ -14,12 +14,14 @@ import CartFloatingSummary from "./CartFloatingSummary"
 import PageHeader from "@/components/shared/PageHeader"
 import { ROUTES } from "@/lib/routes"
 import { useLanguage } from "@/providers/LanguageProvider"
+import { cn } from "@/lib/utils"
 
 export default function CartContent() {
   const { 
     items, 
     removeFromCart, 
     toggleItemSelection, 
+    toggleGroupSelection,
     toggleAllSelection, 
     totalAmount, 
     selectedCount,
@@ -128,19 +130,94 @@ export default function CartContent() {
             </Link>
           </motion.div>
         ) : (
-          <div className="space-y-4">
-            <AnimatePresence mode="popLayout">
-              {items.map((item) => (
-                <CartItemCard 
-                  key={item.id} 
-                  // @ts-ignore
-                  item={item} 
-                  toggleSelection={toggleItemSelection} 
-                  remove={removeFromCart} 
-                  formatCurrency={formatCurrency}
-                />
-              ))}
-            </AnimatePresence>
+          <div className="space-y-10">
+            {/* Play Together Items */}
+            {items.filter(i => i.type !== "RANDOM").length > 0 && (() => {
+              const playItemsGroup = items.filter(i => i.type !== "RANDOM" && !i.sold);
+              const isGroupSelected = playItemsGroup.length > 0 && playItemsGroup.every(i => i.selected);
+              
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-2">
+                    <button 
+                      onClick={() => toggleGroupSelection("PLAY", !isGroupSelected)}
+                      className="flex items-center space-x-3 group/header"
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded-lg border-[1.5px] flex items-center justify-center transition-all duration-300",
+                        isGroupSelected
+                          ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                          : "border-border group-hover/header:border-primary/50 bg-secondary/50"
+                      )}>
+                        {isGroupSelected && <Check className="w-3.5 h-3.5 stroke-[4]" />}
+                      </div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/80 group-hover/header:text-primary transition-colors">Tài khoản Play</h3>
+                    </button>
+                    <span className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-widest">
+                      {items.filter(i => i.type !== "RANDOM").reduce((acc, i) => acc + i.quantity, 0)} {t.common.account}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    <AnimatePresence mode="popLayout">
+                      {items.filter(i => i.type !== "RANDOM").map((item) => (
+                        <CartItemCard 
+                          key={item.id} 
+                          // @ts-ignore
+                          item={item} 
+                          toggleSelection={toggleItemSelection} 
+                          remove={removeFromCart} 
+                          formatCurrency={formatCurrency}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Random Category Items */}
+            {items.filter(i => i.type === "RANDOM").length > 0 && (() => {
+              const randomItemsGroup = items.filter(i => i.type === "RANDOM" && !i.sold);
+              const isGroupSelected = randomItemsGroup.length > 0 && randomItemsGroup.every(i => i.selected);
+
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-2">
+                    <button 
+                      onClick={() => toggleGroupSelection("RANDOM", !isGroupSelected)}
+                      className="flex items-center space-x-3 group/header"
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded-lg border-[1.5px] flex items-center justify-center transition-all duration-300",
+                        isGroupSelected
+                          ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                          : "border-border group-hover/header:border-primary/50 bg-secondary/50"
+                      )}>
+                        {isGroupSelected && <Check className="w-3.5 h-3.5 stroke-[4]" />}
+                      </div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-foreground/80 group-hover/header:text-primary transition-colors">Tài khoản Random</h3>
+                    </button>
+                    <span className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-widest">
+                      {items.filter(i => i.type === "RANDOM").reduce((acc, i) => acc + i.quantity, 0)} {t.common.account}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    <AnimatePresence mode="popLayout">
+                      {items.filter(i => i.type === "RANDOM").map((item) => (
+                        <CartItemCard 
+                          key={item.id} 
+                          // @ts-ignore
+                          item={item} 
+                          toggleSelection={toggleItemSelection} 
+                          remove={removeFromCart} 
+                          formatCurrency={formatCurrency}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
         </div>

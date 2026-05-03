@@ -27,7 +27,7 @@ export async function GET() {
     const formattedItems = cartItems.map((item) => ({
       id: item.product.id,
       cartItemId: item.id,
-      title: item.product.title,
+      title: item.product.category.name,
       price: item.product.price,
       thumbnail: item.product.thumbnail || item.product.images[0],
       type: item.product.type,
@@ -156,13 +156,25 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    const { productId, selected, quantity, all } = await req.json()
+    const { productId, productIds, selected, quantity, all } = await req.json()
 
     if (all !== undefined) {
       // Cập nhật tất cả items của user (chỉ support selected)
       await prisma.cartItem.updateMany({
         where: { userId: session.user.id },
         data: { selected: !!all }
+      })
+      return NextResponse.json({ success: true })
+    }
+
+    if (productIds !== undefined && selected !== undefined) {
+      // Cập nhật hàng loạt selected cho danh sách IDs
+      await prisma.cartItem.updateMany({
+        where: {
+          userId: session.user.id,
+          productId: { in: productIds }
+        },
+        data: { selected: !!selected }
       })
       return NextResponse.json({ success: true })
     }

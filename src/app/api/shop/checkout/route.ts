@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { Prisma, type ProductType } from "@prisma/client"
+import { getSiteConfig } from "@/lib/configUtils"
 
 type CheckoutItem = {
   productId: string
@@ -33,7 +34,8 @@ export async function POST(req: Request) {
     if (directPurchase?.productId) {
       // LUỒNG MUA NGAY
       const product = await prisma.product.findUnique({
-        where: { id: directPurchase.productId }
+        where: { id: directPurchase.productId },
+        include: { category: true }
       })
 
       if (!product || product.sold) {
@@ -60,14 +62,14 @@ export async function POST(req: Request) {
         productId: product.id,
         requiredQty,
         price: product.price,
-        title: product.title,
+        title: product.category.name,
         type: product.type
       }]
     } else {
       // LUỒNG GIỎ HÀNG (Mặc định)
       const cartItems = await prisma.cartItem.findMany({
         where: { userId: session.user.id, selected: true },
-        include: { product: true }
+        include: { product: { include: { category: true } } }
       })
 
       if (cartItems.length === 0) {
@@ -81,7 +83,7 @@ export async function POST(req: Request) {
 
         if (availableCount < item.quantity) {
           return NextResponse.json({ 
-            error: `Sản phẩm "${item.product.title}" không đủ kho.` 
+            error: `Sản phẩm "${item.product.category.name}" không đủ kho.` 
           }, { status: 400 })
         }
 
@@ -90,7 +92,7 @@ export async function POST(req: Request) {
           productId: item.product.id,
           requiredQty: item.quantity,
           price: item.product.price,
-          title: item.product.title,
+          title: item.product.category.name,
           type: item.product.type
         })
       }
@@ -106,6 +108,10 @@ export async function POST(req: Request) {
         error: `Số dư không đủ. Bạn cần thêm ${totalAmount - (user?.balance || 0)} VNĐ.` 
       }, { status: 400 })
     }
+
+    // Lấy cấu hình phí sàn
+    const config = await getSiteConfig()
+    const sellerFeePercent = parseFloat(config.SELLER_FEE || "0")
 
     // THỰC HIỆN GIAO DỊCH (TRANSACTION)
     const order = await prisma.$transaction(async (tx) => {
@@ -137,6 +143,14 @@ export async function POST(req: Request) {
           throw new Error("OUT_OF_STOCK")
         }
 
+        // Lấy uploaderId từ các secret (giả định uploader đầu tiên là chủ sở hữu lô)
+        const sampleSecret = await tx.accountSecret.findFirst({
+          where: { id: secretsToDeliver[0].id },
+          select: { uploaderId: true }
+        })
+
+        const sellerId = sampleSecret?.uploaderId
+
         const orderItem = await tx.orderItem.create({
           data: {
             orderId: newOrder.id,
@@ -156,6 +170,35 @@ export async function POST(req: Request) {
 
         if (delivered.count !== item.requiredQty) {
           throw new Error("OUT_OF_STOCK")
+        }
+
+        // B4: Cộng tiền cho Seller (nếu có uploaderId)
+        let totalProfitForItem = 0
+        if (sellerId) {
+          const sellerRevenue = item.price * item.requiredQty * (1 - sellerFeePercent / 100)
+          totalProfitForItem = (item.price * item.requiredQty) - sellerRevenue
+          
+          if (sellerRevenue > 0) {
+            await tx.user.update({
+              where: { id: sellerId },
+              data: { balance: { increment: sellerRevenue } }
+            })
+          }
+        } else {
+          // Nếu không có uploader (sản phẩm của admin), lợi nhuận là 100%
+          totalProfitForItem = item.price * item.requiredQty
+        }
+
+        // B5: Ghi nhận lợi nhuận hệ thống
+        if (totalProfitForItem > 0) {
+          await tx.systemProfit.create({
+            data: {
+              amount: totalProfitForItem,
+              type: "ORDER_FEE",
+              orderId: newOrder.id,
+              note: `Phí sàn từ sản phẩm ${item.title} (Số lượng: ${item.requiredQty})`
+            }
+          })
         }
 
         // Cập nhật Stock cha

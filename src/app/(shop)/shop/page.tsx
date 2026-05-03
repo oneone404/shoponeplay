@@ -44,7 +44,7 @@ export default async function ShopPage() {
     categorySlug: p.category.slug, // Slug của danh mục cụ thể
     groupSlug: p.category.group.slug, // Slug của nhóm (để lọc theo tab)
     groupName: p.category.group.name,
-    tags: p.type === 'PLAY' ? ['VIP', 'AN TOÀN'] : (p.type === 'RANDOM' ? ['HOT', '99% TRÚNG'] : ['SIÊU TỐC'])
+    tags: p.type === 'PLAY' ? ['PLAY TOGETHER VNG'] : []
   }))
 
   return (

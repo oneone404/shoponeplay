@@ -71,6 +71,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.totalDeposited = dbUser.totalDeposited;
           token.emailVerified = dbUser.emailVerified;
           token.twoFactorEnabled = dbUser.twoFactorEnabled;
+        } else {
+          // USER DELETED FROM DB -> INVALIDATE TOKEN
+          return null;
         }
       }
 
