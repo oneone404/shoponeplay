@@ -64,7 +64,6 @@ export default function AdminCardsClient({
       <AdminHeader
         title="Cấu Hình Nạp Thẻ"
         subtitle="Quản lý tích hợp nạp thẻ cào qua đối tác (TheSieuRe / TheGiaRe)"
-        icon={<Shield className="w-5 h-5 text-primary" />}
       />
 
       <div className="w-full">
