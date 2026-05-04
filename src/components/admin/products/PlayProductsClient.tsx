@@ -2,27 +2,28 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
-  AlertCircle,
-  ChevronDown,
-  Download,
   Edit,
   ExternalLink,
-  Filter,
-  PackageCheck,
+  Plus,
   Search,
-  ShieldCheck,
-  ShoppingBag,
   Trash2,
-  ZoomIn,
+  Gamepad2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Eye,
+  EyeOff,
+  Filter,
+  ChevronDown
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import ExportAccountsModal from "./ExportAccountsModal"
-import QuickViewAccountsModal from "./QuickViewAccountsModal"
-import ImageLightbox from "./ImageLightbox"
-import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
 import { useUI } from "@/providers/UIProvider"
 import ConfirmModal from "@/components/utils/ConfirmModal"
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+import { cn } from "@/lib/utils"
+import QuickViewAccountsModal from "./QuickViewAccountsModal"
 
 interface Product {
   id: string
@@ -31,19 +32,18 @@ interface Product {
   oldPrice?: number | null
   thumbnail?: string | null
   sold: boolean
+  isHidden: boolean
   stock: number
+  type: "PLAY" | "RANDOM" | "SERVICE"
   category: {
     name: string
     slug: string
   }
-  _count?: {
-    secrets: number
-  }
   uploader: {
     name: string | null
-    email: string | null
-    id: string
+    role: string
   }
+  secrets?: { username: string }[]
 }
 
 interface PlayProductsClientProps {
@@ -51,64 +51,51 @@ interface PlayProductsClientProps {
   categories: { id: string; name: string; slug: string }[]
 }
 
-export default function PlayProductsClient({ initialProducts, categories }: PlayProductsClientProps) {
+export default function PlayProductsClient({
+  initialProducts,
+  categories
+}: PlayProductsClientProps) {
   const [search, setSearch] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
-  const [exportingProduct, setExportingProduct] = useState<Product | null>(null)
-  const [isBulkExportOpen, setIsBulkExportOpen] = useState(false)
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+  const [isToggling, setIsToggling] = useState<string | null>(null)
 
   const { addMessage } = useUI()
-
-  const handleDelete = async () => {
-    if (!deletingProduct) return
-    setIsDeleting(true)
-    try {
-      const res = await fetch(`/api/admin/products/${deletingProduct.id}`, {
-        method: 'DELETE'
-      })
-      if (!res.ok) throw new Error('Xóa thất bại')
-      addMessage({
-        type: "success",
-        text: "Đã xóa sản phẩm và giải phóng bộ nhớ ảnh"
-      })
-      // Refresh logic or filter out
-      window.location.reload()
-    } catch (err) {
-      addMessage({
-        type: "error",
-        text: "Có lỗi xảy ra khi xóa"
-      })
-    } finally {
-      setIsDeleting(false)
-      setIsDeleteModalOpen(false)
-      setDeletingProduct(null)
-    }
-  }
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
-  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
-  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null)
   const categoryDropdownRef = useRef<HTMLDivElement | null>(null)
-  const selectedCategoryLabel = selectedCategory === "all"
-    ? "TẤT CẢ DANH MỤC"
-    : formatCategoryLabel(categories.find((category) => category.slug === selectedCategory)?.name || selectedCategory)
 
   const filteredProducts = useMemo(() => {
     const keyword = search.trim().toLowerCase()
-
     return initialProducts.filter((product) => {
-      const matchesSearch = !keyword ||
+      const matchesSearch = !keyword || 
+        product.id.toLowerCase().includes(keyword) || 
         product.category.name.toLowerCase().includes(keyword) ||
-        product.id.toLowerCase().includes(keyword) ||
-        product.category.name.toLowerCase().includes(keyword)
+        product.secrets?.[0]?.username?.toLowerCase().includes(keyword)
+
       const matchesCategory = selectedCategory === "all" || product.category.slug === selectedCategory
 
       return matchesSearch && matchesCategory
     })
   }, [initialProducts, search, selectedCategory])
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem)
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page)
+  }
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, selectedCategory])
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -116,125 +103,118 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
         setIsCategoryOpen(false)
       }
     }
-
     document.addEventListener("pointerdown", handlePointerDown)
     return () => document.removeEventListener("pointerdown", handlePointerDown)
   }, [])
 
-  const totalStock = initialProducts.reduce((total, product) => total + (product._count?.secrets || 0), 0)
-  const activeProducts = initialProducts.filter((product) => !product.sold).length
-  const selectableProducts = filteredProducts.filter((product) => (product._count?.secrets || 0) > 0)
-  const selectedProducts = initialProducts.filter((product) => selectedProductIds.includes(product.id))
-  const selectedStock = selectedProducts.reduce((total, product) => total + (product._count?.secrets || 0), 0)
-  const isAllVisibleSelected = selectableProducts.length > 0 && selectableProducts.every((product) => selectedProductIds.includes(product.id))
-
-  const toggleSelectAllVisible = () => {
-    setSelectedProductIds((current) => {
-      if (isAllVisibleSelected) {
-        return current.filter((id) => !selectableProducts.some((product) => product.id === id))
-      }
-
-      return Array.from(new Set([...current, ...selectableProducts.map((product) => product.id)]))
-    })
+  const handleDelete = async () => {
+    if (!deletingProduct) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/products/${deletingProduct.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Xóa thất bại')
+      addMessage({ type: "success", text: "Đã xóa sản phẩm thành công" })
+      window.location.reload()
+    } catch (err) {
+      addMessage({ type: "error", text: "Có lỗi xảy ra khi xóa" })
+    } finally {
+      setIsDeleting(false)
+      setIsDeleteModalOpen(false)
+      setDeletingProduct(null)
+    }
   }
 
-  const toggleProductSelection = (product: Product) => {
-    if ((product._count?.secrets || 0) <= 0) return
-
-    setSelectedProductIds((current) => (
-      current.includes(product.id)
-        ? current.filter((id) => id !== product.id)
-        : [...current, product.id]
-    ))
+  const toggleProductVisibility = async (id: string, currentHidden: boolean) => {
+    if (isToggling) return
+    setIsToggling(id)
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isHidden: !currentHidden })
+      })
+      if (!res.ok) throw new Error('Cập nhật thất bại')
+      addMessage({
+        type: "success",
+        text: currentHidden ? "Đã mở hiển thị sản phẩm" : "Đã ẩn sản phẩm khỏi shop"
+      })
+      window.location.reload()
+    } catch (err) {
+      addMessage({ type: "error", text: "Có lỗi xảy ra" })
+    } finally {
+      setIsToggling(null)
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SummaryCard label="Tài khoản Play" value={initialProducts.length.toLocaleString("vi-VN")} icon={<ShoppingBag className="w-5 h-5" />} color="text-primary" />
-        <SummaryCard label="Đang bán" value={activeProducts.toLocaleString("vi-VN")} icon={<ShieldCheck className="w-5 h-5" />} color="text-green-500" />
-        <SummaryCard label="Tổng kho" value={totalStock.toLocaleString("vi-VN")} icon={<PackageCheck className="w-5 h-5" />} color="text-amber-500" />
-      </div>
-
-      <div className="flex flex-col h-full bg-card border border-border rounded-2xl overflow-visible shadow-sm">
-        <div className="p-4 border-b border-border flex items-center justify-between gap-3 bg-secondary/30">
-          <div className="flex flex-wrap gap-3 w-full max-w-2xl min-w-0">
-            <div className="relative flex-1">
+      <div className="bg-card border border-border rounded-2xl overflow-visible shadow-sm">
+        <div className="p-4 border-b border-border bg-secondary/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3 w-full max-w-2xl min-w-0">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Tìm Kiếm Tài Khoản Play..."
+                placeholder="Tìm Kiếm ID, Danh Mục, Tài khoản..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-background border border-border rounded-xl w-full outline-none focus:border-primary/50 text-sm font-bold"
+                className="pl-10 pr-4 py-2 bg-background border border-border rounded-xl w-full outline-none focus:border-primary/50 text-sm font-bold transition-colors"
               />
             </div>
-            <div ref={categoryDropdownRef} className="relative w-full sm:w-[190px] shrink-0">
+
+            {/* Category Filter - Styled like SellerProductsClient */}
+            <div ref={categoryDropdownRef} className="relative w-full sm:w-auto sm:min-w-[190px] shrink-0">
               <button
                 type="button"
-                onClick={() => setIsCategoryOpen((value) => !value)}
-                className="inline-flex w-full items-center justify-between gap-2 px-3 py-2 bg-background border border-border rounded-xl text-[11px] font-bold text-foreground uppercase tracking-wide outline-none hover:bg-secondary focus:border-primary/50 transition-colors"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="w-full flex items-center justify-between gap-3 px-3 py-2 bg-background border border-border rounded-xl text-[11px] font-bold text-foreground uppercase tracking-widest hover:bg-secondary transition-all whitespace-nowrap"
               >
-                <span className="inline-flex items-center gap-2 min-w-0">
+                <span className="flex items-center gap-2 truncate">
                   <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="truncate">{selectedCategoryLabel}</span>
+                  <span className="truncate">{selectedCategory === "all" ? "Tất cả danh mục" : categories.find(c => c.slug === selectedCategory)?.name || "Danh mục"}</span>
                 </span>
-                <ChevronDown className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={cn("w-4 h-4 text-muted-foreground shrink-0 transition-transform", isCategoryOpen && "rotate-180")} />
               </button>
 
               {isCategoryOpen && (
-                <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-64 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategory("all")
-                      setIsCategoryOpen(false)
-                    }}
-                    className="flex w-full items-center px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-foreground hover:bg-secondary transition-colors"
-                  >
-                    TẤT CẢ DANH MỤC
-                  </button>
-                  {categories.map((category) => (
+                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-full md:w-64 bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                     <button
-                      key={category.id}
                       type="button"
                       onClick={() => {
-                        setSelectedCategory(category.slug)
+                        setSelectedCategory("all")
                         setIsCategoryOpen(false)
                       }}
-                      className="flex w-full items-center px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                      className={cn(
+                        "w-full px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest hover:bg-secondary transition-colors",
+                        selectedCategory === "all" ? "text-primary bg-primary/5" : "text-muted-foreground"
+                      )}
                     >
-                      {formatCategoryLabel(category.name)}
+                      Tất cả danh mục
                     </button>
-                  ))}
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory(cat.slug)
+                          setIsCategoryOpen(false)
+                        }}
+                        className={cn(
+                          "w-full px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest hover:bg-secondary transition-colors",
+                          selectedCategory === cat.slug ? "text-primary bg-primary/5" : "text-muted-foreground"
+                        )}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-            {selectedProductIds.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsBulkExportOpen(true)}
-                className="inline-flex w-full sm:hidden items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-foreground hover:bg-secondary transition-colors"
-              >
-                <Download className="h-4 w-4 text-amber-500" />
-                Xuất đã chọn ({selectedProductIds.length})
-              </button>
-            )}
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 shrink-0 sm:ml-auto">
-            {selectedProductIds.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsBulkExportOpen(true)}
-                className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-foreground hover:bg-secondary transition-colors"
-              >
-                <Download className="h-4 w-4 text-amber-500" />
-                Xuất đã chọn ({selectedProductIds.length})
-              </button>
-            )}
-            <div className="text-[10px] md:text-sm font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap">
-              Tổng: {filteredProducts.length}
-            </div>
+          <div className="text-[10px] md:text-sm font-bold text-muted-foreground uppercase tracking-widest whitespace-nowrap px-2">
+            Tổng: {filteredProducts.length}
           </div>
         </div>
 
@@ -242,221 +222,104 @@ export default function PlayProductsClient({ initialProducts, categories }: Play
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-secondary/50 text-[10px] uppercase tracking-widest text-muted-foreground border-b border-border">
               <tr>
-                <th className="px-6 py-4 font-bold w-10">
-                  <input
-                    type="checkbox"
-                    checked={isAllVisibleSelected}
-                    onChange={toggleSelectAllVisible}
-                    className="h-4 w-4 rounded border-border accent-primary"
-                    aria-label="Chọn tất cả sản phẩm đang hiển thị"
-                  />
-                </th>
                 <th className="px-6 py-4 font-bold">Sản phẩm</th>
-                <th className="px-6 py-4 font-bold">Danh mục</th>
+                <th className="px-6 py-4 font-bold text-left">Tài khoản</th>
                 <th className="px-6 py-4 font-bold">Giá bán</th>
-                <th className="px-6 py-4 font-bold">Trạng thái</th>
-                <th className="px-6 py-4 font-bold text-center">Kho hàng</th>
-                <th className="px-6 py-4 font-bold text-right">Seller</th>
+                <th className="px-6 py-4 font-bold text-center">Trạng thái</th>
                 <th className="px-6 py-4 font-bold text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredProducts.length > 0 ? filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-secondary/20 transition-colors group">
+              {currentProducts.length > 0 ? currentProducts.map((product) => (
+                <tr key={product.id} className={cn("hover:bg-secondary/20 transition-colors group", product.isHidden && "opacity-60 bg-secondary/10")}>
                   <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedProductIds.includes(product.id)}
-                      disabled={(product._count?.secrets || 0) <= 0}
-                      onChange={() => toggleProductSelection(product)}
-                      className="h-4 w-4 rounded border-border accent-primary disabled:opacity-40"
-                      aria-label={`Chọn ${product.category.name}`}
-                    />
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-16 aspect-video rounded-lg overflow-hidden border border-border bg-secondary shrink-0 group/img">
+                        <Image src={product.thumbnail || "/images/product.png"} alt="" fill className="object-cover group-hover/img:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-foreground truncate max-w-[200px]">{product.category.name}</p>
+                        <p className="text-[10px] text-muted-foreground font-medium uppercase">ID: {product.id.slice(-8)}</p>
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <ProductIdentity 
-                      product={product} 
-                      onImageClick={() => setPreviewImage({ src: product.thumbnail || "/images/product.png", alt: product.category.name })} 
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold bg-secondary border border-border text-muted-foreground uppercase">
-                      {product.category.name}
+                  <td className="px-6 py-4 text-left">
+                    <span className="inline-block font-bold text-foreground bg-secondary/50 px-2.5 py-1 rounded-lg border border-border">
+                      {product.secrets?.[0]?.username || "N/A"}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-bold text-primary">{product.price.toLocaleString("vi-VN")} VND</p>
-                    {product.oldPrice && <p className="text-[10px] text-muted-foreground line-through">{product.oldPrice.toLocaleString("vi-VN")} VND</p>}
+                    {product.oldPrice && <p className="text-[10px] text-muted-foreground line-through opacity-50">{product.oldPrice.toLocaleString("vi-VN")} VND</p>}
                   </td>
-                  <td className="px-6 py-4">
-                    {product.sold ? (
-                      <StatusBadge icon={<AlertCircle className="w-3 h-3" />} label="Đã bán" className="text-muted-foreground bg-secondary" />
-                    ) : (
-                      <StatusBadge icon={<ShieldCheck className="w-3 h-3" />} label="Đang bán" className="text-green-500 bg-green-500/10" />
-                    )}
-                  </td>
-                  <td className="px-6 py-4 font-bold text-center">
-                    {(product._count?.secrets || 0).toLocaleString("vi-VN")}
-                    <span className="block text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Tài khoản</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex flex-col items-end">
-                      <span className="font-bold text-foreground text-xs">{product.uploader.name || "N/A"}</span>
-                      <span className="text-[10px] text-muted-foreground/60 font-medium lowercase truncate max-w-[120px]">
-                        {product.uploader.email || product.uploader.id.slice(-8)}
-                      </span>
+                  <td className="px-6 py-4 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          disabled={isToggling === product.id}
+                          onClick={() => toggleProductVisibility(product.id, product.isHidden)}
+                          className={cn("relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none", !product.isHidden ? "bg-green-500" : "bg-zinc-600")}
+                        >
+                          <span className={cn("inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200", !product.isHidden ? "translate-x-6" : "translate-x-1")} />
+                          <div className="absolute inset-0 flex items-center justify-between px-1 pointer-events-none">
+                              {!product.isHidden ? <Eye className="w-3 h-3 text-white ml-0.5" /> : <EyeOff className="w-3 h-3 text-white ml-auto mr-0.5" />}
+                          </div>
+                        </button>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <RowActions 
-                      product={product} 
-                      onExport={setExportingProduct} 
-                      onQuickView={setQuickViewProduct}
-                      onDelete={(p) => {
-                        setDeletingProduct(p)
-                        setIsDeleteModalOpen(true)
-                      }}
-                    />
+                    <div className="flex items-center justify-end gap-2">
+                      <button className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all" onClick={() => setQuickViewProduct(product)}><ExternalLink className="w-4 h-4" /></button>
+                      <Link href={ADMIN_ROUTES.PRODUCTS_PLAY_EDIT(product.id).path} className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"><Edit className="w-4 h-4" /></Link>
+                      <button className="p-2 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all" onClick={() => { setDeletingProduct(product); setIsDeleteModalOpen(true); }}><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </td>
                 </tr>
-              )) : <EmptyRow colSpan={7} />}
+              )) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="p-4 rounded-full bg-secondary">
+                        <Search className="w-8 h-8 text-muted-foreground opacity-20" />
+                      </div>
+                      <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Không tìm thấy tài khoản nào</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-secondary/30">
+            <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Trang {currentPage} / {totalPages}</div>
+            <div className="flex items-center space-x-2">
+              <button onClick={() => goToPage(1)} disabled={currentPage === 1} className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all"><ChevronsLeft className="w-4 h-4" /></button>
+              <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all"><ChevronLeft className="w-4 h-4" /></button>
+              <div className="px-4 text-xs font-black text-primary">{currentPage}</div>
+              <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all"><ChevronRight className="w-4 h-4" /></button>
+              <button onClick={() => goToPage(totalPages)} disabled={currentPage === totalPages} className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all"><ChevronsRight className="w-4 h-4" /></button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {previewImage && (
-        <ImageLightbox
-          src={previewImage.src}
-          alt={previewImage.alt}
-          onClose={() => setPreviewImage(null)}
-        />
-      )}
       {quickViewProduct && (
-        <QuickViewAccountsModal
-          product={{ id: quickViewProduct.id, title: quickViewProduct.category.name }}
-          onClose={() => setQuickViewProduct(null)}
-        />
-      )}
-      {isBulkExportOpen && selectedProducts.length > 0 && (
-        <ExportAccountsModal
-          product={{
-            id: "bulk-play-export",
-            ids: selectedProducts.map((product) => product.id),
-            title: `XUẤT ${selectedProducts.length} SẢN PHẨM PLAY ĐÃ CHỌN`,
-            available: selectedStock,
-          }}
-          onClose={() => setIsBulkExportOpen(false)}
-        />
-      )}
-      {exportingProduct && (
-        <ExportAccountsModal
-          product={{
-            id: exportingProduct.id,
-            title: exportingProduct.category.name,
-            available: exportingProduct._count?.secrets || 0,
-          }}
-          onClose={() => setExportingProduct(null)}
-        />
+        <QuickViewAccountsModal product={{ id: quickViewProduct.id, title: quickViewProduct.category.name }} onClose={() => setQuickViewProduct(null)} />
       )}
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
         isLoading={isDeleting}
-        title="Xác Nhận Xóa"
-        message={`Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct?.category.name}"? Hành động này sẽ xóa vĩnh viễn dữ liệu tài khoản và các ảnh liên quan trên server.`}
-        confirmText="XÓA VĨNH VIỄN"
+        title="Xác nhận xóa"
+        message="Dữ liệu liên quan sẽ bị xóa vĩnh viễn."
+        confirmText="Xóa sản phẩm"
         type="danger"
       />
     </div>
   )
-}
-
-function ProductIdentity({ product, onImageClick }: { product: Product; onImageClick?: () => void }) {
-  return (
-    <div className="flex items-center gap-3">
-      <button 
-        type="button"
-        onClick={onImageClick}
-        className="relative w-20 aspect-video rounded-lg overflow-hidden border border-border bg-secondary shrink-0 group/img hover:border-primary/50 transition-colors cursor-zoom-in"
-      >
-        <Image 
-          src={product.thumbnail || "/images/product.png"} 
-          alt={product.category.name} 
-          fill 
-          sizes="80px"
-          className="object-cover group-hover/img:scale-110 transition-transform duration-300" 
-        />
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-          <ZoomIn className="w-4 h-4 text-white" />
-        </div>
-      </button>
-      <div className="min-w-0">
-        <p className="font-bold text-foreground truncate max-w-[240px]">{product.category.name}</p>
-        <p className="text-[10px] text-muted-foreground font-medium uppercase">ID: {product.id.slice(-8)}</p>
-      </div>
-    </div>
-  )
-}
-
-function RowActions({ product, onExport, onQuickView, onDelete }: { product: Product; onExport: (product: Product) => void; onQuickView: (product: Product) => void; onDelete: (product: Product) => void }) {
-  return (
-    <div className="flex items-center justify-end gap-2">
-      <Link 
-        href={ADMIN_ROUTES.PRODUCTS_PLAY_EDIT(product.id).path} 
-        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors inline-flex items-center justify-center" 
-        title="Sửa"
-      >
-        <Edit className="w-4 h-4" />
-      </Link>
-      <button 
-        onClick={() => onDelete(product)}
-        className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors inline-flex items-center justify-center" 
-        title="Xóa"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-      <button
-        className="p-2 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors inline-flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-40"
-        title="Xem acc nhanh"
-        disabled={(product._count?.secrets || 0) <= 0}
-        onClick={() => onQuickView(product)}
-      >
-        <ExternalLink className="w-4 h-4" />
-      </button>
-      <button
-        className="p-2 text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-colors inline-flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-40"
-        title="Xuất tài khoản"
-        disabled={(product._count?.secrets || 0) <= 0}
-        onClick={() => onExport(product)}
-      >
-        <Download className="w-4 h-4" />
-      </button>
-    </div>
-  )
-}
-
-function StatusBadge({ icon, label, className }: { icon: React.ReactNode; label: string; className: string }) {
-  return <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase ${className}`}>{icon}{label}</span>
-}
-
-function SummaryCard({ label, value, icon, color }: { label: string; value: string; icon: React.ReactNode; color: string }) {
-  return (
-    <div className="p-5 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-center justify-between gap-4">
-        <div><p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{label}</p><p className="text-2xl font-bold mt-2 text-foreground">{value}</p></div>
-        <div className={`w-11 h-11 rounded-xl bg-secondary flex items-center justify-center ${color}`}>{icon}</div>
-      </div>
-    </div>
-  )
-}
-
-function EmptyRow({ colSpan }: { colSpan: number }) {
-  return <tr><td colSpan={colSpan} className="px-6 py-16 text-center text-sm font-bold text-muted-foreground">KHÔNG TÌM THẤY SẢN PHẨM NÀO</td></tr>
-}
-
-function formatCategoryLabel(value: string) {
-  return value.toLocaleUpperCase("vi-VN")
 }

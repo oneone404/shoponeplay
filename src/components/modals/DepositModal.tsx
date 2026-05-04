@@ -1,78 +1,181 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Check, Copy, CreditCard, QrCode, ArrowRight, Loader2, Wallet, History } from "lucide-react"
+import { X, Check, Copy, CreditCard, QrCode, ArrowRight, Loader2, Wallet, History, Send, Info, CheckCircle2, XCircle, Clock, Building2, Hash, User, DollarSign, MessageSquare, RotateCw, Zap, ShieldCheck } from "lucide-react"
 import { useUI } from "@/providers/UIProvider"
 import { cn } from "@/lib/utils"
 import { useSession } from "next-auth/react"
 import Image from "next/image"
 import { useLanguage } from "@/providers/LanguageProvider"
+import { useRouter } from "next/navigation"
 
 const QUICK_AMOUNTS = [10000, 50000, 100000, 200000, 500000, 1000000]
 
+const TELCOS = [
+  { id: "VIETTEL", name: "Viettel", logo: "/images/networks/viettel.svg" },
+  { id: "MOBIFONE", name: "Mobifone", logo: "/images/networks/mobifone.svg" },
+  { id: "VINAPHONE", name: "Vinaphone", logo: "/images/networks/vinaphone.svg" },
+  { id: "ZING", name: "Zing", logo: "/images/networks/zing.svg" },
+  { id: "GARENA", name: "Garena", logo: "/images/networks/garena.svg" },
+]
+
+const CARD_AMOUNTS = [10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000, 1000000]
+
 export default function DepositModal() {
   const { depositOpen, setDepositOpen, addMessage } = useUI()
+  const router = useRouter()
   const { data: session } = useSession()
   const { t } = useLanguage()
+
+  // Common states
+  const [method, setMethod] = useState<"BANK" | "CARD">("BANK")
+  const [loading, setLoading] = useState(false)
+
+  // Bank states
   const [amount, setAmount] = useState<number>(0)
   const [selectedBank, setSelectedBank] = useState<any>(null)
   const [banks, setBanks] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [step, setStep] = useState(1) // 1: Amount, 2: Bank & QR
+  const [config, setConfig] = useState({ prefix: "SOP", suffix: "", minAmount: 10000 })
+  const [step, setStep] = useState(1) // 1: Amount, 2: Bank & QR, 3: Processing
+  const [isConfirmed, setIsConfirmed] = useState(false)
+  const [isRefreshingHistory, setIsRefreshingHistory] = useState(false)
 
-  // Fetch banks from API (we will create this)
+  // Card states
+  const [selectedTelco, setSelectedTelco] = useState(TELCOS[0].id)
+  const [selectedCardAmount, setSelectedCardAmount] = useState(CARD_AMOUNTS[4])
+  const [serial, setSerial] = useState("")
+  const [pin, setPin] = useState("")
+  const [cardHistory, setCardHistory] = useState<any[]>([])
+
+  // Fetch bank info
   useEffect(() => {
-    if (depositOpen) {
+    if (depositOpen && method === "BANK") {
       const fetchBanks = async () => {
         try {
           const res = await fetch("/api/user/bank-info")
           const data = await res.json()
-          setBanks(data)
-          if (data.length > 0) setSelectedBank(data[0])
+          setBanks(data.banks || [])
+          if (data.config) setConfig(data.config)
+          if (data.banks?.length > 0) setSelectedBank(data.banks[0])
         } catch (error) {
           console.error("Failed to fetch banks", error)
-        } finally {
-          setLoading(false)
         }
       }
       fetchBanks()
-    } else {
-      // Reset state when closing after animation ends
-      const timer = setTimeout(() => {
-        setStep(1)
-        setAmount(0)
-      }, 600)
-      return () => clearTimeout(timer)
     }
-  }, [depositOpen])
+  }, [depositOpen, method])
+
+  // Fetch card history
+  const fetchCardHistory = async () => {
+    try {
+      const res = await fetch("/api/user/deposits/card/history")
+      const data = await res.json()
+      if (data.deposits) setCardHistory(data.deposits)
+    } catch (error) {
+      console.error("Failed to fetch card history", error)
+    }
+  }
+
+  useEffect(() => {
+    if (depositOpen && method === "CARD") {
+      fetchCardHistory()
+    }
+  }, [depositOpen, method])
+
+  const refreshCardHistory = async () => {
+    if (isRefreshingHistory) return
+    setIsRefreshingHistory(true)
+    await fetchCardHistory()
+    // Keep spinning for a bit for better feel
+    setTimeout(() => setIsRefreshingHistory(false), 800)
+  }
+
+  // Polling for bank confirmation
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (step === 3 && !isConfirmed && method === "BANK") {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch("/api/user/deposits/check")
+          const data = await res.json()
+          if (data.confirmed) {
+            setIsConfirmed(true)
+            clearInterval(interval)
+          }
+        } catch (err) {
+          console.error("Polling error:", err)
+        }
+      }, 2000)
+    }
+    return () => { if (interval) clearInterval(interval) }
+  }, [step, isConfirmed, method])
+
+  // Handle Card Submit
+  const handleCardSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!serial || !pin) {
+      addMessage({ type: "error", text: "Vui lòng nhập đầy đủ Serial và Mã thẻ" })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch("/api/user/deposits/card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          telco: selectedTelco,
+          amount: selectedCardAmount,
+          serial,
+          pin
+        })
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        addMessage({ type: "success", text: "Đã gửi thẻ thành công. Vui lòng chờ xử lý!" })
+        setSerial("")
+        setPin("")
+        fetchCardHistory()
+      } else {
+        addMessage({ type: "error", text: data.error || "Gửi thẻ thất bại" })
+      }
+    } catch (error) {
+      addMessage({ type: "error", text: "Lỗi kết nối máy chủ" })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
     addMessage({ type: "success", text: t.common.copy_success_label.replace("{label}", label) })
   }
 
-  const transferSyntax = session?.user?.name
-    ? `NAP ${session.user.name.split(' ')[0].toUpperCase()}${session.user.id.slice(-4).toUpperCase()}`
-    : "NAP ONEPLAY"
+  const transferSyntax = session?.user?.id
+    ? [config.prefix, session.user.id.slice(-8).toUpperCase(), config.suffix].filter(Boolean).join(" ")
+    : [config.prefix, "ONEPLAY", config.suffix].filter(Boolean).join(" ")
 
-  const qrUrl = selectedBank ? `https://qr.sepay.vn/img?acc=${selectedBank.accountNumber}&bank=${selectedBank.bankName}&amount=${amount}&des=${encodeURIComponent(transferSyntax)}` : ""
+  const qrUrl = selectedBank
+    ? `https://qr.sepay.vn/img?acc=${selectedBank.accountNumber}&bank=${selectedBank.bankName}&amount=${amount}&des=${encodeURIComponent(transferSyntax)}`
+    : ""
 
   return (
     <div className={cn(
       "fixed inset-0 z-[100] transition-transform duration-[600ms] ease-[cubic-bezier(0.32,0.72,0,1)] bg-background will-change-transform",
       depositOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
     )}>
-      {/* Container (Full Screen) */}
-      <div className="flex flex-col h-full w-full overflow-y-auto no-scrollbar">
-        <div className="px-4 py-6 border-b border-border bg-secondary/30">
+      <div className="flex flex-col h-full w-full overflow-hidden">
+        {/* Header */}
+        <div className="px-4 py-6 border-b border-border bg-secondary/30 shrink-0">
           <div className="max-w-xl mx-auto w-full flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-primary" />
+                <Wallet className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-bold tracking-tight">{t.deposit.title}</h2>
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest opacity-70">{t.deposit.subtitle}</p>
+                <h2 className="text-sm font-bold uppercase tracking-widest">{t.deposit.title}</h2>
+                <p className="text-[10px] text-muted-foreground font-bold opacity-60 tracking-tighter">{t.deposit.subtitle}</p>
               </div>
             </div>
             <button
@@ -84,217 +187,367 @@ export default function DepositModal() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar">
-          <div className="max-w-xl mx-auto w-full px-4 py-6 md:px-6 md:py-8">
-            {step === 1 ? (
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t.deposit.amount_label}</label>
-                  <div className="relative group">
-                    <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                    <input
-                      type="number"
-                      value={amount || ""}
-                      onChange={(e) => setAmount(Number(e.target.value))}
-                      placeholder={t.deposit.amount_placeholder}
-                      className="relative w-full bg-secondary/50 border border-border rounded-2xl px-6 py-4 text-lg font-bold text-foreground outline-none focus:border-primary transition-all placeholder:text-muted-foreground/30"
-                    />
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground opacity-50">VND</div>
-                  </div>
-                </div>
+        {/* Content Scrollable */}
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-12">
+          <div className="mx-auto w-full max-w-4xl px-4 py-6 transition-all duration-500">
+            {/* Method Toggle */}
+            <div className="flex items-center space-x-2 bg-secondary/80 backdrop-blur-md p-1.5 rounded-2xl border border-border mb-8 shadow-inner">
+              <button
+                onClick={() => {
+                  setMethod("BANK")
+                  setStep(1)
+                }}
+                className={cn(
+                  "flex-1 py-3 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-2",
+                  method === "BANK" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <QrCode className="w-4 h-4" />
+                <span>Ngân hàng</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMethod("CARD")
+                }}
+                className={cn(
+                  "flex-1 py-3 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-2",
+                  method === "CARD" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>Thẻ cào</span>
+              </button>
+            </div>
 
-                <div className="grid grid-cols-3 gap-2">
-                  {QUICK_AMOUNTS.map((val) => (
-                    <button
-                      key={val}
-                      onClick={() => setAmount(val)}
-                      className={cn(
-                        "py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all border",
-                        amount === val
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-[1.02]"
-                          : "bg-secondary/50 text-muted-foreground border-border hover:border-primary/30"
-                      )}
-                    >
-                      {new Intl.NumberFormat('vi-VN').format(val)}
-                    </button>
-                  ))}
-                </div>
-
-                <button
-                  disabled={amount < 10000}
-                  onClick={() => setStep(2)}
-                  className="w-full h-14 bg-foreground text-background rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale shadow-lg shadow-foreground/5"
-                >
-                  <span>{t.common.continue}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            ) : step === 2 ? (
-              <div className="space-y-6">
-                {loading ? (
-                  <div className="py-20 flex flex-col items-center justify-center space-y-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <p className="text-xs font-bold uppercase tracking-widest opacity-50">{t.deposit.loading_banks}</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="bg-secondary/30 rounded-3xl p-6 border border-border space-y-6">
-                      {/* Bank Header Info */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          {selectedBank?.logo ? (
-                            <div className="w-12 h-12 bg-white rounded-xl p-1.5 flex items-center justify-center border border-border shadow-sm flex-shrink-0">
-                              <img src={selectedBank.logo} alt={selectedBank.bankName} className="w-full h-full object-contain" />
-                            </div>
-                          ) : (
-                            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                              <CreditCard className="w-6 h-6 text-primary" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mb-0.5">{t.deposit.beneficiary_bank}</p>
-                            <h3 className="text-lg font-bold text-foreground tracking-tight truncate">{selectedBank?.bankName}</h3>
-                          </div>
+            {/* --- BANK VIEW --- */}
+            {method === "BANK" && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Step 1: Amount Selection */}
+                {step === 1 && (
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-8 bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="md:col-span-3 space-y-6">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t.deposit.amount_label}</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={amount || ""}
+                            onChange={(e) => setAmount(Number(e.target.value))}
+                            placeholder={t.deposit.amount_placeholder}
+                            className="relative w-full bg-background/50 border border-border rounded-2xl px-6 py-4 text-lg font-bold text-foreground outline-none focus:border-primary transition-all placeholder:text-muted-foreground/30"
+                          />
+                          <div className="absolute right-6 top-1/2 -translate-y-1/2 font-bold text-muted-foreground opacity-50">VND</div>
                         </div>
+                        {amount > 0 && amount < config.minAmount && (
+                          <p className="text-[10px] font-bold text-rose-500 mt-2 ml-1 animate-in fade-in slide-in-from-top-1">
+                            Nạp Tối Thiểu {new Intl.NumberFormat('vi-VN').format(config.minAmount)} VND
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        {QUICK_AMOUNTS.map((val) => (
+                          <button
+                            key={val}
+                            onClick={() => setAmount(val)}
+                            className={cn(
+                              "py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all border",
+                              amount === val
+                                ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-[1.02]"
+                                : "bg-background/50 text-muted-foreground border-border hover:border-primary/30"
+                            )}
+                          >
+                            {new Intl.NumberFormat('vi-VN').format(val)}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        disabled={amount < config.minAmount}
+                        onClick={() => setStep(2)}
+                        className="w-full h-14 bg-background border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50 disabled:grayscale group/btn"
+                      >
+                        <span>{t.common.continue}</span>
+                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+
+                    <div className="md:col-span-2 flex flex-col space-y-4 pt-8 md:pt-0 border-t md:border-t-0 md:border-l border-border/50 pl-0 md:pl-8 mt-2 md:mt-0">
+                      <div className="flex items-center space-x-2 text-[10px] font-bold text-primary uppercase tracking-widest ml-1">
+                        <Info className="w-4 h-4" />
+                        <span>Hướng dẫn & Lưu ý</span>
+                      </div>
+
+                      <div className="space-y-3">
+                        {[
+                          {
+                            icon: <Zap className="w-3.5 h-3.5 text-amber-500" />,
+                            title: "Tự động 24/7",
+                            desc: "Hệ Thống Xử Lý Nạp Tiền Hoàn Toàn Tự Động 24/7 - Cộng Tiền Sau 5S."
+                          },
+                          {
+                            icon: <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />,
+                            title: "An toàn & Bảo mật",
+                            desc: "Vui Lòng Chuyển Khoản Đúng Nội Dung Để Được Xử Lý Và Cộng Tiền."
+                          },
+                          {
+                            icon: <Clock className="w-3.5 h-3.5 text-blue-500" />,
+                            title: "Hỗ Trợ Tận Tâm",
+                            desc: "Nạp Sai Nội Dung Liên Hệ Admin Để Được Hỗ Trợ."
+                          }
+                        ].map((item, i) => (
+                          <div key={i} className="p-4 bg-background/30 border-2 border-border/50 rounded-2xl">
+                            <div className="flex items-center space-x-2 mb-1.5">
+                              {item.icon}
+                              <span className="text-[10px] font-bold uppercase tracking-tight">{item.title}</span>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground font-bold leading-relaxed opacity-70">{item.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: QR & Info - 2 Columns on Desktop */}
+                {step === 2 && (
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                    {/* Column 1: QR Code */}
+                    <div className="md:col-span-2 bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-8 flex flex-col items-center justify-center space-y-4 shadow-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-60">Quét mã QR</p>
+                      <div className="relative group p-4 bg-white rounded-3xl shadow-2xl shadow-black/5 transition-transform hover:scale-[1.02] duration-500">
+                        <img src={qrUrl} alt="QR Code" className="w-56 h-56" />
+                      </div>
+                      <div className="flex items-center space-x-2 text-[10px] font-bold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
+                        <Info className="w-3.5 h-3.5" />
+                        <span>Tự Động Nhận Tiền Trong 5 Giây</span>
+                      </div>
+                    </div>
+
+                    {/* Column 2: Information */}
+                    <div className="md:col-span-3 space-y-4 flex flex-col">
+                      <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-6 space-y-3 shadow-sm flex-1">
                         <button
                           onClick={() => setStep(1)}
-                          className="flex-shrink-0 px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[9px] font-bold uppercase tracking-widest transition-colors"
+                          className="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-widest text-primary/70 hover:text-primary transition-colors mb-4 ml-1 group"
                         >
-                          {t.deposit.edit_amount}
+                          <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                          <span>Quay lại nhập số tiền</span>
                         </button>
-                      </div>
-
-                      {/* Bank Switcher */}
-                      {banks.length > 1 && (
-                        <div className="flex items-center justify-between p-2.5 bg-background/50 rounded-xl border border-border/50">
-                          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">{t.deposit.select_other_bank}</span>
-                          <div className="flex items-center space-x-1.5">
-                            {banks.map((b) => (
+                        {[
+                          { label: "Ngân hàng", value: selectedBank?.bankName, icon: <Building2 className="w-3 h-3" /> },
+                          { label: "Số tài khoản", value: selectedBank?.accountNumber, icon: <Hash className="w-3 h-3" /> },
+                          { label: "Chủ tài khoản", value: selectedBank?.accountName, icon: <User className="w-3 h-3" /> },
+                          { label: "Số tiền", value: `${new Intl.NumberFormat('vi-VN').format(amount)} VND`, icon: <DollarSign className="w-3 h-3" /> },
+                          { label: "Nội dung", value: transferSyntax, icon: <MessageSquare className="w-3 h-3" /> },
+                        ].map((item, i) => (
+                          <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-background/30 border border-border/50 group hover:border-primary/30 transition-all">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-muted-foreground">{item.icon}</span>
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase">{item.label}</span>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <span className="text-xs font-bold">{item.value}</span>
                               <button
-                                key={b.id}
-                                onClick={() => setSelectedBank(b)}
-                                className={cn(
-                                  "w-6 h-6 rounded-lg border flex items-center justify-center p-1 transition-all bg-white",
-                                  selectedBank?.id === b.id ? "border-primary ring-2 ring-primary/20" : "border-border opacity-40 grayscale hover:opacity-100 hover:grayscale-0"
-                                )}
+                                onClick={() => handleCopy(item.value, item.label)}
+                                className="p-2 bg-background/50 hover:bg-primary hover:text-white rounded-lg transition-all shadow-sm"
                               >
-                                <img src={b.logo} alt={b.bankName} className="w-full h-full object-contain" />
+                                <Copy className="w-3.5 h-3.5" />
                               </button>
-                            ))}
+                            </div>
                           </div>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => setStep(3)}
+                        className="w-full h-14 bg-background border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center space-x-2 mt-2 group/btn"
+                      >
+                        <Check className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+                        <span>Xác Nhận Đã Chuyển Tiền</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Processing/Confirmation */}
+                {step === 3 && (
+                  <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-12 flex flex-col items-center justify-center space-y-8 shadow-sm animate-in zoom-in-95 duration-500">
+                    {!isConfirmed ? (
+                      <>
+                        <div className="relative">
+                          <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                          <Clock className="w-8 h-8 text-primary absolute inset-0 m-auto animate-pulse" />
                         </div>
-                      )}
-
-                      {/* Transaction Details */}
-                      <div className="space-y-5 pt-2">
-                        <InfoItem label={t.deposit.account_number} value={selectedBank?.accountNumber} onCopy={() => handleCopy(selectedBank?.accountNumber, t.deposit.account_number.toLowerCase())} />
-                        <InfoItem label={t.deposit.account_name} value={selectedBank?.accountName} />
-                        <InfoItem label={t.deposit.amount} value={`${new Intl.NumberFormat('vi-VN').format(amount)} VND`} highlight />
-                        <InfoItem label={t.deposit.syntax} value={transferSyntax} onCopy={() => handleCopy(transferSyntax, t.deposit.syntax.toLowerCase())} highlight />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center p-6 bg-white rounded-[32px] border border-border shadow-inner relative overflow-hidden group">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-50" />
-
-                      {/* Decorative Border Corners */}
-                      <div className="absolute top-4 left-4 w-7 h-7 border-t-2 border-l-2 border-primary/10 rounded-tl-lg" />
-                      <div className="absolute top-4 right-4 w-7 h-7 border-t-2 border-r-2 border-primary/10 rounded-tr-lg" />
-                      <div className="absolute bottom-4 left-4 w-7 h-7 border-b-2 border-l-2 border-primary/10 rounded-bl-lg" />
-                      <div className="absolute bottom-4 right-4 w-7 h-7 border-b-2 border-r-2 border-primary/10 rounded-br-lg" />
-
-                      <div className="relative w-48 h-48 md:w-56 md:h-56 p-3 bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] z-10 overflow-hidden border border-primary/5">
-                        <Image
-                          src={qrUrl}
-                          alt="QR Code"
-                          fill
-                          className="object-contain p-2 rounded-2xl"
-                        />
-                        {/* Scanning Line Animation */}
-                        <div className="absolute inset-x-4 top-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent animate-[scan_3s_linear_infinite] opacity-30 z-20 pointer-events-none" />
-                      </div>
-
-                      <div className="mt-6 flex items-center space-x-2 px-5 py-2.5 bg-primary/5 rounded-full z-10 border border-primary/10">
-                        <QrCode className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary">{t.deposit.scan_to_pay}</span>
-                      </div>
-                    </div>
-
-                    <p className="text-[9px] text-center text-muted-foreground uppercase font-bold tracking-widest leading-relaxed px-6 opacity-40">
-                      {t.deposit.warning_syntax.split("*")[1] ? (
-                        <>*<span className="text-foreground">{t.deposit.warning_syntax.split("*")[1]}</span></>
-                      ) : t.deposit.warning_syntax}
-                    </p>
-
-                    <button
-                      onClick={() => setStep(3)}
-                      className="w-full h-14 bg-foreground text-background rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center space-x-2 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-foreground/10"
-                    >
-                      <span>{t.deposit.i_have_transferred}</span>
-                      <Check className="w-4 h-4" />
-                    </button>
-                  </>
+                        <div className="text-center space-y-2">
+                          <h3 className="text-lg font-bold uppercase tracking-widest">Đang kiểm tra giao dịch</h3>
+                          <p className="text-xs text-muted-foreground font-bold opacity-60">Hệ Thống Đang Xác Nhận Số Tiền...</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center animate-in zoom-in duration-500">
+                          <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                        </div>
+                        <div className="text-center space-y-2">
+                          <h3 className="text-lg font-bold uppercase tracking-widest text-emerald-500">Nạp tiền thành công!</h3>
+                          <p className="text-xs text-muted-foreground font-bold opacity-60">Số Tiền Đã Được Cộng Vào Tài Khoản Của Bạn.</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setDepositOpen(false)
+                            setTimeout(() => {
+                              setStep(1)
+                              setIsConfirmed(false)
+                              setAmount(0)
+                            }, 500)
+                          }}
+                          className="w-full h-14 bg-emerald-500 text-white rounded-xl font-bold text-[11px] uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2"
+                        >
+                          <span>Xác Nhận</span>
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
-            ) : (
-              <div className="py-16 flex flex-col items-center justify-center space-y-8 text-center animate-in fade-in zoom-in duration-700">
-                <div className="relative">
-                  <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center border-2 border-primary/10">
-                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                  </div>
+            )}
+
+            {/* --- CARD VIEW --- */}
+            {method === "CARD" && (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="md:col-span-3">
+                  <form onSubmit={handleCardSubmit} className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-8 space-y-6 shadow-sm h-full">
+                    {/* Telco Selection */}
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Chọn Nhà Mạng</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {TELCOS.map((telco) => (
+                          <button
+                            key={telco.id}
+                            type="button"
+                            onClick={() => setSelectedTelco(telco.id)}
+                            className={cn(
+                              "relative flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all duration-300",
+                              selectedTelco === telco.id ? "bg-background border-primary shadow-lg shadow-primary/10" : "bg-background/50 border-border hover:border-primary/30"
+                            )}
+                          >
+                            <img src={telco.logo} alt={telco.name} className="h-6 w-auto object-contain rounded-lg" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Amount Selection */}
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Chọn Mệnh Giá</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {CARD_AMOUNTS.map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => setSelectedCardAmount(amt)}
+                            className={cn(
+                              "py-3 rounded-xl text-[10px] font-bold border transition-all",
+                              selectedCardAmount === amt ? "bg-primary text-white border-primary shadow-md" : "bg-background/50 text-muted-foreground border-border"
+                            )}
+                          >
+                            {new Intl.NumberFormat('vi-VN').format(amt)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Inputs */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Số Serial</label>
+                        <input
+                          type="text"
+                          value={serial}
+                          onChange={(e) => setSerial(e.target.value)}
+                          placeholder="Nhập Serial"
+                          className="w-full bg-background/50 border border-border rounded-xl px-5 py-3.5 text-sm font-bold focus:border-primary outline-none transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Mã Thẻ (Pin)</label>
+                        <input
+                          type="text"
+                          value={pin}
+                          onChange={(e) => setPin(e.target.value)}
+                          placeholder="Nhập Mã Thẻ"
+                          className="w-full bg-background/50 border border-border rounded-xl px-5 py-3.5 text-sm font-bold focus:border-primary outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      disabled={loading}
+                      type="submit"
+                      className="w-full h-14 bg-background border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50 group/btn"
+                    >
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><span>Gửi Thẻ Ngay</span><Send className="w-4 h-4 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" /></>}
+                    </button>
+                  </form>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="text-2xl font-bold tracking-tight uppercase">{t.deposit.processing_title}</h3>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed max-w-[280px] mx-auto font-bold uppercase tracking-widest opacity-40">
-                    {t.deposit.processing_desc}
-                  </p>
-                </div>
+                {/* Card History (Integrated into Card) */}
+                <div className="md:col-span-2 flex flex-col">
+                  <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-6 shadow-sm flex-1 flex flex-col">
+                    <div className="flex items-center justify-between mb-4 px-1">
+                      <div className="flex items-center space-x-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                        <History className="w-3.5 h-3.5" />
+                        <span>Giao dịch gần đây</span>
+                      </div>
+                      <button
+                        onClick={refreshCardHistory}
+                        disabled={isRefreshingHistory}
+                        className={cn(
+                          "p-1.5 bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background text-primary/50 hover:text-primary rounded-full transition-all shadow-sm",
+                          isRefreshingHistory && "animate-spin cursor-not-allowed opacity-50"
+                        )}
+                      >
+                        <RotateCw className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
 
-                <div className="w-full max-w-xs p-5 bg-secondary/30 rounded-3xl border border-border space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">{t.deposit.estimated_time}</span>
-                    <span className="text-xs font-bold text-primary uppercase">≈ 1 - 3 PHÚT</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary animate-[loading_10s_ease-in-out_infinite]" style={{ width: '40%' }} />
+                    {cardHistory.length > 0 ? (
+                      <div className="space-y-3 flex-1 overflow-y-auto no-scrollbar max-h-[400px]">
+                        {cardHistory.map((item) => (
+                          <div key={item.id} className="p-4 bg-background/30 border border-border/50 rounded-2xl flex items-center justify-between group hover:border-primary/20 transition-all">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-[10px] font-bold text-primary shadow-inner">
+                                {item.cardType[0]}
+                              </div>
+                              <div>
+                                <p className="text-[11px] font-bold uppercase tracking-tight">{item.cardType} - {new Intl.NumberFormat('vi-VN').format(item.declaredValue)}</p>
+                                <p className="text-[9px] text-muted-foreground font-bold opacity-60 uppercase">{new Date(item.createdAt).toLocaleTimeString()}</p>
+                              </div>
+                            </div>
+                            <div className={cn(
+                              "px-2.5 py-1 rounded-md flex items-center space-x-1.5 border",
+                              item.status === "COMPLETED" ? "text-emerald-500 bg-emerald-500/5 border-emerald-500/10" : item.status === "FAILED" ? "text-rose-500 bg-rose-500/5 border-rose-500/10" : "text-amber-500 bg-amber-500/5 border-amber-500/10"
+                            )}>
+                              {item.status === "COMPLETED" ? <CheckCircle2 className="w-3 h-3" /> : item.status === "FAILED" ? <XCircle className="w-3 h-3" /> : <Clock className="w-3 h-3 animate-pulse" />}
+                              <span className="text-[8px] font-bold uppercase tracking-widest">{item.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex-1 border border-dashed border-border rounded-2xl flex flex-col items-center justify-center text-center p-8 space-y-3 opacity-40">
+                        <Clock className="w-8 h-8 text-muted-foreground" />
+                        <p className="text-[10px] font-bold uppercase tracking-widest">Chưa có giao dịch</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <button
-                  onClick={() => setDepositOpen(false)}
-                  className="px-6 py-2.5 bg-secondary hover:bg-secondary/80 rounded-xl text-[9px] font-bold uppercase tracking-widest text-foreground transition-all active:scale-95"
-                >
-                  {t.common.back_home}
-                </button>
               </div>
             )}
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function InfoItem({ label, value, onCopy, highlight }: { label: string, value: string, onCopy?: () => void, highlight?: boolean }) {
-  return (
-    <div className="flex items-center justify-between group h-6">
-      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{label}</span>
-      <div className="flex items-center space-x-2 min-w-0">
-        <span className={cn(
-          "text-sm font-bold tracking-tight leading-none truncate",
-          highlight ? "text-accent" : "text-foreground"
-        )}>
-          {value}
-        </span>
-        {onCopy && (
-          <button
-            onClick={onCopy}
-            className="flex-shrink-0 p-1.5 hover:bg-primary/10 rounded-lg text-primary transition-all opacity-40 hover:opacity-100 -mr-1.5 active:scale-90"
-          >
-            <Copy className="w-3 h-3" />
-          </button>
-        )}
       </div>
     </div>
   )

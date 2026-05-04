@@ -10,30 +10,40 @@ export const metadata = {
 
 export default async function WithdrawPage() {
   const session = await auth()
-  
-  if (!session?.user?.id || (session.user.role !== "SELLER" && session.user.role !== "ADMIN")) {
-    redirect("/")
-  }
+  const userId = session!.user.id
 
-  const userId = session.user.id
-
-  // Fetch current balance and history
-  const [user, history] = await Promise.all([
+  const [user, withdrawals] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { balance: true }
+      select: { 
+        balance: true,
+        totalDeposited: true,
+        sellerBankName: true,
+        sellerAccountNumber: true,
+        sellerAccountName: true,
+      }
     }),
     prisma.withdrawal.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" }
+      where: { userId, status: "COMPLETED" },
+      select: { amount: true }
     })
   ])
+
+  const totalWithdrawn = withdrawals.reduce((acc, curr) => acc + curr.amount, 0)
+
+  const defaultBankInfo = {
+    bankName: user?.sellerBankName || "",
+    accountNumber: user?.sellerAccountNumber || "",
+    accountName: user?.sellerAccountName || "",
+  }
 
   return (
     <WithdrawView 
       balance={user?.balance || 0} 
-      history={history as any} 
+      totalDeposited={user?.totalDeposited || 0}
+      totalWithdrawn={totalWithdrawn}
       onRequestWithdraw={createWithdrawal}
+      defaultBankInfo={defaultBankInfo}
     />
   )
 }

@@ -79,5 +79,9 @@ export const USER_ROUTES = {
   BLOG_DETAIL: (slug: string, title?: string) => ({
     path: `/blog/${slug}`,
     title: title || slug
+  }),
+  ORDER_DETAIL: (id: string) => ({
+    path: `/orders/${id}`,
+    title: `Đơn Hàng #${id.slice(-12).toUpperCase()}${SUFFIX}`
   })
 } as const;

@@ -79,7 +79,7 @@ export default function GeneralSettings() {
   }
 
   const handleRemoveLink = (index: number) => {
-    setLinks(links.filter((_, i) => i !== index))
+    setLinks(links.filter((_: any, i: number) => i !== index))
   }
 
   const handleUploadIcon = async (index: number, file: File) => {

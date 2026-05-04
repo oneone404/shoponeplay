@@ -90,7 +90,7 @@ export default function SellerProductForm({
 
   const addStat = () => setStats([...stats, { key: "", value: "" }])
   const removeStat = (index: number) => {
-    const newStats = stats.filter((_, i) => i !== index)
+    const newStats = stats.filter((_: any, i: number) => i !== index)
     setStats(newStats.length ? newStats : [{ key: "", value: "" }])
   }
 
@@ -105,7 +105,7 @@ export default function SellerProductForm({
   }
 
   const removeDescription = (index: number) => {
-    const newDesc = formData.description.filter((_, i) => i !== index)
+    const newDesc = formData.description.filter((_: any, i: number) => i !== index)
     setFormData({ ...formData, description: newDesc.length ? newDesc : [""] })
   }
 
@@ -148,7 +148,7 @@ export default function SellerProductForm({
   }
 
   const removeImage = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index)
+    const newImages = formData.images.filter((_: any, i: number) => i !== index)
     setFormData({ ...formData, images: newImages })
   }
 
@@ -280,7 +280,7 @@ export default function SellerProductForm({
                     onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
                     className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl focus:border-primary/50 outline-none transition-all font-bold appearance-none cursor-pointer"
                   >
-                    {categories.map(cat => (
+                    {categories.map((cat: { id: string, name: string }) => (
                       <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>
                     ))}
                   </select>
@@ -374,7 +374,7 @@ export default function SellerProductForm({
                   </div>
 
                   <div className="space-y-3">
-                    {stats.map((stat, idx) => (
+                    {stats.map((stat: { key: string, value: string }, idx: number) => (
                       <div key={idx} className="flex gap-2 items-start animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="flex-1 grid grid-cols-2 gap-2">
                           <input
@@ -501,7 +501,7 @@ export default function SellerProductForm({
                     onChange={e => handleFileUpload(e, "detail")}
                   />
                   <div className="grid grid-cols-2 gap-2">
-                    {formData.images.map((img, i) => (
+                    {formData.images.map((img: string, i: number) => (
                       <div key={i} className="relative aspect-video rounded-xl overflow-hidden group">
                         <img src={img} alt={`Detail ${i}`} className="w-full h-full object-cover" />
                         <button
@@ -536,7 +536,7 @@ export default function SellerProductForm({
             </h3>
 
             <div className="space-y-2">
-              {formData.description.map((desc, i) => (
+              {formData.description.map((desc: string, i: number) => (
                 <div key={i} className="flex gap-2">
                   <input
                     type="text"

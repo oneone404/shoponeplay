@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Search, MoreVertical, Shield, User, Wallet, Edit, SearchX, Trash2, History } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, MoreVertical, Shield, User, Wallet, Edit, SearchX, Trash2, History, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { useUI } from "@/providers/UIProvider"
@@ -9,11 +9,15 @@ import Image from "next/image"
 import Link from "next/link"
 import EditUserModal from "./EditUserModal"
 import ConfirmModal from "@/components/utils/ConfirmModal"
+import { cn } from "@/lib/utils"
 
 export default function UserTable({ initialUsers }: { initialUsers: any[] }) {
   const [users, setUsers] = useState(initialUsers)
   const [search, setSearch] = useState("")
   const [editingUser, setEditingUser] = useState<any | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 15
+
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, userId: string, userName: string }>({
     isOpen: false,
     userId: "",
@@ -22,11 +26,29 @@ export default function UserTable({ initialUsers }: { initialUsers: any[] }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const { addMessage } = useUI()
 
+  // Filter logic
   const filteredUsers = users.filter(user =>
     (user.email && user.email.toLowerCase().includes(search.toLowerCase())) ||
     (user.name && user.name.toLowerCase().includes(search.toLowerCase())) ||
     user.id.toLowerCase().includes(search.toLowerCase())
   )
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem)
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
+
+  // Reset page on search
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search])
 
   const handleUpdateUser = (updatedUser: any) => {
     setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u))
@@ -66,6 +88,7 @@ export default function UserTable({ initialUsers }: { initialUsers: any[] }) {
         type="danger"
         isLoading={isDeleting}
       />
+
       {/* Toolbar */}
       <div className="p-4 border-b border-border flex items-center justify-between bg-secondary/30">
         <div className="relative w-full max-w-sm">
@@ -97,9 +120,9 @@ export default function UserTable({ initialUsers }: { initialUsers: any[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {filteredUsers.length === 0 ? (
+            {currentUsers.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <SearchX className="w-12 h-12 mb-2 opacity-20" />
                     <p className="font-bold">Không tìm thấy người dùng nào</p>
@@ -107,7 +130,7 @@ export default function UserTable({ initialUsers }: { initialUsers: any[] }) {
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((user) => (
+              currentUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-secondary/20 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
@@ -180,6 +203,48 @@ export default function UserTable({ initialUsers }: { initialUsers: any[] }) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Footer */}
+      {totalPages > 1 && (
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-secondary/30">
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+            Trang {currentPage} / {totalPages}
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => goToPage(1)}
+              disabled={currentPage === 1}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="px-4 text-xs font-black text-primary">
+              {currentPage}
+            </div>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => goToPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {editingUser && (
         <EditUserModal

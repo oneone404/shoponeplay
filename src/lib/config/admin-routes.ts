@@ -19,11 +19,11 @@ export const ADMIN_ROUTES = {
   },
   PRODUCTS_PLAY: {
     path: "/admin/products/play",
-    title: `Quản Lý Tài Khoản Play${SUFFIX}`
+    title: `Tài Khoản Play${SUFFIX}`
   },
   PRODUCTS_RANDOM: {
     path: "/admin/products/random",
-    title: `Quản Lý Tài Khoản Random${SUFFIX}`
+    title: `Tài Khoản Random${SUFFIX}`
   },
   PRODUCTS_PLAY_ADD: {
     path: "/admin/products/play/add",
@@ -55,7 +55,23 @@ export const ADMIN_ROUTES = {
   }),
   TRANSACTIONS: {
     path: "/admin/transactions",
-    title: `Quản Lý Giao Dịch${SUFFIX}`
+    title: `Lịch Sử Đơn Hàng${SUFFIX}`
+  },
+  TRANSACTIONS_HISTORY: {
+    path: "/admin/transactions/history",
+    title: `Lịch Sử Giao Dịch${SUFFIX}`
+  },
+  WITHDRAWALS: {
+    path: "/admin/withdrawals",
+    title: `Lịch Sử Thanh Toán${SUFFIX}`
+  },
+  DEPOSITS_BANK: {
+    path: "/admin/deposits/bank",
+    title: `Lịch Sử Nạp Bank${SUFFIX}`
+  },
+  DEPOSITS_CARD: {
+    path: "/admin/deposits/card",
+    title: `Lịch Sử Nạp Card${SUFFIX}`
   },
   SETTINGS: {
     path: "/admin/settings",
@@ -77,8 +93,16 @@ export const ADMIN_ROUTES = {
     path: "/admin/settings/seller",
     title: `Cấu Hình Người Bán${SUFFIX}`
   },
+  BANKS: {
+    path: "/admin/settings/banks",
+    title: `Cấu Hình Nạp Bank${SUFFIX}`
+  },
   USER_ACTIVITY: (id: string) => ({
     path: `/admin/users/${id}/activity`,
     title: `Lịch Sử Người Dùng${SUFFIX}`
+  }),
+  ORDER_DETAIL: (id: string) => ({
+    path: `/admin/orders/${id}`,
+    title: `Đơn Hàng #${id.slice(-12).toUpperCase()}${SUFFIX}`
   })
 } as const;

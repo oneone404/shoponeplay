@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Shield, User, Wallet, Edit, SearchX, Trash2, History, ShoppingBag } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Shield, User, Wallet, Edit, SearchX, Trash2, History, ShoppingBag, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import Image from "next/image"
@@ -12,12 +12,31 @@ export default function SellerTable({ initialSellers }: { initialSellers: any[] 
   const [sellers, setSellers] = useState(initialSellers)
   const [search, setSearch] = useState("")
   const [editingSeller, setEditingSeller] = useState<any | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   const filteredSellers = sellers.filter(seller =>
     (seller.email && seller.email.toLowerCase().includes(search.toLowerCase())) ||
     (seller.name && seller.name.toLowerCase().includes(search.toLowerCase())) ||
     seller.id.toLowerCase().includes(search.toLowerCase())
   )
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredSellers.length / itemsPerPage)
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentSellers = filteredSellers.slice(indexOfFirstItem, indexOfLastItem)
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
+
+  // Reset page on search
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search])
 
   return (
     <div className="flex flex-col h-full bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -50,7 +69,7 @@ export default function SellerTable({ initialSellers }: { initialSellers: any[] 
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {filteredSellers.length === 0 ? (
+            {currentSellers.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
@@ -60,7 +79,7 @@ export default function SellerTable({ initialSellers }: { initialSellers: any[] 
                 </td>
               </tr>
             ) : (
-              filteredSellers.map((seller) => (
+              currentSellers.map((seller) => (
                 <tr key={seller.id} className="hover:bg-secondary/20 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
@@ -116,6 +135,48 @@ export default function SellerTable({ initialSellers }: { initialSellers: any[] 
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Footer */}
+      {totalPages > 1 && (
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-secondary/30">
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+            Trang {currentPage} / {totalPages}
+          </div>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => goToPage(1)}
+              disabled={currentPage === 1}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="px-4 text-xs font-black text-primary">
+              {currentPage}
+            </div>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => goToPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {editingSeller && (
         <EditUserModal

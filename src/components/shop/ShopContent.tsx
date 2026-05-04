@@ -92,22 +92,25 @@ function ShopInner({
   // Master Filter Logic
   const filteredProducts = products
     .filter(p => {
-      // Tạm thời bỏ qua các sản phẩm là Dịch vụ
+      // 1. Ẩn sản phẩm đã đánh dấu ẩn hoặc đã bán
+      if (p.isHidden || p.sold) return false
+
+      // 2. Tạm thời bỏ qua các sản phẩm là Dịch vụ
       if (p.type === 'SERVICE') return false
 
-      // Category Filter
+      // 3. Category Filter
       const matchCategory = activeCategory === "all" || p.categorySlug === activeCategory || p.groupSlug === activeCategory
 
-      // Search Filter
+      // 4. Search Filter
       const matchSearch = (p.categoryName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.id || "").toLowerCase().includes(searchQuery.toLowerCase())
 
-      // Price Filter
+      // 5. Price Filter
       const priceValue = p.price
       const matchMinPrice = minPrice === "" || priceValue >= parseFloat(minPrice)
       const matchMaxPrice = maxPrice === "" || priceValue <= parseFloat(maxPrice)
 
-      // Type Filter
+      // 6. Type Filter
       const matchType = !selectedType || p.type === selectedType
 
       return matchCategory && matchSearch && matchMinPrice && matchMaxPrice && matchType

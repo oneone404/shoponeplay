@@ -11,11 +11,7 @@ export const metadata = {
 
 export default async function SellerDashboard() {
   const session = await auth();
-  if (!session?.user?.id || (session.user.role !== "SELLER" && session.user.role !== "ADMIN")) {
-    redirect("/");
-  }
-
-  const sellerId = session.user.id;
+  const sellerId = session!.user.id;
   const now = new Date();
   const today = startOfDay(now);
   const week = startOfWeek(now, { weekStartsOn: 1 });

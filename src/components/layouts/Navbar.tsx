@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn, Store } from "lucide-react"
+import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn, Store, ChevronRight, ChevronLeft } from "lucide-react"
 import { useTheme } from "@/providers/ThemeProvider"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
@@ -25,11 +25,12 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
   const { items } = useCart()
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
+  const [menuMode, setMenuMode] = useState<"main" | "history">("main")
 
   // Avoid hydration mismatch and clean up ?v= URL params
   useEffect(() => {
     setMounted(true)
-    
+
     // Clean up ?v= param from URL if it exists (used for cache busting)
     if (typeof window !== 'undefined' && window.location.search.includes('v=')) {
       const url = new URL(window.location.href);
@@ -42,6 +43,14 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
   useEffect(() => {
     closeAll()
   }, [pathname, closeAll])
+
+  // Reset menu mode to 'main' when profile dropdown is closed
+  useEffect(() => {
+    if (!profileOpen) {
+      const timer = setTimeout(() => setMenuMode("main"), 300)
+      return () => clearTimeout(timer)
+    }
+  }, [profileOpen])
 
   const isAuthenticated = status === "authenticated"
   const isLoading = status === "loading"
@@ -96,7 +105,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
               </button>
             )}
 
-            <Link 
+            <Link
               href={ROUTES.BAG}
               className="p-2 hover:bg-secondary rounded-full transition-colors text-muted-foreground hover:text-foreground relative group"
             >
@@ -153,11 +162,11 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                 <div
                   className={cn(
                     "absolute right-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-20 py-1 origin-top-right overflow-hidden transition-all duration-[400ms] will-change-transform",
-                    profileOpen 
-                      ? "opacity-100 translate-y-0 scale-100 pointer-events-auto" 
+                    profileOpen
+                      ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
                       : "opacity-0 -translate-y-2 scale-95 pointer-events-none"
                   )}
-                  style={{ 
+                  style={{
                     transitionTimingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)',
                     transform: profileOpen ? 'translate3d(0, 0, 0)' : 'translate3d(0, -8px, 0) scale(0.95)'
                   }}
@@ -210,43 +219,89 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                   )}
 
                   <div className="py-2">
-                    {/* Mobile Navigation Links */}
-                    <div className="md:hidden border-b border-border mb-2 pb-2">
-                      <DropdownItem href={ROUTES.SHOP} icon={<LayoutGrid className="w-4 h-4" />}>{t.nav.shop.toUpperCase()}</DropdownItem>
-                      <DropdownItem href={ROUTES.TOOLS} icon={<Terminal className="w-4 h-4" />}>{t.nav.tools.toUpperCase()}</DropdownItem>
-                      <DropdownItem href={ROUTES.HISTORY} icon={<History className="w-4 h-4" />}>{t.nav.history.toUpperCase()}</DropdownItem>
-                      <DropdownItem href={ROUTES.HACKS} icon={<Package className="w-4 h-4" />}>{t.nav.hacks.toUpperCase()}</DropdownItem>
-                    </div>
+                    {/* Switchable Menu Content */}
+                    <AnimatePresence mode="wait">
+                      {menuMode === "main" && (
+                        <motion.div
+                          key="main-menu"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          {/* Section 1: Management */}
+                          {isAuthenticated && (session?.user?.role === "ADMIN" || session?.user?.role === "SELLER") && (
+                            <div className="border-b border-border mb-2 pb-2">
+                              <p className="px-5 py-1 text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">Quản trị & Bán hàng</p>
+                              {session?.user?.role === "ADMIN" && (
+                                <DropdownItem href="/admin" icon={<LayoutGrid className="w-4 h-4" />} onClick={closeAll}>{t.nav.admin}</DropdownItem>
+                              )}
+                              <DropdownItem href="/seller" icon={<Store className="w-4 h-4" />} onClick={closeAll}>Kênh Người Bán</DropdownItem>
+                            </div>
+                          )}
 
-                    {/* Admin Actions */}
-                    {isAuthenticated && session?.user?.role === "ADMIN" && (
-                      <DropdownItem href="/admin" icon={<LayoutGrid className="w-4 h-4" />} onClick={closeAll}>{t.nav.admin}</DropdownItem>
-                    )}
-                    
-                    {/* Seller Actions */}
-                    {isAuthenticated && (session?.user?.role === "ADMIN" || session?.user?.role === "SELLER") && (
-                      <DropdownItem href="/seller" icon={<Store className="w-4 h-4" />} onClick={closeAll}>Kênh Người Bán</DropdownItem>
-                    )}
+                          {/* Section 2: User Core */}
+                          <div className="space-y-0.5">
+                            <p className="px-5 py-1 text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tài khoản của tôi</p>
+                            <DropdownItem href={ROUTES.USER.SETTINGS} icon={<User className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, ROUTES.USER.SETTINGS)}>{t.nav.user_profile}</DropdownItem>
 
-                    {/* Standard User Actions */}
-                    <DropdownItem href={ROUTES.USER.SETTINGS} icon={<User className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, ROUTES.USER.SETTINGS)}>{t.nav.user_profile}</DropdownItem>
-                    <DropdownItem href={ROUTES.USER.HISTORY} icon={<History className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, ROUTES.USER.HISTORY)}>{t.nav.purchased_orders}</DropdownItem>
+                            {/* History Switcher Button */}
+                            <button
+                              onClick={() => setMenuMode("history")}
+                              className="w-full flex items-center justify-between px-5 py-3 text-[10.5px] font-bold uppercase tracking-widest text-foreground hover:bg-secondary transition-colors group/item"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <History className="w-4 h-4" />
+                                <span>LỊCH SỬ GIAO DỊCH</span>
+                              </div>
+                              <ChevronRight className="w-3.5 h-3.5 opacity-50 group-hover/item:opacity-100 group-hover/item:translate-x-0.5 transition-all" />
+                            </button>
 
-                    <DropdownItem href={ROUTES.BLOG} icon={<BookOpen className="w-4 h-4" />} onClick={closeAll}>{t.nav.blog_news}</DropdownItem>
-                    <DropdownItem href={ROUTES.USER.SETTINGS} icon={<Settings className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, ROUTES.USER.SETTINGS)}>{t.nav.settings}</DropdownItem>
+                            <DropdownItem href={ROUTES.BLOG} icon={<BookOpen className="w-4 h-4" />} onClick={closeAll}>{t.nav.blog_news}</DropdownItem>
+                            <DropdownItem href={ROUTES.USER.SETTINGS} icon={<Settings className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, ROUTES.USER.SETTINGS)}>{t.nav.settings}</DropdownItem>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {menuMode === "history" && (
+                        <motion.div
+                          key="history-menu"
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          transition={{ duration: 0.2 }}
+                          className="space-y-0.5"
+                        >
+                          <div className="px-4 mb-2">
+                            <button 
+                              onClick={() => setMenuMode("main")}
+                              className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors py-1 group"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                              <p className="text-[8px] font-black uppercase tracking-[0.2em]">LỊCH SỬ GIAO DỊCH</p>
+                            </button>
+                          </div>
+
+                          <DropdownItem href={ROUTES.ORDERS} icon={<Package className="w-4 h-4" />} onClick={closeAll}>Đơn Hàng Đã Mua</DropdownItem>
+                          <DropdownItem href="/orders/balance" icon={<Terminal className="w-4 h-4" />} onClick={closeAll}>Biến Động Số Dư</DropdownItem>
+                          <DropdownItem href="/orders/bank" icon={<Globe className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Bank</DropdownItem>
+                          <DropdownItem href="/orders/card" icon={<History className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Card</DropdownItem>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Language Switcher - Simplified & Optimized for Safari */}
                   <div className="px-5 py-3 border-t border-border flex items-center justify-center">
                     <div className="relative flex w-full h-8 bg-secondary rounded-xl p-1 cursor-pointer border border-border overflow-hidden select-none touch-none">
-                      <div 
+                      <div
                         className="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-primary rounded-[10px] shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform"
                         style={{
                           transform: language === "en" ? 'translate3d(100%, 0, 0)' : 'translate3d(0, 0, 0)',
                           WebkitTransform: language === "en" ? 'translate3d(100%, 0, 0)' : 'translate3d(0, 0, 0)',
                         }}
                       />
-                      <button 
+                      <button
                         onClick={() => setLanguage("vi")}
                         className={cn(
                           "relative z-10 flex-1 flex items-center justify-center text-[10px] font-bold transition-colors duration-300",
@@ -255,7 +310,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                       >
                         TIẾNG VIỆT
                       </button>
-                      <button 
+                      <button
                         onClick={() => setLanguage("en")}
                         className={cn(
                           "relative z-10 flex-1 flex items-center justify-center text-[10px] font-bold transition-colors duration-300",

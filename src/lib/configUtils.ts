@@ -24,6 +24,8 @@ export interface SiteConfig {
   TELEGRAM_ID: string;
   TELEGRAM_ENABLED: string;
   SELLER_FEE: string; // Phí sàn (%)
+  TELEGRAM_NOTIFY_ORDER: string; // Thông báo đơn hàng mới
+  TELEGRAM_NOTIFY_WITHDRAW: string; // Thông báo rút tiền
 }
 
 const defaultConfig: SiteConfig = {
@@ -52,7 +54,9 @@ const defaultConfig: SiteConfig = {
   TELEGRAM_TOKEN: "",
   TELEGRAM_ID: "",
   TELEGRAM_ENABLED: "false",
-  SELLER_FEE: "10" // Mặc định 10%
+  SELLER_FEE: "10", // Mặc định 10%
+  TELEGRAM_NOTIFY_ORDER: "true",
+  TELEGRAM_NOTIFY_WITHDRAW: "true"
 };
 
 export async function getSiteConfig(): Promise<SiteConfig> {

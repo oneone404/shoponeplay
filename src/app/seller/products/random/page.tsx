@@ -10,12 +10,7 @@ export const metadata = {
 
 export default async function SellerRandomProductsPage() {
   const session = await auth()
-  
-  if (!session || (session.user as any).role !== "SELLER" && (session.user as any).role !== "ADMIN") {
-    redirect("/")
-  }
-
-  const userId = session.user.id
+  const userId = session!.user.id
 
   // Fetch only RANDOM products for this seller
   const products = await prisma.product.findMany({
@@ -58,6 +53,8 @@ export default async function SellerRandomProductsPage() {
         subtitle="Danh sách tài khoản Random đã đăng bán"
         addPath={SELLER_ROUTES.PRODUCTS_RANDOM_ADD.path}
         addLabel="Thêm Lô Random"
+        showCards={false}
+        hideAccountColumn={true}
       />
     </div>
   )

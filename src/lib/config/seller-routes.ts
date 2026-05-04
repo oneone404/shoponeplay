@@ -34,12 +34,20 @@ export const SELLER_ROUTES = {
     title: `Chỉnh Sửa Sản Phẩm${SUFFIX}`
   }),
   ORDERS: {
-    path: "/seller/orders",
-    title: `Quản Lý Đơn Hàng${SUFFIX}`
+    path: "/seller/transactions",
+    title: `Lịch Sử Đơn Hàng${SUFFIX}`
   },
   WITHDRAW: {
     path: "/seller/withdraw",
     title: `Ví Tiền${SUFFIX}`
+  },
+  WITHDRAW_HISTORY: {
+    path: "/seller/withdraw/history",
+    title: `Lịch Sử Thanh Toán${SUFFIX}`
+  },
+  TRANSACTIONS: {
+    path: "/seller/transactions/history",
+    title: `Lịch Sử Giao Dịch${SUFFIX}`
   },
   SETTINGS: {
     path: "/seller/settings",

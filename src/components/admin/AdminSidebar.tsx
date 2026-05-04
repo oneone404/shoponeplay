@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Users, ShoppingBag, Receipt, Settings, FolderTree, LogOut, X, ChevronRight, ChevronDown } from "lucide-react"
+import { LayoutDashboard, Users, ShoppingBag, Receipt, Settings, FolderTree, LogOut, X, ChevronRight, ChevronDown, History, ShoppingCart, Globe, PackageCheck } from "lucide-react"
 
 export default function AdminSidebar({
   onCloseMobile,
@@ -27,9 +27,9 @@ export default function AdminSidebar({
       label: "Danh mục",
       icon: FolderTree,
     },
-    { 
-      href: "/admin/products", 
-      label: "Sản phẩm", 
+    {
+      href: "/admin/products",
+      label: "Sản phẩm",
       icon: ShoppingBag,
       subItems: [
         { href: "/admin/products", label: "Tất cả sản phẩm" },
@@ -37,7 +37,19 @@ export default function AdminSidebar({
         { href: "/admin/products/random", label: "Tài khoản Random" },
       ]
     },
-    { href: "/admin/transactions", label: "Giao dịch", icon: Receipt },
+    {
+      href: "/admin/history",
+      label: "LỊCH SỬ",
+      icon: History,
+      subItems: [
+        { href: "/admin/transactions/history", label: "Lịch Sử Giao Dịch" },
+        { href: "/admin/transactions", label: "Lịch Sử Đơn Hàng" },
+        { href: "/admin/withdrawals", label: "Lịch Sử Thanh Toán" },
+        { href: "/admin/accounts", label: "Lịch Sử Bán Acc" },
+        { href: "/admin/deposits/bank", label: "Lịch Sử Nạp Bank" },
+        { href: "/admin/deposits/card", label: "Lịch Sử Nạp Card" },
+      ]
+    },
     {
       href: "/admin/settings",
       label: "Cài đặt",
@@ -46,6 +58,8 @@ export default function AdminSidebar({
         { href: "/admin/settings", label: "Cấu Hình Chung" },
         { href: "/admin/settings/notifications", label: "Cấu Hình Thông Báo" },
         { href: "/admin/settings/seller", label: "Cấu Hình Seller" },
+        { href: "/admin/settings/banks", label: "Cấu Hình Nạp Bank" },
+        { href: "/admin/settings/cards", label: "Cấu Hình Nạp Card" },
         { href: "/admin/settings/branding", label: "Giao diện & Branding" },
         { href: "/admin/settings/system", label: "Trạng thái hệ thống" }
       ]
@@ -55,7 +69,11 @@ export default function AdminSidebar({
   // Automatically expand the menu if we are currently inside it
   useEffect(() => {
     const currentPaths = links
-      .filter(l => l.subItems && (pathname === l.href || (pathname.startsWith(l.href) && l.href !== "/admin")))
+      .filter(l => l.subItems && (
+        pathname === l.href ||
+        (pathname.startsWith(l.href) && l.href !== "/admin") ||
+        l.subItems.some(si => pathname === si.href || pathname.startsWith(si.href))
+      ))
       .map(l => l.href)
 
     setExpandedMenus(prev => {
@@ -105,7 +123,8 @@ export default function AdminSidebar({
 
       <nav className="space-y-2 flex-1 overflow-y-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {links.map((link) => {
-          const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== "/admin");
+          const isSubItemActive = !!link.subItems?.some(si => pathname === si.href || pathname.startsWith(si.href));
+          const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== "/admin") || isSubItemActive;
           const isExpanded = expandedMenus.includes(link.href);
           const hasSubItems = !!link.subItems && link.subItems.length > 0;
 

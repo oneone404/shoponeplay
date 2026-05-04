@@ -24,7 +24,7 @@ export default async function Home() {
     where: { slug: "tai-khoan-play" },
     include: { 
       categories: {
-        include: { _count: { select: { products: { where: { sold: false } } } } }
+        include: { _count: { select: { products: { where: { sold: false, isHidden: false } } } } }
       }
     }
   })
@@ -33,7 +33,7 @@ export default async function Home() {
     where: { slug: "tai-khoan-random" },
     include: { 
       categories: {
-        include: { _count: { select: { products: true } } }
+        include: { _count: { select: { products: { where: { isHidden: false } } } } }
       }
     }
   })

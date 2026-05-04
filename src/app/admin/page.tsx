@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { startOfDay, startOfWeek, startOfMonth } from "date-fns";
-import { Clock, Calendar, TrendingUp } from "lucide-react";
-import AdminDashboardView from "@/components/admin/dashboard/AdminDashboardView";
+import { Metadata } from "next";
 import { ADMIN_ROUTES } from "@/lib/config/admin-routes";
+import AdminDashboardView from "@/components/admin/dashboard/AdminDashboardView";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: ADMIN_ROUTES.DASHBOARD.title
 };
 
@@ -39,8 +39,11 @@ export default async function AdminDashboard() {
   // Stats Table Calculation
   const fetchRevenue = async (startDate: Date) => {
     const [deposits, orders] = await Promise.all([
-      prisma.deposit.aggregate({
-        where: { createdAt: { gte: startDate }, status: "COMPLETED" },
+      prisma.transaction.aggregate({
+        where: { 
+          createdAt: { gte: startDate }, 
+          type: "DEPOSIT"
+        },
         _sum: { amount: true }
       }),
       prisma.order.aggregate({

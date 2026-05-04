@@ -23,6 +23,7 @@ export default async function ShopPage() {
 
   // 2. Lấy toàn bộ sản phẩm
   const products = await prisma.product.findMany({
+    where: { isHidden: false },
     include: { 
       category: {
         include: { group: true }

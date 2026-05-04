@@ -10,12 +10,7 @@ export const metadata = {
 
 export default async function SellerPlayProductsPage() {
   const session = await auth()
-  
-  if (!session || (session.user as any).role !== "SELLER" && (session.user as any).role !== "ADMIN") {
-    redirect("/")
-  }
-
-  const userId = session.user.id
+  const userId = session!.user.id
 
   // Fetch only PLAY products for this seller
   const products = await prisma.product.findMany({
@@ -31,6 +26,10 @@ export default async function SellerPlayProductsPage() {
             where: { isSold: false }
           }
         }
+      },
+      secrets: {
+        take: 1,
+        select: { username: true }
       }
     },
     orderBy: {
@@ -46,7 +45,8 @@ export default async function SellerPlayProductsPage() {
     ...p,
     price: Number(p.price),
     oldPrice: p.oldPrice ? Number(p.oldPrice) : null,
-    stock: p._count.secrets
+    stock: p._count.secrets,
+    username: p.secrets[0]?.username
   }))
 
   return (
@@ -58,6 +58,8 @@ export default async function SellerPlayProductsPage() {
         subtitle="Danh sách tài khoản Play đã đăng bán"
         addPath={SELLER_ROUTES.PRODUCTS_PLAY_ADD.path}
         addLabel="Thêm Tài Khoản"
+        hideStockColumn={true}
+        showCards={false}
       />
     </div>
   )

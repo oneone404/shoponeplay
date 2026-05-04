@@ -53,7 +53,8 @@ export async function PATCH(
       thumbnail,
       playAccount,
       stats,
-      newSecrets // For RANDOM type
+      newSecrets,
+      isHidden // New field
     } = body
 
     // 1. Lấy thông tin sản phẩm cũ để so sánh ảnh
@@ -70,13 +71,14 @@ export async function PATCH(
       const product = await tx.product.update({
         where: { id },
         data: {
-          price: Number(price),
-          oldPrice: oldPrice ? Number(oldPrice) : null,
-          categoryId,
+          price: price !== undefined ? Number(price) : undefined,
+          oldPrice: oldPrice !== undefined ? (oldPrice ? Number(oldPrice) : null) : undefined,
+          categoryId: categoryId !== undefined ? categoryId : undefined,
           description: description ? description.filter((d: string) => d.trim().length > 0) : undefined,
           images: images ? images.filter((img: string) => img.trim().length > 0) : undefined,
-          thumbnail,
+          thumbnail: thumbnail !== undefined ? thumbnail : undefined,
           stats: stats !== undefined ? (stats || {}) : undefined,
+          isHidden: isHidden !== undefined ? isHidden : undefined,
         }
       })
 
@@ -115,7 +117,7 @@ export async function PATCH(
       return product
     })
 
-    // 2. Dọn dẹp ảnh cũ (Chỉ xóa nếu thực sự thay đổi và là ảnh upload)
+    // 2. Dọn dẹp ảnh cũ
     const { unlink } = await import("fs/promises")
     const path = await import("path")
 
@@ -128,12 +130,10 @@ export async function PATCH(
       } catch (e) {}
     }
 
-    // Kiểm tra thumbnail
     if (thumbnail && oldProduct.thumbnail && thumbnail !== oldProduct.thumbnail) {
       await deleteFile(oldProduct.thumbnail)
     }
 
-    // Kiểm tra list ảnh chi tiết
     if (images && oldProduct.images && Array.isArray(oldProduct.images)) {
       const removedImages = (oldProduct.images as string[]).filter(oldImg => !images.includes(oldImg))
       await Promise.all(removedImages.map(img => deleteFile(img)))
@@ -145,6 +145,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
+
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -157,7 +158,6 @@ export async function DELETE(
 
     const { id } = await params
 
-    // 1. Tìm sản phẩm để lấy danh sách ảnh
     const product = await prisma.product.findUnique({
       where: { id },
       select: { thumbnail: true, images: true }
@@ -167,20 +167,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
-    // 2. Xóa trong DB (Prisma sẽ tự xóa secrets nếu có config Cascade, 
-    // nhưng ở đây ta dùng transaction cho chắc chắn)
     await prisma.$transaction(async (tx) => {
-      // Xóa secrets trước
-      await tx.accountSecret.deleteMany({
-        where: { productId: id }
-      })
-      // Xóa product
-      await tx.product.delete({
-        where: { id }
-      })
+      await tx.accountSecret.deleteMany({ where: { productId: id } })
+      await tx.product.delete({ where: { id } })
     })
 
-    // 3. Xóa ảnh vật lý (Không làm gián đoạn response nếu lỗi)
     const { unlink } = await import("fs/promises")
     const path = await import("path")
 
@@ -190,15 +181,10 @@ export async function DELETE(
           const filePath = path.join(process.cwd(), "public", url)
           await unlink(filePath)
         }
-      } catch (e) {
-        console.error(`[DELETE_FILE_ERROR] ${url}:`, e)
-      }
+      } catch (e) {}
     }
 
-    // Xóa thumbnail
     if (product.thumbnail) await deleteFile(product.thumbnail)
-    
-    // Xóa list ảnh chi tiết
     if (product.images && Array.isArray(product.images)) {
       await Promise.all(product.images.map(img => deleteFile(img)))
     }

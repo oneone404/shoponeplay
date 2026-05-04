@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/auth"
 import { notFound, redirect } from "next/navigation"
 import SellerProductForm from "@/components/seller/products/SellerProductForm"
 import { SELLER_ROUTES } from "@/lib/config/seller-routes"
@@ -10,14 +9,16 @@ export const metadata: Metadata = {
   title: "Chỉnh Sửa Sản Phẩm - ShopOnePlay",
 }
 
-export default async function SellerEditProductPage({ params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) redirect("/auth/login")
+export default async function SellerEditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await auth()
+  const sellerId = session!.user.id
 
-  const product = await prisma.product.findUnique({
+  const { id } = await params
+
+  const product = await prisma.product.findFirst({
     where: { 
-      id: params.id,
-      uploaderId: session.user.id // Security: Only allow owner to edit
+      id: id,
+      uploaderId: sellerId // Security: Only allow owner to edit
     },
     include: {
       category: true,

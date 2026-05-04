@@ -6,7 +6,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { SELLER_ROUTES } from "@/lib/config/seller-routes"
-import { LayoutDashboard, ShoppingBag, Receipt, LogOut, X, ChevronRight, HandCoins } from "lucide-react"
+import { LayoutDashboard, ShoppingBag, LogOut, X, ChevronRight, HandCoins, History, Settings } from "lucide-react"
 
 export default function SellerSidebar({
   onCloseMobile,
@@ -31,8 +31,24 @@ export default function SellerSidebar({
         { href: SELLER_ROUTES.PRODUCTS_RANDOM.path, label: "Tài khoản Random" },
       ]
     },
-    { href: SELLER_ROUTES.ORDERS.path, label: "Đơn hàng", icon: Receipt },
-    { href: SELLER_ROUTES.WITHDRAW.path, label: "Ví Tiền", icon: HandCoins },
+    { href: SELLER_ROUTES.WITHDRAW.path, label: "VÍ TIỀN", icon: HandCoins,
+      active: pathname.startsWith("/seller/withdraw"),
+      subItems: [
+        { href: SELLER_ROUTES.WITHDRAW.path, label: "Ví Tiền" },
+        { href: SELLER_ROUTES.WITHDRAW_HISTORY.path, label: "Lịch Sử Thanh Toán" },
+      ]
+    },
+    { 
+      href: "#", 
+      label: "LỊCH SỬ", 
+      icon: History,
+      active: pathname.startsWith("/seller/transactions"),
+      subItems: [
+        { href: SELLER_ROUTES.TRANSACTIONS.path, label: "Lịch Sử Giao Dịch" },
+        { href: SELLER_ROUTES.ORDERS.path, label: "Lịch Sử Đơn Hàng" },
+      ]
+    },
+    { href: SELLER_ROUTES.SETTINGS.path, label: "Cài đặt", icon: Settings },
   ]
 
   // Automatically expand the menu if we are currently inside it
@@ -88,9 +104,10 @@ export default function SellerSidebar({
 
       <nav className="space-y-2 flex-1 overflow-y-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {links.map((link) => {
-          const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== "/seller");
-          const isExpanded = expandedMenus.includes(link.href);
           const hasSubItems = !!link.subItems && link.subItems.length > 0;
+          const isSubItemActive = hasSubItems && link.subItems?.some(sub => pathname === sub.href);
+          const isActive = pathname === link.href || (pathname.startsWith(link.href) && link.href !== "/seller") || isSubItemActive;
+          const isExpanded = expandedMenus.includes(link.href);
 
           return (
             <div key={link.href} className="space-y-1">

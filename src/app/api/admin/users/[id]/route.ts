@@ -34,23 +34,42 @@ export async function PATCH(
 
     const newBalance = currentUser.balance + (balanceAdd || 0);
 
-    // Update user
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        role,
-        balance: newBalance,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-        balance: true,
-        totalDeposited: true,
-        createdAt: true,
+    // Update user and log transaction in a single transaction
+    const [updatedUser] = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { id },
+        data: {
+          role,
+          balance: newBalance,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          balance: true,
+          totalDeposited: true,
+          createdAt: true,
+        }
+      });
+
+      // Only create transaction if there was a balance change
+      if (balanceAdd && balanceAdd !== 0) {
+        await tx.transaction.create({
+          data: {
+            userId: id,
+            amount: balanceAdd,
+            balanceBefore: currentUser.balance,
+            balanceAfter: newBalance,
+            type: balanceAdd > 0 ? "ADMIN_ADD" : "ADMIN_SUB",
+            description: `Admin ${(balanceAdd > 0 ? "Cộng" : "Trừ")} Tiền`,
+            adminId: session.user.id
+          }
+        });
       }
+
+      return [user];
     });
 
     return NextResponse.json({ message: "User updated", user: updatedUser });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { processWithdrawalAction } from "@/lib/services/withdrawal"
 
 export const dynamic = "force-dynamic"
 
@@ -47,36 +48,14 @@ export async function POST(req: Request) {
     let success = false
 
     try {
-      await prisma.$transaction(async (tx) => {
-        const withdrawal = await tx.withdrawal.findUnique({
-          where: { id: withdrawalId },
-          include: { user: true }
-        })
-
-        if (!withdrawal) throw new Error("Không tìm thấy yêu cầu")
-        if (withdrawal.status !== "PENDING") throw new Error("Yêu cầu đã được xử lý trước đó")
-
-        if (action === "done") {
-          await tx.withdrawal.update({
-            where: { id: withdrawalId },
-            data: { status: "COMPLETED" }
-          })
-          resultMessage = "✅ ĐÃ HOÀN THÀNH"
-          success = true
-        } else if (action === "cancel") {
-          // Refund balance to user
-          await tx.user.update({
-            where: { id: withdrawal.userId },
-            data: { balance: { increment: withdrawal.amount } }
-          })
-          await tx.withdrawal.update({
-            where: { id: withdrawalId },
-            data: { status: "REJECTED" }
-          })
-          resultMessage = "❌ ĐÃ HUỶ BỎ (ĐÃ HOÀN TIỀN)"
-          success = true
-        }
+      const result = await processWithdrawalAction({
+        withdrawalId,
+        action: action as "done" | "cancel",
+        adminId: String(from.id),
+        adminName: from.first_name || from.username || "Admin Tele"
       })
+      resultMessage = result.message
+      success = true
     } catch (err: any) {
       resultMessage = `⚠️ LỖI: ${err.message}`
     }

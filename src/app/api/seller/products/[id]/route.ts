@@ -1,12 +1,15 @@
+import { NextResponse } from "next/server"
 import { auth } from "@/auth"
+import { prisma } from "@/lib/prisma"
 import { deleteUploadFile, deleteUploadFiles } from "@/lib/file-utils"
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
+    const { id } = await params
 
     if (!session || (session.user.role !== "SELLER" && session.user.role !== "ADMIN")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -22,13 +25,14 @@ export async function PATCH(
       thumbnail,
       stats,
       playAccount,
-      newSecrets
+      newSecrets,
+      isHidden // New field
     } = body
 
     // Verify ownership
     const existingProduct = await prisma.product.findUnique({
       where: { 
-        id: params.id,
+        id: id,
         uploaderId: session.user.id
       }
     })
@@ -40,23 +44,23 @@ export async function PATCH(
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update Product info
       const product = await tx.product.update({
-        where: { id: params.id },
+        where: { id: id },
         data: {
-          price,
-          oldPrice,
-          categoryId,
+          price: price !== undefined ? price : undefined,
+          oldPrice: oldPrice !== undefined ? oldPrice : undefined,
+          categoryId: categoryId !== undefined ? categoryId : undefined,
           description: description?.filter((d: string) => d.trim().length > 0),
           images: images?.filter((img: string) => img.trim().length > 0),
-          thumbnail,
-          stats: stats || {},
+          thumbnail: thumbnail !== undefined ? thumbnail : undefined,
+          stats: stats || undefined,
+          isHidden: isHidden !== undefined ? isHidden : undefined,
         }
       })
 
       // 2. Update Play Account if applicable
       if (existingProduct.type === "PLAY" && playAccount) {
-        // Play products usually have 1 secret
         const secret = await tx.accountSecret.findFirst({
-          where: { productId: params.id }
+          where: { productId: id }
         })
 
         if (secret) {
@@ -76,7 +80,7 @@ export async function PATCH(
       if (existingProduct.type === "RANDOM" && newSecrets && newSecrets.length > 0) {
         await tx.accountSecret.createMany({
           data: newSecrets.map((s: any) => ({
-            productId: params.id,
+            productId: id,
             username: s.username,
             password: s.password,
             accountId: s.accountId || null,
@@ -85,13 +89,12 @@ export async function PATCH(
           }))
         })
 
-        // Update stock count
         const newCount = await tx.accountSecret.count({
-          where: { productId: params.id, isSold: false }
+          where: { productId: id, isSold: false, status: "AVAILABLE" }
         })
         
         await tx.product.update({
-          where: { id: params.id },
+          where: { id: id },
           data: { stock: newCount }
         })
       }
@@ -99,7 +102,7 @@ export async function PATCH(
       return product
     })
 
-    // 4. File cleanup for updated images
+    // 4. File cleanup
     if (thumbnail && existingProduct.thumbnail && thumbnail !== existingProduct.thumbnail) {
       await deleteUploadFile(existingProduct.thumbnail)
     }
@@ -118,19 +121,19 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
+    const { id } = await params
 
     if (!session || (session.user.role !== "SELLER" && session.user.role !== "ADMIN")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Verify ownership
     const product = await prisma.product.findUnique({
       where: { 
-        id: params.id,
+        id: id,
         uploaderId: session.user.id
       }
     })
@@ -139,12 +142,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Không tìm thấy sản phẩm hoặc bạn không có quyền xóa" }, { status: 404 })
     }
 
-    // Delete product
     await prisma.product.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
-    // File cleanup (Thumbnail and Detail images)
     if (product.thumbnail) await deleteUploadFile(product.thumbnail)
     if (product.images && Array.isArray(product.images)) {
       await deleteUploadFiles(product.images)

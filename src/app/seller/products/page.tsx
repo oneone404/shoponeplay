@@ -10,12 +10,7 @@ export const metadata = {
 
 export default async function SellerProductsPage() {
   const session = await auth()
-  
-  if (!session || (session.user as any).role !== "SELLER" && (session.user as any).role !== "ADMIN") {
-    redirect("/")
-  }
-
-  const userId = session.user.id
+  const userId = session!.user.id
 
   // Fetch products uploaded by this seller
   const products = await prisma.product.findMany({
@@ -30,6 +25,10 @@ export default async function SellerProductsPage() {
             where: { isSold: false }
           }
         }
+      },
+      secrets: {
+        take: 1,
+        select: { username: true }
       }
     },
     orderBy: {
@@ -51,7 +50,8 @@ export default async function SellerProductsPage() {
     ...p,
     price: Number(p.price),
     oldPrice: p.oldPrice ? Number(p.oldPrice) : null,
-    stock: p._count.secrets
+    stock: p._count.secrets,
+    username: p.secrets[0]?.username
   }))
 
   return (
@@ -61,8 +61,9 @@ export default async function SellerProductsPage() {
         categories={categories}
         title="Tất Cả Sản Phẩm"
         subtitle="Quản lý danh sách sản phẩm và kho tài khoản"
-        showCategoryFilter={false}
+        showCategoryFilter={true}
         showAddButton={false}
+        showTypeFilter={true}
       />
     </div>
   )

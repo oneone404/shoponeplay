@@ -1,7 +1,7 @@
 export const deposit = {
   vi: {
-    title: "Nạp Tiền Vào Ví",
-    subtitle: "Tự động & Bảo mật",
+    title: "Nạp Tiền",
+    subtitle: "Hệ Thống Nạp Tiền Tự Động",
     amount_label: "Số tiền muốn nạp (VND)",
     amount_placeholder: "Nhập Số Tiền...",
     loading_banks: "Đang tải thông tin ngân hàng...",
