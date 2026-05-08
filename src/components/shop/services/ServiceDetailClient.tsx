@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { ShieldCheck, Clock, Zap, Wallet, CreditCard, ChevronRight, Check, AlertTriangle, Loader2 } from "lucide-react"
+import { ShieldCheck, Clock, Zap, Wallet, CreditCard, ChevronRight, Check, AlertTriangle, Loader2, User } from "lucide-react"
 import { useUI } from "@/providers/UIProvider"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 interface ServiceDetailClientProps {
@@ -29,7 +30,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
 
   const handleCheckout = async () => {
     if (!isLoggedIn) {
-      addMessage({ type: 'warning', text: 'Vui lòng đăng nhập để sử dụng dịch vụ' })
+      addMessage({ type: 'error', text: 'Vui lòng đăng nhập để sử dụng dịch vụ' })
       return
     }
 

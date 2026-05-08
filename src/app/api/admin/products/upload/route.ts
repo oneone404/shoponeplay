@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const isGif = file.type === "image/gif";
-    let finalBuffer = buffer;
+    let finalBuffer: any = buffer;
     let finalExtension = ".webp";
 
     if (!isGif) {
