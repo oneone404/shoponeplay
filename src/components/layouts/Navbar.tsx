@@ -91,7 +91,6 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
               <NavLink href={ROUTES.SHOP} icon={<LayoutGrid className="w-4 h-4" />}>{t.nav.shop}</NavLink>
               <NavLink href={ROUTES.TOOLS} icon={<Terminal className="w-4 h-4" />}>{t.nav.tools}</NavLink>
               <NavLink href={ROUTES.HISTORY} icon={<History className="w-4 h-4" />}>{t.nav.history}</NavLink>
-              <NavLink href={ROUTES.SERVICES} icon={<Zap className="w-4 h-4" />}>Dịch Vụ</NavLink>
               <NavLink href={ROUTES.HACKS} icon={<Package className="w-4 h-4" />}>{t.nav.hacks}</NavLink>
               <NavLink href={ROUTES.BLOG} icon={<BookOpen className="w-4 h-4" />}>{t.nav.blog}</NavLink>
             </div>
