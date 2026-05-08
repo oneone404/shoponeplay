@@ -9,6 +9,8 @@ export async function updateCardConfig(data: {
   partnerKey: string
   apiUrl: string
   enabled: boolean
+  customDiscountEnabled: boolean
+  telcoDiscounts: Record<string, number>
 }) {
   try {
     const session = await auth()
@@ -20,7 +22,12 @@ export async function updateCardConfig(data: {
       { key: "CARD_PARTNER_ID", value: data.partnerId },
       { key: "CARD_PARTNER_KEY", value: data.partnerKey },
       { key: "CARD_API_URL", value: data.apiUrl },
-      { key: "CARD_ENABLED", value: String(data.enabled) }
+      { key: "CARD_ENABLED", value: String(data.enabled) },
+      { key: "CARD_CUSTOM_DISCOUNT_ENABLED", value: String(data.customDiscountEnabled) },
+      ...Object.entries(data.telcoDiscounts).map(([telco, value]) => ({
+        key: `CARD_DISCOUNT_${telco.toUpperCase()}`,
+        value: String(value)
+      }))
     ]
 
     await Promise.all(

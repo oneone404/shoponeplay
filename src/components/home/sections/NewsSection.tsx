@@ -50,7 +50,7 @@ export function NewsSection({ posts }: NewsSectionProps) {
                    post.category === 'events' ? t.home.events : t.home.news}
                 </span>
               </div>
-              <h4 className="font-bold text-lg md:text-xl uppercase tracking-tighter leading-tight group-hover:text-primary transition-all line-clamp-2">
+              <h4 className="font-bold text-lg md:text-xl uppercase tracking-tighter leading-tight group-hover:text-primary transition-all line-clamp-2 text-center">
                 {post.title}
               </h4>
 

@@ -37,21 +37,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 })
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer())
-    
-    // Process with Sharp: Convert to WebP and compress
-    const optimizedBuffer = await sharp(buffer)
-      .webp({ quality: 80 }) // 80 is sweet spot for web
-      .toBuffer()
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const isGif = file.type === "image/gif";
+    let finalBuffer = buffer;
+    let finalExtension = ".webp";
+
+    if (!isGif) {
+      // Process with Sharp: Convert to WebP and compress for non-gif images
+      finalBuffer = await sharp(buffer)
+        .webp({ quality: 80 })
+        .toBuffer();
+    } else {
+      finalExtension = ".gif";
+    }
     
     // Save to public/uploads/products
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "products")
-    await mkdir(uploadDir, { recursive: true })
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "products");
+    await mkdir(uploadDir, { recursive: true });
 
-    const fileName = `${type || 'product'}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.webp`
-    const filePath = path.join(uploadDir, fileName)
+    const fileName = `${type || 'product'}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}${finalExtension}`;
+    const filePath = path.join(uploadDir, fileName);
     
-    await writeFile(filePath, optimizedBuffer)
+    await writeFile(filePath, finalBuffer);
 
     return NextResponse.json({ 
       url: `/uploads/products/${fileName}`

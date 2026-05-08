@@ -88,8 +88,9 @@ export default function ProductDetail({ product }: { product: any }) {
                         : "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 400px"
                     }
                     className="object-cover transition-transform duration-[1.5s] group-hover:scale-105"
+                    unoptimized={img.toLowerCase().endsWith(".gif")}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />erating.
 
                   {/* Subtle hover indicator */}
                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-[9px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
@@ -241,6 +242,7 @@ export default function ProductDetail({ product }: { product: any }) {
                 sizes="100vw"
                 className="object-contain drop-shadow-2xl"
                 priority
+                unoptimized={images[lightboxIndex].toLowerCase().endsWith(".gif")}
               />
             </div>
 

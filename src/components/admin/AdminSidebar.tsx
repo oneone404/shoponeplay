@@ -38,6 +38,15 @@ export default function AdminSidebar({
       ]
     },
     {
+      href: "/admin/services",
+      label: "Dịch vụ Game",
+      icon: PackageCheck,
+      subItems: [
+        { href: "/admin/services", label: "Tất cả dịch vụ" },
+        { href: "/admin/services/orders", label: "Đơn hàng dịch vụ" },
+      ]
+    },
+    {
       href: "/admin/history",
       label: "LỊCH SỬ",
       icon: History,

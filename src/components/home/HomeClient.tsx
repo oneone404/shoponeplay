@@ -47,8 +47,8 @@ export default function HomeClient({
               className="object-cover transition-transform duration-1000 group-hover:scale-105"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/30 to-transparent z-10" />
-            <div className="absolute inset-0 bg-black/20 z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/10 to-transparent z-10" />
+            <div className="absolute inset-0 bg-black/5 z-10" />
           </div>
 
           {/* CONTENT LAYER */}

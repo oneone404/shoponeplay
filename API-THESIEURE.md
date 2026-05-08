@@ -1,31 +1,63 @@
 CARD PARTNER API
+ĐỔI THẺ
+Api dành cho đối tác bán thẻ cào cho hệ thống
+
 POST
-Lấy trạng thái
-http://{{domain_post}}/api/rechargews
-Hàm này sẽ tải lại thẻ theo mã đơn hàng, không phát sinh giao dịch mới.
-Thứ tự mã hóa chữ ký: md5(partner_key + partner_id + command + request_id)
+Gửi thẻ lên hệ thống
+http://{{domain_post}}/chargingws/v2
+Bạn có thể gửi bằng phương thức get hoặc post tùy thích.
+Chữ ký được mã hóa như sau: md5(partner_key + code + serial)
+Mã lỗi:
+1: Thẻ thành công đúng mệnh giá
+2: Thẻ thành công sai mệnh giá
+3: Thẻ lỗi
+4: Hệ thống bảo trì
+99: Thẻ chờ xử lý
+100: Gửi thẻ thất bại - Có lý do đi kèm ở phần thông báo trả về
+
+HEADERS
+Content-Type
+application/json
 
 Body
-raw (json)
-json
-{
-    "partner_id": "3681148751", 
-    "command":"getstatus", 
-    "request_id": "116",
-    "order_code": "R625931CC50F71",
-    "sign":"43567456546dfs32465asdkg123"
-}
+formdata
+telco
+MOBIFONE
+
+code
+664196324427
+
+serial
+089801001443088
+
+amount
+50000
+
+request_id
+32323333
+
+partner_id
+8740404061
+
+sign
+9a0ac309d8047b49f49a43bfdb8d0d51
+
+command
+charging
+
 Example Request
-Get Status
+Gửi thẻ lên hệ thống
 curl
-curl --location -g 'http://{{domain_post}}/api/rechargews' \
---data '{
-    "partner_id": "3681148751", 
-    "command":"getstatus", 
-    "request_id": "116",
-    "order_code": "R625931CC50F71",
-    "sign":"43567456546dfs32465asdkg123"
-}'
+curl --location -g 'http://{{domain_post}}/chargingws/v2' \
+--header 'Content-Type: application/json' \
+--form 'telco="VIETTEL"' \
+--form 'code="312821445892982"' \
+--form 'serial="10004783347874"' \
+--form 'amount="50000"' \
+--form 'request_id="323233"' \
+--form 'partner_id="3681148751"' \
+--form 'sign="19db4f1670100764069dba47429a9d94"' \
+--form 'command="charging"'
 200 OK
 Example Response
 Body
@@ -33,41 +65,65 @@ Headers (12)
 View More
 json
 {
-  "status": "success",
-  "data": {
-    "account": {
-      "phone": "0943793984"
-    },
-    "request_value": 10000,
-    "amount": 10000,
-    "request_id": "116",
-    "order_code": "R625931CC50F71",
-    "status": "pending"
-  }
+  "trans_id": 8,
+  "request_id": "323233",
+  "amount": 35000,
+  "value": null,
+  "declared_value": 50000,
+  "telco": "VIETTEL",
+  "serial": "10004783347874",
+  "code": "312821445892982",
+  "status": 99,
+  "message": "PENDING"
 }
 POST
-Lấy danh sách sản phẩm
-http://{{domain_post}}/api/rechargews
-Hàm này sẽ tải tất cả thông tin về sản phẩm mà chúng tôi đang bán.
-Thứ tự mã hóa chữ ký: md5(partner_key + partner_id + command)
+Kiểm tra trạng thái thẻ
+http://{{domain_post}}/chargingws/v2
+Bạn có thể gửi bằng phương thức get hoặc post tùy thích. Chữ ký được mã hóa như sau: md5(partner_key + code + serial)
+
+HEADERS
+Content-Type
+application/json
 
 Body
-raw (json)
-json
-{
-    "partner_id": "45974491332", 
-    "command":"productlist", 
-    "sign":"43567456546dfs32465asdkg123"
-}
+formdata
+telco
+VIETTEL
+
+code
+312821445892982
+
+serial
+10004783347874
+
+amount
+50000
+
+request_id
+323233
+
+partner_id
+3681148751
+
+sign
+19db4f1670100764069dba47429a9d94
+
+command
+check
+
 Example Request
-Get Product Info
+Kiểm tra trạng thái thẻ
 curl
-curl --location -g 'http://{{domain_post}}/api/rechargews' \
---data '{
-    "partner_id": "3681148751", 
-    "command":"productlist", 
-    "sign":"43567456546dfs32465asdkg123"
-}'
+curl --location -g 'http://{{domain_post}}/chargingws/v2' \
+--header 'Content-Type: application/json' \
+--form 'telco="VIETTEL"' \
+--form 'code="312821445892982"' \
+--form 'serial="10004783347874"' \
+--form 'amount="50000"' \
+--form 'request_id="323233"' \
+--form 'partner_id="3681148751"' \
+--form 'sign="19db4f1670100764069dba47429a9d94"' \
+--form 'command="check"'
 200 OK
 Example Response
 Body
@@ -75,1029 +131,207 @@ Headers (12)
 View More
 json
 {
-  "status": "success",
-  "data": [
+  "trans_id": 8,
+  "request_id": "323233",
+  "status": 99,
+  "message": "PENDING",
+  "telco": "VIETTEL",
+  "code": "312821445892982",
+  "serial": "10004783347874",
+  "declared_value": 50000,
+  "value": null,
+  "amount": 35000
+}
+POST
+Gọi về cho bạn bằng POST JSON
+http://yourdomain.com/charge/callback
+Bạn nhận callback kết quả xử lý thẻ từ chúng tôi bằng phương thức POST. Chúng tôi gửi Json cho các bạn nhé.
+Chữ ký của callback_sign sẽ là: md5(partner_key + code + serial)
+
+Body
+raw (json)
+View More
+json
+{"status":1,"message":"Th\u00e0nh c\u00f4ng","request_id":"989876","declared_value":50000,"value":50000,"amount":25000,"code":"314688440422676","serial":"10003395125761","telco":"VIETTEL","trans_id":54180,"callback_sign":"17b118fe86852c52ea126c9537617f6d"}
+Example Request
+callback-post - kết quả
+View More
+curl
+curl --location 'http://yourdomain.com/charge/callback' \
+--data '{"status":1,"message":"Th\u00e0nh c\u00f4ng","request_id":"989876","declared_value":50000,"value":50000,"amount":25000,"code":"314688440422676","serial":"10003395125761","telco":"VIETTEL","trans_id":54180,"callback_sign":"17b118fe86852c52ea126c9537617f6d"}'
+200 OK
+Example Response
+Body
+Headers (0)
+View More
+json
+{
+  "status": 1,
+  "message": "Thành công",
+  "request_id": "989876",
+  "declared_value": 50000,
+  "value": 50000,
+  "amount": 25000,
+  "code": "314688440422676",
+  "serial": "10003395125761",
+  "telco": "VIETTEL",
+  "trans_id": 54180,
+  "callback_sign": "17b118fe86852c52ea126c9537617f6d"
+}
+GET
+Gọi về cho bạn bằng GET
+http://yourdomain.com/charge/callback?status=1&message=Thành công&request_id=989876&declared_value=50000&card_value=50000&value=50000&amount=25000&code=314688440422676&serial=10003395125761&telco=VIETTEL&trans_id=343424&callback_sign=17b118fe86852c52ea126c9537617f6d
+Bạn nhận callback kết quả xử lý thẻ từ chúng tôi bằng phương thức GET
+
+PARAMS
+status
+1
+
+message
+Thành công
+
+request_id
+989876
+
+declared_value
+50000
+
+Mệnh giá khai báo
+
+card_value
+50000
+
+Mệnh giá thực của thẻ
+
+value
+50000
+
+Mệnh giá tính tiền
+
+amount
+25000
+
+Số tiền nhận được
+
+code
+314688440422676
+
+serial
+10003395125761
+
+telco
+VIETTEL
+
+trans_id
+343424
+
+Mã giao dịch bên chúng tôi
+
+callback_sign
+17b118fe86852c52ea126c9537617f6d
+
+Chữ ký bảo vệ
+
+Example Request
+callback-get
+View More
+curl
+curl --location 'http://yourdomain.com/charge/callback?status=1&message=Th%C3%A0nh%20c%C3%B4ng&request_id=989876&declared_value=50000&value=50000&amount=25000&code=314688440422676&serial=10003395125761&telco=VIETTEL&trans_id=343424&callback_sign=17b118fe86852c52ea126c9537617f6d'
+Example Response
+Body
+Headers (0)
+No response body
+This request doesn't return any response body
+GET
+Lấy giá tẩy thẻ
+http://{{domain_post}}/chargingws/v2/getfee?partner_id=0299338261
+Bạn nhận callback kết quả xử lý thẻ từ chúng tôi bằng phương thức GET
+
+PARAMS
+partner_id
+0299338261
+
+Example Request
+Lấy giá đổi thẻ
+curl
+curl --location -g 'http://{{domain_post}}/chargingws/price?partner_id=3681148751'
+200 OK
+Example Response
+Body
+Headers (12)
+View More
+json
+{
+  "VIETTEL": [
     {
-      "name": "Nạp Viettel trả sau",
-      "service_code": "viettelts",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/thecao/the-viettel.png",
-      "items": [
-        {
-          "name": "10,000 đ",
-          "value": 10000,
-          "price": "10000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "20,000 đ",
-          "value": 20000,
-          "price": "20000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "30,000 đ",
-          "value": 30000,
-          "price": "30000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "300,000 đ",
-          "value": 300000,
-          "price": "300000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": 0
-        }
-      ]
+      "telco": "VIETTEL",
+      "value": 10000,
+      "fees": 30,
+      "penalty": 20
     },
     {
-      "name": "Nạp Viettel trả trước",
-      "service_code": "vietteltt",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/thecao/the-viettel.png",
-      "items": [
-        {
-          "name": "10,000 đ",
-          "value": 10000,
-          "price": "10000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "20,000 đ",
-          "value": 20000,
-          "price": "20000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "30,000 đ",
-          "value": 30000,
-          "price": "30000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "300,000 đ",
-          "value": 300000,
-          "price": "300000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
+      "telco": "VIETTEL",
+      "value": 20000,
+      "fees": 30,
+      "penalty": 20
     },
     {
-      "name": "Nạp Vinaphone trả trước",
-      "service_code": "vinatt",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/thecao/the-vinaphone.jpeg",
-      "items": [
-        {
-          "name": "20,000 đ",
-          "value": 20000,
-          "price": "20000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "30,000 đ",
-          "value": 30000,
-          "price": "30000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "300,000 đ",
-          "value": 300000,
-          "price": "300000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "10,000 đ",
-          "value": 10000,
-          "price": "10000",
-          "currency_code": "VND",
-          "discount": 0
-        }
-      ]
+      "telco": "VIETTEL",
+      "value": 50000,
+      "fees": 30,
+      "penalty": 20
     },
     {
-      "name": "Nạp Vinaphone trả sau",
-      "service_code": "vinats",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/thecao/the-vinaphone.jpeg",
-      "items": [
-        {
-          "name": "20,000 đ",
-          "value": 20000,
-          "price": "20000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "30,000 đ",
-          "value": 30000,
-          "price": "30000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "300,000 đ",
-          "value": 300000,
-          "price": "300000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "10,000 đ",
-          "value": 10000,
-          "price": "10000",
-          "currency_code": "VND",
-          "discount": 0
-        }
-      ]
-    },
-    {
-      "name": "Nạp Mobifone trả sau",
-      "service_code": "mobits",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/thecao/the-mobifone.jpeg",
-      "items": [
-        {
-          "name": "20,000 đ",
-          "value": 20000,
-          "price": "20000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "30,000 đ",
-          "value": 30000,
-          "price": "30000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "300,000 đ",
-          "value": 300000,
-          "price": "300000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "10,000 đ",
-          "value": 10000,
-          "price": "10000",
-          "currency_code": "VND",
-          "discount": 0
-        }
-      ]
-    },
-    {
-      "name": "Nạp Mobifone trả trước",
-      "service_code": "mobitt",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/thecao/the-mobifone.jpeg",
-      "items": [
-        {
-          "name": "20,000 đ",
-          "value": 20000,
-          "price": "20000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "30,000 đ",
-          "value": 30000,
-          "price": "30000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "300,000 đ",
-          "value": 300000,
-          "price": "300000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "10,000 đ",
-          "value": 10000,
-          "price": "10000",
-          "currency_code": "VND",
-          "discount": 0
-        }
-      ]
-    },
-    {
-      "name": "Nạp Vietnamobile trả trước",
-      "service_code": "vnmobilett",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/thecao/the-vietnamobile.jpeg",
-      "items": [
-        {
-          "name": "20,000 đ",
-          "value": 20000,
-          "price": "20000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "30,000 đ",
-          "value": 30000,
-          "price": "30000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "300,000 đ",
-          "value": 300000,
-          "price": "300000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": 0
-        },
-        {
-          "name": "10,000 đ",
-          "value": 10000,
-          "price": "10000",
-          "currency_code": "VND",
-          "discount": 0
-        }
-      ]
-    },
-    {
-      "name": "Avatar 3",
-      "service_code": "av3",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/avatar3.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Avatar Musik",
-      "service_code": "am",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/avatarmusik.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Ninja",
-      "service_code": "nj",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/ninjaschool.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Ngọc Rồng",
-      "service_code": "nr",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/ngocrong.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Hiệp Sĩ Online",
-      "service_code": "hs",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/hiepsionline.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Sơn Thủy Phân Tranh",
-      "service_code": "stpt",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/sonthuyphantranh.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "KPAH",
-      "service_code": "kpah",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/kran.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "KPAH 3D",
-      "service_code": "kpah3d",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/kran3d.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Mobi Army 2",
-      "service_code": "army2",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/army2.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Mobi Army 3",
-      "service_code": "army3",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/army3.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Ongame",
-      "service_code": "ongame",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/ongame.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Avatar",
-      "service_code": "avatar",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/avatar.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
-    },
-    {
-      "name": "Hải Tặc Tí Hon",
-      "service_code": "ht",
-      "image": "http://api.netpaydev.vn/storage/userfiles/images/topup/haitactihon.jpg",
-      "items": [
-        {
-          "name": "50,000 đ",
-          "value": 50000,
-          "price": "50000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "100,000 đ",
-          "value": 100000,
-          "price": "100000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "200,000 đ",
-          "value": 200000,
-          "price": "200000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "500,000 đ",
-          "value": 500000,
-          "price": "500000",
-          "currency_code": "VND",
-          "discount": "4"
-        },
-        {
-          "name": "1,000,000 đ",
-          "value": 1000000,
-          "price": "1000000",
-          "currency_code": "VND",
-          "discount": "4"
-        }
-      ]
+      "telco": "VIETTEL",
+      "value": 100000,
+      "fees": 30,
+      "penalty": 20
     }
-  ]
+  ],
+  "VINAPHONE": [],
+  "MOBIFONE": [],
+  "GATE": [],
+  "ZING": []
 }
-POST
-Lấy số dư
-http://{{domain_post}}/api/rechargews
-Hàm này sẽ tải lại thẻ theo mã đơn hàng, không phát sinh giao dịch mới.
-Thứ tự mã hóa chữ ký: md5(partner_key + partner_id + command)
+KIỂM TRA SERI
+Api dành cho đối tác kiểm tra seri thẻ cào
 
-Body
-raw (json)
-json
-{
-    "partner_id": "3681148751", 
-    "command":"getbalance", 
-    "sign":"43567456546dfs32465asdkg123"
-}
+POST
+Kiểm tra seri
+http://{{domain_post}}/api/checkcard?telco=VIETTEL&serial=20000203625855&partner_id=44492838431&sign=77453e6def6c29d40fa6e2536f31c552
+PARAMS
+telco
+VIETTEL
+
+serial
+20000203625855
+
+partner_id
+44492838431
+
+sign
+77453e6def6c29d40fa6e2536f31c552
+
+md5(partner_key+serial) - ghép liền 2 dữ liệu
+
 Example Request
-Get Balance
+Kiểm tra seri
+View More
 curl
-curl --location -g 'http://{{domain_post}}/api/rechargews' \
---data '{
-    "partner_id": "3681148751", 
-    "command":"getbalance", 
-    "sign":"43567456546dfs32465asdkg123"
-}'
+curl --location -g --request POST 'http://{{domain_post}}/api/checkcard?telco=VIETTEL&serial=20000203625855&partner_id=44492838431&sign=77453e6def6c29d40fa6e2536f31c552'
 200 OK
 Example Response
 Body
-Headers (12)
+Headers (7)
 json
 {
   "status": "success",
   "data": {
-    "balance": 85465019,
-    "currency": "VND"
+    "status": "checked",
+    "serial": "20000203625855",
+    "card_status": "unavailable",
+    "value": 50000,
+    "date_used": "20/11/2022",
+    "acc_charged": "986"
   }
 }

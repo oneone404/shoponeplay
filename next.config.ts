@@ -5,6 +5,15 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   allowedDevOrigins: ['shoponeplay.com'],
   images: {
+    qualities: [75],
+    localPatterns: [
+      {
+        pathname: '/uploads/**',
+      },
+      {
+        pathname: '/images/**',
+      }
+    ],
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,6 +26,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'accone.vn',
       }
     ],
   },

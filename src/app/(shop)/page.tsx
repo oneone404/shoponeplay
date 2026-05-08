@@ -44,6 +44,12 @@ export default async function Home() {
     take: 3
   });
 
+  const gameServices = await prisma.gameService.findMany({
+    where: { status: 'ACTIVE' },
+    take: 4,
+    orderBy: { createdAt: 'desc' }
+  });
+
   const notifications = [
     "User *******123 vừa nạp 100.000 VND thành công",
     "Chúc mừng user *******789 vừa mua Tài khoản PlayTogether [PLAY TOGETHER VNG]",
@@ -100,7 +106,7 @@ export default async function Home() {
         )}
 
         {/* SECTION: DỊCH VỤ GAME */}
-        <ServiceSection />
+        <ServiceSection services={JSON.parse(JSON.stringify(gameServices))} />
 
         {/* SECTION: LATEST NEWS / ARTICLES */}
         <NewsSection posts={JSON.parse(JSON.stringify(latestPosts))} />

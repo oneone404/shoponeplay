@@ -233,7 +233,7 @@ export default function CategoryForm({
               >
                 {formData.image ? (
                   <>
-                    <Image src={formData.image} alt="Category image" fill className="object-cover" />
+                    <Image src={formData.image} alt="Category image" fill className="object-cover" unoptimized={formData.image.toLowerCase().endsWith(".gif")} />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Upload className="w-6 h-6 text-white" />
                     </div>

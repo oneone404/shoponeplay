@@ -97,8 +97,8 @@ export default function OrdersClient() {
         {/* Header Section */}
         <PageHeader
           subtitle=" Quản Lý Đơn Hàng Đã Mua"
-          title="LỊCH SỬ"
-          highlightTitle="ĐƠN HÀNG"
+          title="ĐƠN HÀNG"
+          highlightTitle="ĐÃ MUA"
           className="!px-0"
         />
 
@@ -117,7 +117,7 @@ export default function OrdersClient() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Tìm Mã Đơn, Tên..."
+                placeholder="Tìm Mã Đơn, Tên Sản Phẩm..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-xl text-sm font-bold outline-none focus:border-primary/50 transition-colors shadow-sm"
@@ -274,13 +274,13 @@ export default function OrdersClient() {
 
 function SummaryCard({ label, value, icon, color }: { label: string; value: string; icon: React.ReactNode; color: string }) {
   return (
-    <div className="p-5 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all group">
+    <div className="p-4 bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all group">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{label}</p>
-          <p className="text-2xl font-bold mt-2 text-foreground tabular-nums tracking-tight">{value}</p>
+          <p className="text-xl font-bold mt-1.5 text-foreground tabular-nums tracking-tight">{value}</p>
         </div>
-        <div className={cn("w-11 h-11 rounded-xl bg-secondary flex items-center justify-center transition-transform group-hover:scale-110", color)}>{icon}</div>
+        <div className={cn("w-10 h-10 rounded-xl bg-secondary flex items-center justify-center transition-transform group-hover:scale-110", color)}>{icon}</div>
       </div>
     </div>
   )

@@ -1,7 +1,13 @@
+import { Metadata } from "next"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import AdminCardsClient from "@/components/admin/settings/AdminCardsClient"
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+
+export const metadata: Metadata = {
+  title: ADMIN_ROUTES.CARDS.title,
+}
 
 export default async function AdminCardsPage() {
   const session = await auth()
@@ -12,11 +18,19 @@ export default async function AdminCardsPage() {
 
   const configs = await prisma.config.findMany({
     where: {
-      key: { in: ["CARD_PARTNER_ID", "CARD_PARTNER_KEY", "CARD_API_URL", "CARD_ENABLED"] }
+      key: { 
+        startsWith: "CARD_",
+      }
     }
   })
 
   const configMap = new Map(configs.map(c => [c.key, c.value]))
+
+  const telcos = ["VIETTEL", "MOBIFONE", "VINAPHONE", "ZING", "GARENA"]
+  const telcoDiscounts: Record<string, number> = {}
+  telcos.forEach(t => {
+    telcoDiscounts[t] = Number(configMap.get(`CARD_DISCOUNT_${t}`) ?? "20")
+  })
   
   return (
     <AdminCardsClient 
@@ -24,6 +38,8 @@ export default async function AdminCardsPage() {
       initialPartnerKey={configMap.get("CARD_PARTNER_KEY") ?? ""}
       initialApiUrl={configMap.get("CARD_API_URL") ?? "thesieure.com"}
       initialEnabled={configMap.get("CARD_ENABLED") === "true"}
+      initialCustomDiscountEnabled={configMap.get("CARD_CUSTOM_DISCOUNT_ENABLED") === "true"}
+      initialTelcoDiscounts={telcoDiscounts}
     />
   )
 }

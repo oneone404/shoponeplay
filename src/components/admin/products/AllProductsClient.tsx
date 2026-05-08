@@ -257,7 +257,7 @@ export default function AllProductsClient({
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="relative w-16 aspect-video rounded-lg overflow-hidden border border-border bg-secondary shrink-0 group/img">
-                        <Image src={product.thumbnail || "/images/product.png"} alt="" fill className="object-cover group-hover/img:scale-110 transition-transform duration-300" />
+                        <Image src={product.thumbnail || "/images/product.png"} alt="" fill className="object-cover group-hover/img:scale-110 transition-transform duration-300" unoptimized={(product.thumbnail || "").toLowerCase().endsWith(".gif")} />
                       </div>
                       <div className="min-w-0">
                         <p className="font-bold text-foreground truncate max-w-[200px]">{product.category.name}</p>

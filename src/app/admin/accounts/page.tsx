@@ -1,7 +1,13 @@
+import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import AdminAccountsHistoryClient from "@/components/admin/transactions/AdminAccountsHistoryClient"
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+
+export const metadata: Metadata = {
+  title: ADMIN_ROUTES.ACCOUNTS_HISTORY.title,
+}
 
 export const dynamic = 'force-dynamic'
 

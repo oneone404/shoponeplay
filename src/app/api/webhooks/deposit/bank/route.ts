@@ -55,7 +55,11 @@ export async function POST(req: Request) {
     for (const tx of txArray) {
       // Normalize fields (Pay2S vs standard)
       const id = String(tx.id || tx.transaction_id || "")
-      const amount = parseFloat(tx.transferAmount || tx.amount || 0)
+      let amount = parseFloat(tx.transferAmount || tx.amount || 0)
+
+      // ROUND DOWN TO NEAREST 1000 (e.g., 19500 -> 19000, 19900 -> 19000)
+      amount = Math.floor(amount / 1000) * 1000
+
       const content = tx.content || tx.description || ""
       const gateway = tx.gateway || tx.bank_name || "BANK"
 

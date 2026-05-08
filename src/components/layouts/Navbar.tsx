@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn, Store, ChevronRight, ChevronLeft } from "lucide-react"
+import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn, Store, ChevronRight, ChevronLeft, Zap } from "lucide-react"
 import { useTheme } from "@/providers/ThemeProvider"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
@@ -13,7 +13,9 @@ import { useUI } from "@/providers/UIProvider"
 import { getMembershipTier } from "@/lib/membership"
 import { useCart } from "@/providers/CartProvider"
 import { ROUTES } from "@/lib/routes"
+import { USER_ROUTES } from "@/lib/config/user-routes"
 import { useLanguage } from "@/providers/LanguageProvider"
+import { ArrowRightLeft, Building2, CreditCard } from "lucide-react"
 
 export default function Navbar({ logoUrl }: { logoUrl?: string }) {
   const router = useRouter()
@@ -89,6 +91,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
               <NavLink href={ROUTES.SHOP} icon={<LayoutGrid className="w-4 h-4" />}>{t.nav.shop}</NavLink>
               <NavLink href={ROUTES.TOOLS} icon={<Terminal className="w-4 h-4" />}>{t.nav.tools}</NavLink>
               <NavLink href={ROUTES.HISTORY} icon={<History className="w-4 h-4" />}>{t.nav.history}</NavLink>
+              <NavLink href={ROUTES.SERVICES} icon={<Zap className="w-4 h-4" />}>Dịch Vụ</NavLink>
               <NavLink href={ROUTES.HACKS} icon={<Package className="w-4 h-4" />}>{t.nav.hacks}</NavLink>
               <NavLink href={ROUTES.BLOG} icon={<BookOpen className="w-4 h-4" />}>{t.nav.blog}</NavLink>
             </div>
@@ -243,7 +246,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                           {/* Section 2: User Core */}
                           <div className="space-y-0.5">
                             <p className="px-5 py-1 text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tài khoản của tôi</p>
-                            <DropdownItem href={ROUTES.USER.SETTINGS} icon={<User className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, ROUTES.USER.SETTINGS)}>{t.nav.user_profile}</DropdownItem>
+                            <DropdownItem href={USER_ROUTES.SETTINGS.path} icon={<User className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, USER_ROUTES.SETTINGS.path)}>{t.nav.user_profile}</DropdownItem>
 
                             {/* History Switcher Button */}
                             <button
@@ -258,7 +261,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                             </button>
 
                             <DropdownItem href={ROUTES.BLOG} icon={<BookOpen className="w-4 h-4" />} onClick={closeAll}>{t.nav.blog_news}</DropdownItem>
-                            <DropdownItem href={ROUTES.USER.SETTINGS} icon={<Settings className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, ROUTES.USER.SETTINGS)}>{t.nav.settings}</DropdownItem>
+                            <DropdownItem href={USER_ROUTES.SETTINGS.path} icon={<Settings className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, USER_ROUTES.SETTINGS.path)}>{t.nav.settings}</DropdownItem>
                           </div>
                         </motion.div>
                       )}
@@ -282,10 +285,11 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                             </button>
                           </div>
 
-                          <DropdownItem href={ROUTES.ORDERS} icon={<Package className="w-4 h-4" />} onClick={closeAll}>Đơn Hàng Đã Mua</DropdownItem>
-                          <DropdownItem href="/orders/balance" icon={<Terminal className="w-4 h-4" />} onClick={closeAll}>Biến Động Số Dư</DropdownItem>
-                          <DropdownItem href="/orders/bank" icon={<Globe className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Bank</DropdownItem>
-                          <DropdownItem href="/orders/card" icon={<History className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Card</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.ORDERS.path} icon={<Package className="w-4 h-4" />} onClick={closeAll}>Đơn Hàng Đã Mua</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.BALANCE.path} icon={<ArrowRightLeft className="w-4 h-4" />} onClick={closeAll}>Biến Động Số Dư</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.BANK.path} icon={<Building2 className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Bank</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.SERVICES.path} icon={<Zap className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Dịch Vụ</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.CARD.path} icon={<CreditCard className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Card</DropdownItem>
                         </motion.div>
                       )}
                     </AnimatePresence>

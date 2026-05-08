@@ -7,15 +7,10 @@ import { cn } from "@/lib/utils"
 import { ROUTES } from "@/lib/routes"
 import { useLanguage } from "@/providers/LanguageProvider"
 
-export function ServiceSection() {
+export function ServiceSection({ services = [] }: { services?: any[] }) {
   const { t } = useLanguage();
 
-  const SERVICES = [
-    { title: t.home.service_list.leveling, sub: t.home.service_list.leveling_sub, img: "/images/categories/cat_service.png", color: "emerald" },
-    { title: t.home.service_list.diamond, sub: t.home.service_list.diamond_sub, img: "/images/categories/cat_service.png", color: "blue" },
-    { title: t.home.service_list.insurance, sub: t.home.service_list.insurance_sub, img: "/images/categories/cat_service.png", color: "secondary" },
-    { title: t.home.service_list.giftbox, sub: t.home.service_list.giftbox_sub, img: "/images/categories/cat_service.png", color: "amber" }
-  ]
+  if (services.length === 0) return null;
 
   return (
     <section>
@@ -30,36 +25,34 @@ export function ServiceSection() {
 
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-6">
-        {SERVICES.map((srv, idx) => (
-          <Link key={idx} href={ROUTES.SHOP} className="group bg-card border border-border/60 rounded-xl overflow-hidden shadow-md transition-all duration-500 active:scale-[0.97]">
-            <div className="aspect-[16/9] relative overflow-hidden">
-              <Image
-                src={srv.img}
-                alt={srv.title}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
-                className="object-cover transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60" />
+        {services.map((srv, idx) => (
+          <Link key={idx} href={`/services/${srv.slug}`} className="group bg-card border border-border rounded-xl overflow-hidden shadow-md transition-all duration-500 active:scale-[0.97]">
+            <div className="p-1.5 md:p-3 pb-0">
+              <div className="aspect-[16/9] relative overflow-hidden rounded-2xl border-2 md:border-4 border-background shadow-sm">
+                <Image
+                  src={srv.thumbnail}
+                  alt={srv.name}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              </div>
             </div>
 
             <div className="p-4 md:p-6">
-              <div className="mb-4">
+              <div className="mb-4 text-center">
                 <h3 className="text-xs md:text-sm font-bold uppercase tracking-tighter text-foreground line-clamp-1 group-hover:text-foreground transition-colors mb-1">
-                  {srv.title}
+                  {srv.name}
                 </h3>
-
               </div>
 
-              <div className="pt-3 border-t border-border/50">
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] md:text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t.common.status}</span>
-                  <span className="text-[9px] md:text-xs font-bold text-emerald-600 uppercase tracking-widest">Sẵn sàng</span>
-                </div>
+              <div className="flex items-center justify-center gap-1.5 py-1.5 bg-background/50 border border-border rounded-full shadow-sm md:py-2">
+                <span className="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{t.common.status}:</span>
+                <span className="text-[9px] md:text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest leading-none">Sẵn sàng</span>
               </div>
 
               <div className="mt-5">
-                <div className="w-full py-2.5 md:py-3.5 bg-secondary/20 border border-border/80 text-muted-foreground rounded-xl text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all duration-300 active:scale-[0.95] flex items-center justify-center group-hover:bg-foreground group-hover:border-foreground group-hover:text-background">
+                <div className="w-full py-2.5 bg-secondary/50 border border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center group/btn">
                   <span>{t.common.view_more.toUpperCase()}</span>
                 </div>
               </div>

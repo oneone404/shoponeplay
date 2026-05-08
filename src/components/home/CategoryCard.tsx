@@ -23,52 +23,49 @@ export function CategoryCard({ title, slug, remaining, sold, minPrice, image, ta
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
-      className="group relative bg-card border border-border/60 rounded-xl overflow-hidden transition-all duration-500 shadow-md"
+      className="group relative bg-card border border-border rounded-xl overflow-hidden transition-all duration-500 shadow-md"
     >
-      <div className="aspect-[16/9] relative overflow-hidden">
-        <Image
-          src={image}
-          alt={title}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover transition-transform duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60" />
+      <div className="p-1.5 md:p-3 pb-0">
+        <div className="aspect-[16/9] relative overflow-hidden rounded-2xl border-2 md:border-4 border-background shadow-sm">
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            unoptimized={image.toLowerCase().endsWith(".gif")}
+          />
 
-        {tag && (
-          <div className="absolute top-4 left-4 bg-accent px-3 py-1 rounded-lg shadow-lg">
-            <span className="text-[10px] font-bold text-white uppercase tracking-widest">{tag}</span>
-          </div>
-        )}
+          {tag && (
+            <div className="absolute top-3 left-3 bg-accent/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-lg">
+              <span className="text-[9px] font-bold text-white uppercase tracking-widest">{tag}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="p-4 md:p-6 bg-card">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col items-center text-center">
           <h3 className="text-xs md:text-sm font-bold uppercase tracking-tighter text-foreground line-clamp-1 transition-colors mb-1 group-hover:text-foreground/80">
             {title}
           </h3>
-          <div className="flex items-center space-x-2 text-[9px] font-bold text-muted-foreground uppercase tracking-widest opacity-80">
-            <div className="w-5 h-5 rounded-lg bg-accent/10 text-accent flex items-center justify-center transition-all duration-300">
-              <ShoppingCart className="w-3 h-3" />
-            </div>
-            <span className="flex items-center gap-1">{t.common.sold}: <span className="text-foreground font-bold">{sold}</span></span>
-          </div>
+
         </div>
 
-        <div className="flex items-center justify-between mb-4 pb-4 border-b border-border/50">
-          <div className="flex flex-col">
-            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{t.common.starting_from}</span>
-            <span className="text-sm font-bold tracking-tighter text-primary">{minPrice} <span className="text-[10px]">VND</span></span>
+        <div className="flex items-center gap-1.5 mb-4 px-1 md:gap-2">
+          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-background/50 border border-border rounded-full shadow-sm md:py-2">
+            <span className="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{t.common.sold}:</span>
+            <span className="text-[9px] md:text-[11px] font-black text-red-500 dark:text-red-400 leading-none">{sold}</span>
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{t.common.remaining}</span>
-            <span className="text-sm font-bold tracking-tighter text-foreground">{remaining}</span>
+          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-background/50 border border-border rounded-full shadow-sm md:py-2">
+            <span className="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{t.common.remaining}:</span>
+            <span className="text-[9px] md:text-[11px] font-black text-emerald-600 dark:text-emerald-400 leading-none">{remaining}</span>
           </div>
         </div>
 
         <div className="mt-4 md:mt-6">
           <Link href={ROUTES.SHOP_CATEGORY(slug)} className="block">
-            <button className="w-full py-2.5 md:py-3.5 bg-secondary/20 border border-border/80 text-muted-foreground rounded-xl text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all duration-300 active:scale-[0.95] group/btn flex items-center justify-center hover:bg-foreground hover:border-foreground hover:text-background">
+            <button className="w-full py-2.5 bg-secondary/50 border border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center group/btn">
               <span>{t.common.view_detail}</span>
             </button>
           </Link>

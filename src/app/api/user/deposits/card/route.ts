@@ -72,17 +72,20 @@ export async function POST(req: Request) {
 
       const result = await response.json()
 
-      // Handle Immediate Response
-      if (result.status === "success" || result.status === 200 || result.status === "1" || result.status === 1) {
+      // Handle Immediate Response (1: Success, 2: Success wrong value, 99: Pending)
+      const successStatuses = [1, "1", 2, "2", 99, "99", 200, "success", "PENDING"]
+      const isAccepted = successStatuses.includes(result.status)
+      if (isAccepted) {
         // Success in sending, now wait for webhook callback
         return NextResponse.json({ success: true, depositId: deposit.id })
       } else {
-        // API returned error
+        // API returned error - Store raw message for admin
+        const rawError = result.message || "Partner API rejected the card"
         await prisma.cardDeposit.update({
           where: { id: deposit.id },
-          data: { status: "FAILED", note: result.message || "API Error" }
+          data: { status: "FAILED", note: rawError }
         })
-        return NextResponse.json({ error: result.message || "Partner API rejected the card" }, { status: 400 })
+        return NextResponse.json({ error: "Thẻ Cào Không Đúng" }, { status: 400 })
       }
 
     } catch (apiError) {

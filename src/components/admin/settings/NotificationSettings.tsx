@@ -9,6 +9,7 @@ export default function NotificationSettings() {
   const [isLoading, setIsLoading] = useState(false)
   const [savingSection, setSavingSection] = useState<string | null>(null)
   const [isSendingTest, setIsSendingTest] = useState(false)
+  const [isSettingUpVPS, setIsSettingUpVPS] = useState(false)
   const [testType, setTestType] = useState<"withdraw" | "order">("withdraw")
   const { addMessage } = useUI()
 
@@ -17,7 +18,9 @@ export default function NotificationSettings() {
     TELEGRAM_ID: "",
     TELEGRAM_ENABLED: "false",
     TELEGRAM_NOTIFY_ORDER: "true",
-    TELEGRAM_NOTIFY_WITHDRAW: "true"
+    TELEGRAM_NOTIFY_WITHDRAW: "true",
+    BACKUP_ENABLED: "false",
+    BACKUP_PASSWORD: ""
   })
 
   useEffect(() => {
@@ -27,7 +30,7 @@ export default function NotificationSettings() {
   const fetchConfigs = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch("/api/admin/config?keys=TELEGRAM_TOKEN,TELEGRAM_ID,TELEGRAM_ENABLED,TELEGRAM_NOTIFY_ORDER,TELEGRAM_NOTIFY_WITHDRAW")
+      const res = await fetch("/api/admin/config?keys=TELEGRAM_TOKEN,TELEGRAM_ID,TELEGRAM_ENABLED,TELEGRAM_NOTIFY_ORDER,TELEGRAM_NOTIFY_WITHDRAW,BACKUP_ENABLED,BACKUP_PASSWORD")
       const data = await res.json()
       if (res.ok) {
         setFormData({
@@ -35,7 +38,9 @@ export default function NotificationSettings() {
           TELEGRAM_ID: data.TELEGRAM_ID || "",
           TELEGRAM_ENABLED: data.TELEGRAM_ENABLED || "false",
           TELEGRAM_NOTIFY_ORDER: data.TELEGRAM_NOTIFY_ORDER || "true",
-          TELEGRAM_NOTIFY_WITHDRAW: data.TELEGRAM_NOTIFY_WITHDRAW || "true"
+          TELEGRAM_NOTIFY_WITHDRAW: data.TELEGRAM_NOTIFY_WITHDRAW || "true",
+          BACKUP_ENABLED: data.BACKUP_ENABLED || "false",
+          BACKUP_PASSWORD: data.BACKUP_PASSWORD || ""
         })
       }
     } catch (err) {
@@ -86,6 +91,26 @@ export default function NotificationSettings() {
       addMessage({ type: 'error', text: err.message || "Không thể gửi tin nhắn test. Hãy kiểm tra Token và ID." })
     } finally {
       setIsSendingTest(false)
+    }
+  }
+
+  const handleSetupVPS = async () => {
+    setIsSettingUpVPS(true)
+    try {
+      const res = await fetch("/api/admin/system/setup-backup", {
+        method: "POST"
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        addMessage({ type: 'success', text: "Cài đặt tự động thành công! Script đã được tạo và đăng ký Cron Job." })
+      } else {
+        throw new Error(data.error || "Lỗi khi cài đặt VPS")
+      }
+    } catch (err: any) {
+      addMessage({ type: 'error', text: err.message || "Không thể cài đặt tự động. Có thể VPS không hỗ trợ hoặc lỗi quyền hạn." })
+    } finally {
+      setIsSettingUpVPS(false)
     }
   }
 
@@ -251,6 +276,78 @@ export default function NotificationSettings() {
                   {formData.TELEGRAM_NOTIFY_ORDER === "true" ? "BẬT" : "TẮT"}
                 </span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Auto Backup Config */}
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Save className="w-4 h-4 text-emerald-500" />
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tự động Backup dữ liệu (VPS)</h3>
+            </div>
+            <button
+              onClick={() => handleSave({
+                BACKUP_ENABLED: formData.BACKUP_ENABLED,
+                BACKUP_PASSWORD: formData.BACKUP_PASSWORD
+              }, "cấu hình Backup")}
+              disabled={!!savingSection}
+              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+            >
+              {savingSection === "cấu hình Backup" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            </button>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <div className="flex items-center justify-between p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
+              <div className="space-y-1">
+                <h4 className="text-[11px] font-bold uppercase tracking-wide">Tự động gửi Backup về Telegram</h4>
+                <p className="text-[10px] text-muted-foreground">Hệ thống sẽ nén và gửi database về Telegram lúc 00:00 hằng ngày.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, BACKUP_ENABLED: prev.BACKUP_ENABLED === "true" ? "false" : "true" }))}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all",
+                  formData.BACKUP_ENABLED === "true" ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"
+                )}
+              >
+                {formData.BACKUP_ENABLED === "true" ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                <span className="text-[10px] font-bold uppercase tracking-widest">
+                  {formData.BACKUP_ENABLED === "true" ? "BẬT" : "TẮT"}
+                </span>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Mật khẩu bảo vệ file nén (.zip)</label>
+              <input
+                type="text"
+                value={formData.BACKUP_PASSWORD}
+                onChange={e => setFormData({ ...formData, BACKUP_PASSWORD: e.target.value })}
+                placeholder="Nhập mật khẩu để bảo vệ dữ liệu khách hàng..."
+                className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl focus:border-primary/50 outline-none transition-all font-mono text-xs"
+              />
+              <p className="text-[9px] text-muted-foreground italic ml-1">* Lưu ý: File backup chứa toàn bộ thông tin nhạy cảm, hãy đặt mật khẩu mạnh.</p>
+            </div>
+
+            <div className="pt-4 border-t border-border/50">
+              <button
+                onClick={() => {
+                  if (confirm("Hệ thống sẽ tự động tạo file script và đăng ký Cron Job trên VPS của bạn. Bạn chắc chắn muốn thực hiện?")) {
+                    handleSetupVPS();
+                  }
+                }}
+                disabled={isSettingUpVPS || !formData.TELEGRAM_TOKEN || !formData.TELEGRAM_ID}
+                className="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-600 active:scale-95 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSettingUpVPS ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Cài đặt tự động lên VPS (Linux)
+              </button>
+              <p className="text-[9px] text-center text-muted-foreground mt-3 uppercase tracking-tighter">
+                * Chỉ dành cho môi trường VPS Linux. Đảm bảo bạn đã lưu cấu hình Bot trước khi ấn.
+              </p>
             </div>
           </div>
         </div>

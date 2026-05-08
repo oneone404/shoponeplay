@@ -476,7 +476,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
 
   return (
     <div
-      className="group bg-card border border-border/60 rounded-2xl overflow-hidden shadow-md transition-all duration-500 flex flex-col h-full"
+      className="group flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary transition-all duration-300"
     >
       {/* Thumbnail Area */}
       <div className="aspect-[16/9] relative overflow-hidden bg-secondary shrink-0">
@@ -487,6 +487,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
           priority
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
           className="object-cover"
+          unoptimized={(product.thumbnail || product.images?.[0] || "").toLowerCase().endsWith(".gif")}
         />
 
         {/* Discount Badge */}
@@ -525,7 +526,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
 
       {/* Content Area */}
       <div className="p-5 flex flex-col flex-1">
-        <div className="flex items-center justify-between mb-4 gap-3">
+        <div className="flex flex-col items-center mb-4 gap-2 text-center">
           <h3 className="font-bold text-[13px] uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors leading-none">
             {product.categoryName}
           </h3>
@@ -618,8 +619,9 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
             ) : (
               <Link 
                 href={ROUTES.PRODUCT_DETAIL(product.id)} 
-                className="flex-1 py-2.5 bg-background text-muted-foreground border border-border rounded-xl text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5 hover:border-primary hover:text-primary transition-all shadow-none"
+                className="flex-1 py-2.5 bg-background text-foreground border border-border rounded-xl text-[10px] font-bold uppercase tracking-widest text-center flex items-center justify-center gap-1.5 hover:bg-secondary active:scale-95 transition-all shadow-sm group/btn"
               >
+                <Eye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
                 {t.common.view_detail}
               </Link>
             )}

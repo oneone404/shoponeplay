@@ -97,6 +97,10 @@ export const ADMIN_ROUTES = {
     path: "/admin/settings/banks",
     title: `Cấu Hình Nạp Bank${SUFFIX}`
   },
+  CARDS: {
+    path: "/admin/settings/cards",
+    title: `Cấu Hình Nạp Card${SUFFIX}`
+  },
   USER_ACTIVITY: (id: string) => ({
     path: `/admin/users/${id}/activity`,
     title: `Lịch Sử Người Dùng${SUFFIX}`
@@ -104,5 +108,9 @@ export const ADMIN_ROUTES = {
   ORDER_DETAIL: (id: string) => ({
     path: `/admin/orders/${id}`,
     title: `Đơn Hàng #${id.slice(-12).toUpperCase()}${SUFFIX}`
-  })
+  }),
+  ACCOUNTS_HISTORY: {
+    path: "/admin/accounts",
+    title: `Lịch Sử Bán Acc${SUFFIX}`
+  }
 } as const;

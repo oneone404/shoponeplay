@@ -21,7 +21,7 @@ export default function BottomNav() {
   const router = useRouter()
   const pathname = usePathname()
   const { t } = useLanguage()
-  const { toolsOpen, setToolsOpen, setProfileOpen, setChatOpen, setDepositOpen } = useUI()
+  const { toolsOpen, setToolsOpen, setProfileOpen, setChatOpen, setDepositOpen, depositOpen } = useUI()
 
   const toggleTools = useCallback(() => {
     setToolsOpen(!toolsOpen)
@@ -42,8 +42,8 @@ export default function BottomNav() {
     { icon: <Headphones className="w-[20px] h-[20px]" />, label: t.bottom_nav.support, action: () => setChatOpen(true) },
   ]
 
-  // If in admin or seller panel, do not render BottomNav
-  if (pathname?.startsWith('/admin') || pathname?.startsWith('/seller')) return null;
+  // If in admin or seller panel, or if deposit modal is open, do not render BottomNav
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/seller') || depositOpen) return null;
 
   return (
     <>

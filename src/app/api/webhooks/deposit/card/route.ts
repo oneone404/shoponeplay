@@ -8,8 +8,8 @@ export async function POST(req: Request) {
     const data = await req.json()
     console.log("[CARD_WEBHOOK_RECEIVED]", data)
 
-    // Standard fields for card charging callbacks
-    const { status, request_id, value, amount, callback_sign, serial, pin } = data
+    // Standard fields for card charging callbacks (TheSieuRe v2)
+    const { status, request_id, value, amount, callback_sign, serial, code } = data
 
     if (!request_id) {
       return NextResponse.json({ error: "Missing request_id" }, { status: 400 })
@@ -18,15 +18,16 @@ export async function POST(req: Request) {
     // Get config for verification
     const config = await getCardConfig()
 
-    // VERIFY SIGNATURE (If provided)
-    // Common pattern: md5(partner_key + status + serial + pin)
+    // VERIFY SIGNATURE (TheSieuRe v2: md5(partner_key + code + serial))
     if (callback_sign && config.partnerKey) {
       const mySign = crypto.createHash("md5")
-        .update(config.partnerKey + status + serial + pin)
+        .update(config.partnerKey + code + serial)
         .digest("hex")
       
-      // Some partners use different sign patterns, if this fails we might need to adjust
-      // But for security, we should ideally verify it
+      if (mySign !== callback_sign) {
+        console.error("[CARD_WEBHOOK] Signature mismatch!", { mySign, callback_sign })
+        // return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+      }
     }
 
     // Find the deposit record
@@ -43,26 +44,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Already processed" }, { status: 200 })
     }
 
-    // Update based on status
-    // Common status codes: 1 (Success), 2 (Success but wrong value), 3 (Failed), 4 (Maintenance)
-    const isSuccess = status === "success" || status === 1 || status === "1" || status === 200
+    // 1 = Success, 2 = Success wrong value, 3 = Failed, 4 = Maintenance, 99 = Pending
+    const statusCode = Number(status)
+
+    // Case 1 & 2: Success (Add balance)
+    const isSuccess = statusCode === 1 || statusCode === 2 || status === "success" || status === 200
 
     if (isSuccess) {
       const realValue = Number(value || deposit.declaredValue)
-      const receivedAmount = Number(amount || realValue * 0.8) // Default 20% fee if not provided
+      let receivedAmount = 0
+
+      if (config.customDiscountEnabled) {
+        const telcoKey = (deposit.cardType || "").toUpperCase()
+        const discount = config.telcoDiscounts[telcoKey] ?? 20
+        const multiplier = (100 - discount) / 100
+        receivedAmount = realValue * multiplier
+      } else {
+        receivedAmount = Number(amount || realValue * 0.8)
+      }
+      
+      receivedAmount = Math.floor(receivedAmount / 1000) * 1000
 
       await prisma.$transaction(async (tx) => {
-        // 1. Update Deposit status
         await tx.cardDeposit.update({
           where: { id: deposit.id },
           data: {
             status: "COMPLETED",
             realValue,
-            amount: receivedAmount
+            amount: receivedAmount,
+            note: statusCode === 2 ? `Sai mệnh giá (Khai ${deposit.declaredValue}đ - Thực tế ${realValue}đ)` : null
           }
         })
 
-        // 2. Update User balance
         await tx.user.update({
           where: { id: deposit.userId },
           data: {
@@ -71,7 +84,6 @@ export async function POST(req: Request) {
           }
         })
 
-        // 3. Create Ledger entry
         await tx.transaction.create({
           data: {
             userId: deposit.userId,
@@ -84,7 +96,6 @@ export async function POST(req: Request) {
           }
         })
 
-        // 4. Log Activity
         await tx.userActivity.create({
           data: {
             userId: deposit.userId,
@@ -96,18 +107,23 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ message: "Processed successfully" }, { status: 200 })
 
-    } else {
-      // Failed card
-      await prisma.cardDeposit.update({
-        where: { id: deposit.id },
-        data: {
-          status: "FAILED",
-          note: data.message || "Card rejected by partner"
-        }
-      })
-
-      return NextResponse.json({ message: "Marked as failed" }, { status: 200 })
+    } 
+    
+    // Case 99: Still Pending (Do nothing, just acknowledge)
+    if (statusCode === 99) {
+      return NextResponse.json({ message: "Card is still pending" }, { status: 200 })
     }
+
+    // Case 3, 4, or others: Failed
+    await prisma.cardDeposit.update({
+      where: { id: deposit.id },
+      data: {
+        status: "FAILED",
+        note: data.message || (statusCode === 4 ? "MAINTENANCE" : "UNKNOWN_ERROR")
+      }
+    })
+
+    return NextResponse.json({ message: "Marked as failed" }, { status: 200 })
 
   } catch (error) {
     console.error("[CARD_WEBHOOK_ERROR]", error)

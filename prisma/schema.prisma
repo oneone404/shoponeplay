@@ -87,6 +87,74 @@ model User {
   uploadedProducts     Product[]            @relation("ProductUploader")
   uploadedSecrets      AccountSecret[]      @relation("SecretUploader")
   withdrawals          Withdrawal[]
+  serviceOrders        ServiceOrder[]
+}
+
+// --- NEW: Game Services Models ---
+
+enum ServiceType {
+  LEVELING
+  TOPUP
+  OTHER
+}
+
+enum ServiceStatus {
+  ACTIVE
+  MAINTENANCE
+  HIDDEN
+}
+
+enum ServiceOrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+model GameService {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  thumbnail   String
+  description String?       @db.Text
+  type        ServiceType   @default(LEVELING)
+  status      ServiceStatus @default(ACTIVE)
+  fields      Json?         // Định dạng các ô input khách cần điền
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  options     ServiceOption[]
+  orders      ServiceOrder[]
+}
+
+model ServiceOption {
+  id          String        @id @default(cuid())
+  serviceId   String
+  name        String
+  price       Float
+  thumbnail   String?
+  description String?       @db.Text
+  status      ServiceStatus @default(ACTIVE)
+  service     GameService   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  orders      ServiceOrder[]
+}
+
+model ServiceOrder {
+  id              String             @id @default(cuid())
+  serviceId       String
+  optionId        String
+  userId          String
+  customerData    Json               // Lưu dữ liệu khách điền (TK, MK, Server...)
+  totalAmount     Float
+  status          ServiceOrderStatus @default(PENDING)
+  adminNote       String?            @db.Text
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  service         GameService        @relation(fields: [serviceId], references: [id])
+  option          ServiceOption      @relation(fields: [optionId], references: [id])
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 // Bảng Sổ Cái (Ledger) - Lưu mọi biến động số dư

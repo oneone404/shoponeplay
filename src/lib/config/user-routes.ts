@@ -13,18 +13,12 @@ export const USER_ROUTES = {
     path: "/bag",
     title: `Giỏ Hàng${SUFFIX}`
   },
-  ORDERS: {
-    path: "/orders",
-    title: `Đơn Hàng Của Tôi${SUFFIX}`
-  },
+
   TOOLS: {
     path: "/tools",
     title: `Công Cụ Game${SUFFIX}`
   },
-  HISTORY: {
-    path: "/history",
-    title: `Lịch Sử Hệ Thống${SUFFIX}`
-  },
+
   HACKS: {
     path: "/hacks",
     title: `Phần Mềm Hỗ Trợ${SUFFIX}`
@@ -53,19 +47,22 @@ export const USER_ROUTES = {
     path: "/shop/track",
     title: `Tra Cứu Đơn Hàng${SUFFIX}`
   },
-  USER: {
-    SETTINGS: {
-      path: "/user/settings",
-      title: `Cấu Hình Tài Khoản${SUFFIX}`
-    },
-    HISTORY: {
-      path: "/user/history",
-      title: `Lịch Sử Giao Dịch${SUFFIX}`
-    },
-    KEYS: {
-      path: "/user/keys",
-      title: `Quản Lý Keys${SUFFIX}`
-    }
+  SETTINGS: {
+    path: "/user/settings",
+    title: `Cấu Hình Tài Khoản${SUFFIX}`
+  },
+  HISTORY: {
+    path: "/orders",
+    title: `Lịch Sử Giao Dịch${SUFFIX}`,
+    BALANCE: { path: "/orders/balance", title: `Biến Động Số Dư${SUFFIX}` },
+    BANK: { path: "/orders/bank", title: `Lịch Sử Nạp Bank${SUFFIX}` },
+    CARD: { path: "/orders/card", title: `Lịch Sử Nạp Card${SUFFIX}` },
+    ORDERS: { path: "/orders", title: `Đơn Hàng Đã Mua${SUFFIX}` },
+    SERVICES: { path: "/orders/services", title: `Lịch Sử Dịch Vụ${SUFFIX}` },
+  },
+  KEYS: {
+    path: "/user/keys",
+    title: `Quản Lý Keys${SUFFIX}`
   },
   // Dynamic Routes
   SHOP_CATEGORY: (slug: string, name?: string) => ({

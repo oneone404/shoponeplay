@@ -162,10 +162,10 @@ export default function DepositModal() {
 
   return (
     <div className={cn(
-      "fixed inset-0 z-[100] transition-transform duration-[600ms] ease-[cubic-bezier(0.32,0.72,0,1)] bg-background will-change-transform",
+      "fixed inset-0 h-[100dvh] z-[999] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] bg-background overflow-hidden",
       depositOpen ? "translate-y-0 pointer-events-auto" : "translate-y-full pointer-events-none"
     )}>
-      <div className="flex flex-col h-full w-full overflow-hidden">
+      <div className="flex flex-col h-full w-full overflow-hidden bg-background">
         {/* Header */}
         <div className="px-4 py-6 border-b border-border bg-secondary/30 shrink-0">
           <div className="max-w-xl mx-auto w-full flex items-center justify-between">
@@ -188,10 +188,10 @@ export default function DepositModal() {
         </div>
 
         {/* Content Scrollable */}
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-12">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-[calc(env(safe-area-inset-bottom)+80px)] bg-background overscroll-contain">
           <div className="mx-auto w-full max-w-4xl px-4 py-6 transition-all duration-500">
             {/* Method Toggle */}
-            <div className="flex items-center space-x-2 bg-secondary/80 backdrop-blur-md p-1.5 rounded-2xl border border-border mb-8 shadow-inner">
+            <div className="flex items-center space-x-2 bg-secondary/95 p-1.5 rounded-2xl border border-border mb-8 shadow-inner">
               <button
                 onClick={() => {
                   setMethod("BANK")
@@ -224,7 +224,7 @@ export default function DepositModal() {
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Step 1: Amount Selection */}
                 {step === 1 && (
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-8 bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-8 bg-card border border-border rounded-3xl overflow-hidden p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="md:col-span-3 space-y-6">
                       <div className="space-y-3">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{t.deposit.amount_label}</label>
@@ -313,7 +313,7 @@ export default function DepositModal() {
                 {step === 2 && (
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                     {/* Column 1: QR Code */}
-                    <div className="md:col-span-2 bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-8 flex flex-col items-center justify-center space-y-4 shadow-sm">
+                    <div className="md:col-span-2 bg-card border border-border rounded-3xl overflow-hidden p-8 flex flex-col items-center justify-center space-y-4 shadow-sm">
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-60">Quét mã QR</p>
                       <div className="relative group p-4 bg-white rounded-3xl shadow-2xl shadow-black/5 transition-transform hover:scale-[1.02] duration-500">
                         <img src={qrUrl} alt="QR Code" className="w-56 h-56" />
@@ -326,7 +326,7 @@ export default function DepositModal() {
 
                     {/* Column 2: Information */}
                     <div className="md:col-span-3 space-y-4 flex flex-col">
-                      <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-6 space-y-3 shadow-sm flex-1">
+                      <div className="bg-card border border-border rounded-3xl overflow-hidden p-6 space-y-3 shadow-sm flex-1">
                         <button
                           onClick={() => setStep(1)}
                           className="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-widest text-primary/70 hover:text-primary transition-colors mb-4 ml-1 group"
@@ -372,7 +372,7 @@ export default function DepositModal() {
 
                 {/* Step 3: Processing/Confirmation */}
                 {step === 3 && (
-                  <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-12 flex flex-col items-center justify-center space-y-8 shadow-sm animate-in zoom-in-95 duration-500">
+                  <div className="bg-card border border-border rounded-3xl overflow-hidden p-12 flex flex-col items-center justify-center space-y-8 shadow-sm animate-in zoom-in-95 duration-500">
                     {!isConfirmed ? (
                       <>
                         <div className="relative">
@@ -418,7 +418,7 @@ export default function DepositModal() {
             {method === "CARD" && (
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="md:col-span-3">
-                  <form onSubmit={handleCardSubmit} className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-8 space-y-6 shadow-sm h-full">
+                  <form onSubmit={handleCardSubmit} className="bg-card border border-border rounded-3xl overflow-hidden p-8 space-y-6 shadow-sm h-full">
                     {/* Telco Selection */}
                     <div className="space-y-3">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Chọn Nhà Mạng</label>
@@ -429,11 +429,13 @@ export default function DepositModal() {
                             type="button"
                             onClick={() => setSelectedTelco(telco.id)}
                             className={cn(
-                              "relative flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all duration-300",
+                              "relative flex flex-col items-center justify-center py-2 px-3 rounded-xl border transition-all duration-300",
                               selectedTelco === telco.id ? "bg-background border-primary shadow-lg shadow-primary/10" : "bg-background/50 border-border hover:border-primary/30"
                             )}
                           >
-                            <img src={telco.logo} alt={telco.name} className="h-6 w-auto object-contain rounded-lg" />
+                            <div className="w-full aspect-video flex items-center justify-center">
+                              <img src={telco.logo} alt={telco.name} className="w-full h-full object-contain" />
+                            </div>
                           </button>
                         ))}
                       </div>
@@ -495,7 +497,7 @@ export default function DepositModal() {
 
                 {/* Card History (Integrated into Card) */}
                 <div className="md:col-span-2 flex flex-col">
-                  <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden p-6 shadow-sm flex-1 flex flex-col">
+                  <div className="bg-card border border-border rounded-3xl overflow-hidden p-5 shadow-sm flex-1 flex flex-col">
                     <div className="flex items-center justify-between mb-4 px-1">
                       <div className="flex items-center space-x-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
                         <History className="w-3.5 h-3.5" />
@@ -505,21 +507,34 @@ export default function DepositModal() {
                         onClick={refreshCardHistory}
                         disabled={isRefreshingHistory}
                         className={cn(
-                          "p-1.5 bg-background/50 border border-border/50 hover:border-primary/30 hover:bg-background text-primary/50 hover:text-primary rounded-full transition-all shadow-sm",
-                          isRefreshingHistory && "animate-spin cursor-not-allowed opacity-50"
+                          "relative flex items-center justify-center w-8 h-8 rounded-xl border transition-all duration-500",
+                          isRefreshingHistory 
+                            ? "bg-primary/20 border-primary/30 cursor-not-allowed" 
+                            : "bg-background/80 border-border active:scale-90"
                         )}
+                        title="Làm mới lịch sử"
                       >
-                        <RotateCw className="w-3.5 h-3.5" />
+                        <RotateCw className={cn(
+                          "w-3.5 h-3.5 transition-all duration-700 ease-in-out",
+                          isRefreshingHistory ? "animate-spin text-primary" : "text-muted-foreground"
+                        )} />
                       </button>
                     </div>
 
                     {cardHistory.length > 0 ? (
-                      <div className="space-y-3 flex-1 overflow-y-auto no-scrollbar max-h-[400px]">
+                      <div className="space-y-3 flex-1 overflow-y-auto max-h-[550px] pr-2 custom-scrollbar">
                         {cardHistory.map((item) => (
-                          <div key={item.id} className="p-4 bg-background/30 border border-border/50 rounded-2xl flex items-center justify-between group hover:border-primary/20 transition-all">
+                          <div key={item.id} className="p-4 bg-background/50 border border-border rounded-2xl flex items-center justify-between group hover:border-primary/40 hover:shadow-md transition-all duration-300">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-[10px] font-bold text-primary shadow-inner">
-                                {item.cardType[0]}
+                              <div className="w-12 aspect-video rounded-lg bg-background flex items-center justify-center p-1 shadow-inner border border-border/50">
+                                {(() => {
+                                  const telco = TELCOS.find(t => t.id === item.cardType.toUpperCase())
+                                  return telco ? (
+                                    <img src={telco.logo} alt={telco.name} className="w-full h-full object-contain" />
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-primary">{item.cardType[0]}</span>
+                                  )
+                                })()}
                               </div>
                               <div>
                                 <p className="text-[11px] font-bold uppercase tracking-tight">{item.cardType} - {new Intl.NumberFormat('vi-VN').format(item.declaredValue)}</p>
@@ -527,11 +542,19 @@ export default function DepositModal() {
                               </div>
                             </div>
                             <div className={cn(
-                              "px-2.5 py-1 rounded-md flex items-center space-x-1.5 border",
-                              item.status === "COMPLETED" ? "text-emerald-500 bg-emerald-500/5 border-emerald-500/10" : item.status === "FAILED" ? "text-rose-500 bg-rose-500/5 border-rose-500/10" : "text-amber-500 bg-amber-500/5 border-amber-500/10"
+                              "px-2 py-0.5 rounded-md flex items-center space-x-1 border shrink-0 whitespace-nowrap",
+                              item.status === "COMPLETED" ? "text-emerald-500 bg-emerald-500/5 border-emerald-500/10" : 
+                              item.status === "FAILED" ? "text-rose-500 bg-rose-500/5 border-rose-500/10" : 
+                              "text-yellow-500 bg-yellow-500/5 border-yellow-500/10 shadow-[0_0_10px_rgba(234,179,8,0.1)]"
                             )}>
-                              {item.status === "COMPLETED" ? <CheckCircle2 className="w-3 h-3" /> : item.status === "FAILED" ? <XCircle className="w-3 h-3" /> : <Clock className="w-3 h-3 animate-pulse" />}
-                              <span className="text-[8px] font-bold uppercase tracking-widest">{item.status}</span>
+                              {item.status === "COMPLETED" ? <CheckCircle2 className="w-2.5 h-2.5" /> : 
+                               item.status === "FAILED" ? <XCircle className="w-2.5 h-2.5" /> : 
+                               <Clock className="w-2.5 h-2.5 animate-pulse" />}
+                              <span className="text-[7.5px] font-bold uppercase tracking-widest">
+                                {item.status === "COMPLETED" ? "Đã nạp" : 
+                                 item.status === "FAILED" ? "Thất bại" : 
+                                 "Chờ xử lý"}
+                              </span>
                             </div>
                           </div>
                         ))}

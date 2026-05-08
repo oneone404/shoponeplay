@@ -148,6 +148,7 @@ export default function CategoriesClient({ initialCategories, groups }: Categori
                               alt={category.name}
                               fill
                               className="object-cover group-hover/img:scale-110 transition-transform duration-300"
+                              unoptimized={category.image.toLowerCase().endsWith(".gif")}
                             />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
                               <ZoomIn className="w-4 h-4 text-white" />

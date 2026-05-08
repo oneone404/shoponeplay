@@ -1,7 +1,13 @@
+import { Metadata } from "next"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import AdminBanksClient from "@/components/admin/settings/AdminBanksClient"
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+
+export const metadata: Metadata = {
+  title: ADMIN_ROUTES.BANKS.title,
+}
 
 export default async function AdminBanksPage() {
   const session = await auth()

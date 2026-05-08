@@ -17,13 +17,25 @@ interface AdminCardsClientProps {
   initialPartnerKey: string
   initialApiUrl: string
   initialEnabled: boolean
+  initialCustomDiscountEnabled: boolean
+  initialTelcoDiscounts: Record<string, number>
 }
+
+const TELCOS = [
+  { id: "VIETTEL", name: "Viettel" },
+  { id: "MOBIFONE", name: "Mobifone" },
+  { id: "VINAPHONE", name: "Vinaphone" },
+  { id: "ZING", name: "Zing" },
+  { id: "GARENA", name: "Garena" },
+]
 
 export default function AdminCardsClient({
   initialPartnerId,
   initialPartnerKey,
   initialApiUrl,
-  initialEnabled
+  initialEnabled,
+  initialCustomDiscountEnabled,
+  initialTelcoDiscounts
 }: AdminCardsClientProps) {
   const { addMessage } = useUI()
   const [loading, setLoading] = useState(false)
@@ -31,6 +43,8 @@ export default function AdminCardsClient({
   const [partnerKey, setPartnerKey] = useState(initialPartnerKey)
   const [apiUrl, setApiUrl] = useState(initialApiUrl)
   const [enabled, setEnabled] = useState(initialEnabled)
+  const [customDiscountEnabled, setCustomDiscountEnabled] = useState(initialCustomDiscountEnabled)
+  const [telcoDiscounts, setTelcoDiscounts] = useState(initialTelcoDiscounts || {})
   const [origin, setOrigin] = useState("")
 
   useEffect(() => {
@@ -44,7 +58,9 @@ export default function AdminCardsClient({
         partnerId,
         partnerKey,
         apiUrl,
-        enabled
+        enabled,
+        customDiscountEnabled,
+        telcoDiscounts
       })
 
       if (result.success) {
@@ -74,7 +90,7 @@ export default function AdminCardsClient({
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                 <Settings2 className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold tracking-tight">Thông Tin Kết Nối</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">Thông Tin Kết Nối</h3>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -157,6 +173,48 @@ export default function AdminCardsClient({
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-40">
                     <ChevronDown className="w-4 h-4" />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-8 border-t border-border/50">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-1">
+                  <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">Chiết khấu tùy chỉnh</h4>
+                  <p className="text-[10px] text-muted-foreground font-medium">Tự Tuỳ Chỉnh % Nạp Thẻ</p>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center space-x-3 bg-secondary/50 px-4 py-2 rounded-xl border border-border/50">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      {customDiscountEnabled ? 'Đang bật' : 'Đang tắt'}
+                    </span>
+                    <button
+                      onClick={() => setCustomDiscountEnabled(!customDiscountEnabled)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ${customDiscountEnabled ? 'bg-primary' : 'bg-muted'}`}
+                    >
+                      <span className={`${customDiscountEnabled ? 'translate-x-4.5' : 'translate-x-0.5'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 shadow-sm`} />
+                    </button>
+                  </div>
+
+                  {customDiscountEnabled && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 w-full pt-6 border-t border-border/30 animate-in fade-in slide-in-from-top-4 duration-500">
+                      {TELCOS.map((telco) => (
+                        <div key={telco.id} className="space-y-2">
+                          <label className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground ml-1">{telco.name}</label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={telcoDiscounts?.[telco.id] ?? 20}
+                              onChange={(e) => setTelcoDiscounts({ ...telcoDiscounts, [telco.id]: Number(e.target.value) })}
+                              className="w-full bg-background/50 border border-border rounded-xl px-4 py-2.5 text-sm font-bold focus:border-primary outline-none transition-all text-center"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

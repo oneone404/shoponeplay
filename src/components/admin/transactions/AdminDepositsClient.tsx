@@ -38,6 +38,7 @@ interface Deposit {
   declaredValue?: number
   realValue?: number
   requestId?: string
+  note?: string | null
   user: {
     name: string | null
     email: string | null
@@ -197,6 +198,7 @@ export default function AdminDepositsClient({
                 {type === "CARD" && (
                   <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Thông Tin Thẻ</th>
                 )}
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ghi Chú</th>
                 <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground text-center">Trạng Thái</th>
               </tr>
             </thead>
@@ -299,6 +301,15 @@ export default function AdminDepositsClient({
                         </div>
                       </td>
                     )}
+                    <td className="px-6 py-4">
+                      {dep.note ? (
+                        <p className="text-[10px] text-rose-500 font-bold max-w-[200px] break-words">
+                          {dep.note}
+                        </p>
+                      ) : (
+                        <span className="text-muted-foreground/30">—</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-center">
                       <span className={cn(
                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border",

@@ -145,26 +145,36 @@ export default function AdminBanksClient({
         subtitle="Quản lý ngân hàng thụ hưởng và quy tắc nạp tiền tự động"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: General Config */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                <Settings className="w-5 h-5" />
+      <div className="space-y-8">
+        {/* Top Section: General Config (Horizontal) */}
+        <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/20">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                <Settings className="w-4 h-4" />
               </div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-foreground/70">Quy tắc nạp tiền</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">Quy tắc nạp tiền tự động</h3>
             </div>
+            <button
+              onClick={handleSaveConfig}
+              disabled={isPending}
+              className="p-2.5 bg-foreground text-background rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm disabled:opacity-50"
+              title="Lưu cấu hình"
+            >
+              <Save className="w-4 h-4" />
+            </button>
+          </div>
 
-            <div className="space-y-5">
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Cú pháp trước ID</label>
                 <input
                   type="text"
                   value={prefix}
                   onChange={(e) => setPrefix(e.target.value)}
-                  className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
-                  placeholder="Ví dụ: NAP (Có thể để trống)"
+                  className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
+                  placeholder="Ví dụ: NAP"
                 />
               </div>
 
@@ -174,19 +184,19 @@ export default function AdminBanksClient({
                   type="text"
                   value={suffix}
                   onChange={(e) => setSuffix(e.target.value)}
-                  className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
-                  placeholder="Ví dụ: chuyen tien (Có thể để trống)"
+                  className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
+                  placeholder="Ví dụ: chuyen tien"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Pay2S Webhook Token</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Webhook Token (Pay2S)</label>
                 <input 
                   type="password" 
                   value={pay2sToken}
                   onChange={(e) => setPay2sToken(e.target.value)}
-                  className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
-                  placeholder="Nhập token từ Pay2S..."
+                  className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
+                  placeholder="Token từ Pay2S..."
                 />
               </div>
 
@@ -196,202 +206,220 @@ export default function AdminBanksClient({
                   type="number"
                   value={minAmount}
                   onChange={(e) => setMinAmount(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
+                  className="w-full px-4 py-3 bg-background/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary transition-all"
                 />
               </div>
-
-              <button
-                onClick={handleSaveConfig}
-                disabled={isPending}
-                className="w-full py-3 bg-foreground text-background rounded-xl font-bold text-[10px] uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <Save className="w-4 h-4" />
-                Lưu cấu hình
-              </button>
             </div>
-          </div>
 
-          <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6 space-y-3">
-            <div className="flex items-center gap-2 text-amber-500">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest">Xem trước nội dung:</h4>
-              <span className="text-xs font-black text-foreground bg-white/50 px-2 py-0.5 rounded border border-amber-500/20">
-                {[prefix, "ABCDXYZ", suffix].filter(Boolean).join(" ")}
-              </span>
+            {/* Preview & Save Action Integrated */}
+            <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <Info className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Xem trước nội dung:</span>
+                </div>
+                <p className="text-sm font-bold text-foreground tracking-tight">
+                  {[prefix, "ABCDXYZ", suffix].filter(Boolean).join(" ")}
+                </p>
+              </div>
             </div>
-            <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
-              Hệ thống sẽ tự động cộng tiền khi nhận được biến động số dư có nội dung chứa cú pháp trên.
-              Mã ID 12345678 là ví dụ cho ID tài khoản của người dùng.
-            </p>
           </div>
         </div>
 
-        {/* Right Column: Bank List */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500">
-                <Building2 className="w-5 h-5" />
+        {/* Bottom Section: Bank List (Full Width) */}
+        <div className="space-y-6">
+          <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-sm h-fit">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/20">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">Danh sách ngân hàng nhận</h3>
               </div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-foreground/70">Danh sách ngân hàng nhận</h3>
+              <button
+                onClick={() => {
+                  setEditingBank({ isActive: true })
+                  setShowForm(true)
+                }}
+                className="px-4 py-2 bg-background border border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all flex items-center gap-2 shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Thêm ngân hàng
+              </button>
             </div>
-            <button
-              onClick={() => {
-                setEditingBank({ isActive: true })
-                setShowForm(true)
-              }}
-              className="px-4 py-2 bg-primary text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
-            >
-              <Plus className="w-4 h-4" />
-              Thêm ngân hàng
-            </button>
-          </div>
 
-          {showForm && (
-            <div className="bg-card border border-primary/30 rounded-2xl p-6 shadow-xl animate-in slide-in-from-top-4 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Chọn Ngân Hàng</label>
-                  <select
-                    value={editingBank?.bankName || ""}
-                    onChange={(e) => handleBankSelect(e.target.value)}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary appearance-none cursor-pointer"
-                  >
-                    <option value="">-- Chọn Ngân Hàng --</option>
-                    {VIETNAM_BANKS.map(b => (
-                      <option key={b.id} value={b.id}>{b.name} ({b.id})</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Số Tài Khoản</label>
-                  <input
-                    type="text"
-                    placeholder="Nhập số tài khoản..."
-                    value={editingBank?.accountNumber || ""}
-                    onChange={(e) => setEditingBank({ ...editingBank, accountNumber: e.target.value })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Chủ Tài Khoản</label>
-                  <input
-                    type="text"
-                    placeholder="Tên người nhận (VIET HOA)..."
-                    value={editingBank?.accountName || ""}
-                    onChange={(e) => setEditingBank({ ...editingBank, accountName: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Logo URL (Tùy chọn)</label>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={editingBank?.logo || ""}
-                    onChange={(e) => setEditingBank({ ...editingBank, logo: e.target.value })}
-                    className="w-full px-4 py-3 bg-secondary/50 border border-border rounded-xl font-bold text-sm outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  onClick={handleSaveBank}
-                  disabled={isPending}
-                  className="px-8 py-3 bg-primary text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/20"
-                >
-                  {editingBank?.id ? "Cập nhật" : "Lưu ngân hàng"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {initialBanks.map((bank) => (
-              <div key={bank.id} className={cn(
-                "group relative bg-card border border-border rounded-2xl p-5 transition-all hover:border-primary/30 hover:shadow-md",
-                !bank.isActive && "opacity-60 grayscale-[0.5]"
-              )}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center overflow-hidden p-2 bg-white">
-                      {bank.logo ? (
-                        <img src={bank.logo} alt={bank.bankName} className="w-full h-full object-contain" />
-                      ) : (
-                        <Banknote className="w-6 h-6 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-foreground tracking-tight">{bank.bankName}</h4>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{bank.accountNumber}</p>
+            <div className="p-6 space-y-6">
+              {showForm && (
+                <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-sm animate-in slide-in-from-top-4 duration-300 mb-8">
+                  <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/20">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                        {editingBank?.id ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                      </div>
+                      <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">
+                        {editingBank?.id ? "Chỉnh sửa ngân hàng" : "Thêm ngân hàng mới"}
+                      </h3>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleToggle(bank)}
-                      className={cn(
-                        "p-2 rounded-lg transition-colors",
-                        bank.isActive ? "text-emerald-500 hover:bg-emerald-500/10" : "text-muted-foreground hover:bg-secondary"
-                      )}
-                      title={bank.isActive ? "Đang bật" : "Đang tắt"}
-                    >
-                      {bank.isActive ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6" />}
-                    </button>
+
+                  <div className="p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Chọn Ngân Hàng</label>
+                        <div className="relative group">
+                          <select
+                            value={editingBank?.bankName || ""}
+                            onChange={(e) => handleBankSelect(e.target.value)}
+                            className="w-full px-5 py-4 bg-background/50 border border-border rounded-2xl font-bold text-sm outline-none focus:border-primary cursor-pointer appearance-none transition-all"
+                          >
+                            <option value="">-- Chọn Ngân Hàng --</option>
+                            {VIETNAM_BANKS.map(b => (
+                              <option key={b.id} value={b.id}>{b.name} ({b.id})</option>
+                            ))}
+                          </select>
+                          <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground group-hover:text-primary transition-colors">
+                            <Building2 className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Số Tài Khoản</label>
+                        <input
+                          type="text"
+                          placeholder="Nhập số tài khoản..."
+                          value={editingBank?.accountNumber || ""}
+                          onChange={(e) => setEditingBank({ ...editingBank, accountNumber: e.target.value })}
+                          className="w-full px-5 py-4 bg-background/50 border border-border rounded-2xl font-bold text-sm outline-none focus:border-primary transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Chủ Tài Khoản</label>
+                        <input
+                          type="text"
+                          placeholder="Tên người nhận (VIET HOA)..."
+                          value={editingBank?.accountName || ""}
+                          onChange={(e) => setEditingBank({ ...editingBank, accountName: e.target.value.toUpperCase() })}
+                          className="w-full px-5 py-4 bg-background/50 border border-border rounded-2xl font-bold text-sm outline-none focus:border-primary transition-all"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Logo URL (Tùy chọn)</label>
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          value={editingBank?.logo || ""}
+                          onChange={(e) => setEditingBank({ ...editingBank, logo: e.target.value })}
+                          className="w-full px-5 py-4 bg-background/50 border border-border rounded-2xl font-bold text-sm outline-none focus:border-primary transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-4 pt-6 border-t border-border/50">
+                      <button
+                        onClick={() => setShowForm(false)}
+                        className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all hover:bg-secondary/50 rounded-xl"
+                      >
+                        Hủy bỏ
+                      </button>
+                      <button
+                        onClick={handleSaveBank}
+                        disabled={isPending}
+                        className="px-10 py-3.5 bg-primary text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center space-x-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>{editingBank?.id ? "Cập nhật ngân hàng" : "Lưu ngân hàng"}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-[10px] font-bold">
-                    <span className="text-muted-foreground uppercase tracking-widest">Chủ TK:</span>
-                    <span className="text-foreground uppercase">{bank.accountName}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setEditingBank(bank)
-                        setShowForm(true)
-                        window.scrollTo({ top: 0, behavior: "smooth" })
-                      }}
-                      className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
-                      title="Chỉnh sửa"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(bank.id)}
-                      className="p-2 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
-                      title="Xóa"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <span className={cn(
-                    "px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-[0.1em]",
-                    bank.isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-slate-500/10 text-slate-500"
+              <div className="grid grid-cols-1 gap-4">
+                {initialBanks.map((bank) => (
+                  <div key={bank.id} className={cn(
+                    "group relative bg-background/30 border border-border rounded-2xl p-4 transition-all hover:border-primary/20 flex flex-col md:flex-row items-center justify-between gap-4",
+                    !bank.isActive && "opacity-60 grayscale-[0.5]"
                   )}>
-                    {bank.isActive ? "Hoạt động" : "Tạm ngưng"}
-                  </span>
-                </div>
-              </div>
-            ))}
+                    <div className="flex items-center space-x-4 flex-1 w-full">
+                      <div className="w-12 h-12 min-w-[48px] rounded-xl bg-white border border-border flex items-center justify-center overflow-hidden p-2 shadow-inner">
+                        {bank.logo ? (
+                          <img src={bank.logo} alt={bank.bankName} className="w-full h-full object-contain" />
+                        ) : (
+                          <Banknote className="w-6 h-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <h4 className="text-[11px] font-bold text-foreground uppercase tracking-tight leading-none mb-1">{bank.bankName}</h4>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">{bank.accountNumber}</p>
+                        </div>
+                        <div className="hidden md:block">
+                          <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Chủ Tài Khoản</span>
+                          <span className="text-[10px] font-bold text-foreground uppercase tracking-tight">{bank.accountName}</span>
+                        </div>
+                        <div className="flex items-center md:justify-center">
+                          <div className={cn(
+                            "px-2.5 py-1 rounded-md text-[8px] font-bold uppercase tracking-[0.1em] border h-fit",
+                            bank.isActive ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/20" : "bg-slate-500/5 text-slate-500 border-slate-500/20"
+                          )}>
+                            {bank.isActive ? "Hoạt động" : "Tạm ngưng"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-            {initialBanks.length === 0 && !showForm && (
-              <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-border rounded-[32px] space-y-4">
-                <div className="p-4 bg-secondary rounded-full">
-                  <Building2 className="w-8 h-8 text-muted-foreground/30" />
-                </div>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Chưa có ngân hàng nào</p>
+                    <div className="flex items-center space-x-2 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-border/50">
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => {
+                            setEditingBank(bank)
+                            setShowForm(true)
+                            window.scrollTo({ top: 0, behavior: "smooth" })
+                          }}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                          title="Chỉnh sửa"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(bank.id)}
+                          className="p-2 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      
+                      <div className="h-8 w-[1px] bg-border mx-2 hidden md:block" />
+
+                      <button
+                        onClick={() => handleToggle(bank)}
+                        className={cn(
+                          "p-2 rounded-lg transition-colors flex items-center space-x-2 group/toggle",
+                          bank.isActive ? "text-emerald-500" : "text-muted-foreground"
+                        )}
+                      >
+                        <span className="text-[9px] font-bold uppercase tracking-widest hidden lg:block opacity-0 group-hover/toggle:opacity-100 transition-opacity">
+                          {bank.isActive ? "Tắt" : "Bật"}
+                        </span>
+                        {bank.isActive ? <ToggleRight className="w-7 h-7" /> : <ToggleLeft className="w-7 h-7" />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {initialBanks.length === 0 && !showForm && (
+                  <div className="col-span-full py-20 flex flex-col items-center justify-center border-2 border-dashed border-border rounded-[32px] space-y-4 bg-secondary/10 opacity-50">
+                    <div className="p-4 bg-background rounded-full shadow-inner">
+                      <Building2 className="w-8 h-8 text-muted-foreground/30" />
+                    </div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Chưa có ngân hàng nào</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
