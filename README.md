@@ -25,6 +25,11 @@ Chào mừng bạn đến với ShopOnePlay, nền tảng thương mại điện
   - Mã hóa AES-256 cho mã PIN thẻ cào và Rate Limiting chống spam API.
   - Tự động hoàn tiền (Refund) cho người dùng khi giao dịch lỗi.
   - Dashboard Admin quản lý toàn diện NCC, sản phẩm tự động và lịch sử đơn hàng.
+- **Hệ thống Nạp Manual (VietQR)**: 
+  - Hỗ trợ nạp các gói không có trong danh sách nạp tự động thông qua quét mã VietQR.
+  - Tự động tạo QR code động từ VNG Billing kèm đầy đủ thông tin đơn hàng và giá tiền.
+  - Thông báo tức thì cho Admin qua Telegram kèm ảnh QR Code và nút xác nhận thanh toán trực tiếp.
+  - Cơ chế bảo vệ Admin: Nút "Tạo lại QR" khi mã cũ hết hạn và log chi tiết người xác nhận đơn.
 
 ---
 

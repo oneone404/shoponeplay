@@ -577,17 +577,11 @@ export async function processTopupQRAction(params: {
       where: { id: orderId },
       data: {
         status: "COMPLETED",
-        completedAt: new Date(),
-        statusLog: {
-          push: {
-            step: "MANUAL_PAY",
-            status: "OK",
-            time: new Date().toISOString(),
-            detail: `Admin ${adminName} xác nhận đã nạp tiền qua QR.`
-          }
-        }
+        completedAt: new Date()
       }
     })
+
+    await logStep(orderId, "MANUAL_PAY", "OK", `Admin ${adminName} xác nhận đã nạp tiền qua QR.`)
 
     return { success: true, message: `✅ Đã xác nhận nạp tiền cho đơn #${orderId.slice(-8).toUpperCase()}` }
   }
