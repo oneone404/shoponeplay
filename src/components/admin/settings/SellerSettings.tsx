@@ -72,7 +72,7 @@ export default function SellerSettings() {
             onClick={handleSubmit}
             disabled={isSaving}
             title="Lưu cấu hình người bán"
-            className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+            className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           </button>

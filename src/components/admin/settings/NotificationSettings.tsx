@@ -139,7 +139,7 @@ export default function NotificationSettings() {
               }, "kết nối Bot")}
               disabled={!!savingSection}
               title="Lưu cấu hình kết nối"
-              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
             >
               {savingSection === "kết nối Bot" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </button>
@@ -208,7 +208,7 @@ export default function NotificationSettings() {
               }, "loại thông báo")}
               disabled={!!savingSection}
               title="Lưu lựa chọn thông báo"
-              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
             >
               {savingSection === "loại thông báo" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </button>
@@ -293,7 +293,8 @@ export default function NotificationSettings() {
                 BACKUP_PASSWORD: formData.BACKUP_PASSWORD
               }, "cấu hình Backup")}
               disabled={!!savingSection}
-              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+              title="Lưu cấu hình Backup"
             >
               {savingSection === "cấu hình Backup" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </button>

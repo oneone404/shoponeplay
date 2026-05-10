@@ -132,9 +132,9 @@ export default function BrandingSettings() {
                 <button 
                   onClick={() => logoInputRef.current?.click()}
                   disabled={isUploadingLogo}
-                  className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-secondary text-foreground border border-border rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-secondary/80 transition-all active:scale-95 disabled:opacity-50 w-fit"
+                  className="flex items-center justify-center space-x-2 px-3 py-1.5 bg-white text-muted-foreground border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/50 transition-all disabled:opacity-50 w-fit"
                 >
-                  {isUploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {isUploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   <span>{isUploadingLogo ? "ĐANG TẢI..." : "TẢI LOGO MỚI"}</span>
                 </button>
               </div>
@@ -173,9 +173,9 @@ export default function BrandingSettings() {
                 <button 
                   onClick={() => footerLogoInputRef.current?.click()}
                   disabled={isUploadingFooterLogo}
-                  className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-secondary text-foreground border border-border rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-secondary/80 transition-all active:scale-95 disabled:opacity-50 w-fit"
+                  className="flex items-center justify-center space-x-2 px-3 py-1.5 bg-white text-muted-foreground border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/50 transition-all disabled:opacity-50 w-fit"
                 >
-                  {isUploadingFooterLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {isUploadingFooterLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   <span>{isUploadingFooterLogo ? "ĐANG TẢI..." : "TẢI LOGO CHÂN TRANG"}</span>
                 </button>
               </div>
@@ -213,9 +213,9 @@ export default function BrandingSettings() {
                 <button 
                   onClick={() => faviconInputRef.current?.click()}
                   disabled={isUploadingFavicon}
-                  className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-secondary text-foreground border border-border rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-secondary/80 transition-all active:scale-95 disabled:opacity-50 w-fit"
+                  className="flex items-center justify-center space-x-2 px-3 py-1.5 bg-white text-muted-foreground border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/50 transition-all disabled:opacity-50 w-fit"
                 >
-                  {isUploadingFavicon ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {isUploadingFavicon ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   <span>{isUploadingFavicon ? "ĐANG TẢI..." : "TẢI FAVICON MỚI"}</span>
                 </button>
               </div>
@@ -254,9 +254,9 @@ export default function BrandingSettings() {
                 <button 
                   onClick={() => bannerInputRef.current?.click()}
                   disabled={isUploadingBanner}
-                  className="flex items-center space-x-2 px-4 py-2 bg-secondary text-foreground border border-border rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-secondary/80 transition-all active:scale-95 disabled:opacity-50"
+                  className="flex items-center space-x-2 px-3 py-1.5 bg-white text-muted-foreground border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/50 transition-all disabled:opacity-50"
                 >
-                  {isUploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {isUploadingBanner ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                   <span>{isUploadingBanner ? "ĐANG TẢI..." : "THAY ĐỔI BANNER"}</span>
                 </button>
               </div>

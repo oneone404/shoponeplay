@@ -158,10 +158,10 @@ export default function AdminBanksClient({
             <button
               onClick={handleSaveConfig}
               disabled={isPending}
-              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
               title="Lưu cấu hình"
             >
-              <Save className="w-4 h-4" />
+              {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </button>
           </div>
 
@@ -243,9 +243,9 @@ export default function AdminBanksClient({
                   setEditingBank({ isActive: true })
                   setShowForm(true)
                 }}
-                className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-primary/20 active:scale-95 transition-all flex items-center gap-2"
+                className="px-3 py-1.5 bg-white text-muted-foreground border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/50 transition-all flex items-center gap-2"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 Thêm ngân hàng
               </button>
             </div>
@@ -262,6 +262,14 @@ export default function AdminBanksClient({
                         {editingBank?.id ? "Chỉnh sửa ngân hàng" : "Thêm ngân hàng mới"}
                       </h3>
                     </div>
+                    <button
+                      onClick={handleSaveBank}
+                      disabled={isPending}
+                      className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+                      title="Lưu ngân hàng"
+                    >
+                      {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    </button>
                   </div>
 
                   <div className="p-8">
@@ -322,14 +330,6 @@ export default function AdminBanksClient({
                         className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all hover:bg-secondary/50 rounded-xl"
                       >
                         Hủy bỏ
-                      </button>
-                      <button
-                        onClick={handleSaveBank}
-                        disabled={isPending}
-                        className="px-10 py-3.5 bg-primary/10 text-primary border border-primary/20 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-primary/20 active:scale-95 transition-all flex items-center space-x-2"
-                      >
-                        <Save className="w-4 h-4" />
-                        <span>{editingBank?.id ? "Cập nhật ngân hàng" : "Lưu ngân hàng"}</span>
                       </button>
                     </div>
                   </div>

@@ -150,7 +150,7 @@ export default function GeneralSettings() {
             }, "thông tin chung")}
             disabled={isSaving}
             title="Lưu thông tin chung"
-            className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+            className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           </button>
@@ -201,7 +201,7 @@ export default function GeneralSettings() {
             }, "banner")}
             disabled={isSaving}
             title="Lưu banner"
-            className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+            className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           </button>
@@ -232,7 +232,7 @@ export default function GeneralSettings() {
             }, "nội dung giới thiệu")}
             disabled={isSaving}
             title="Lưu nội dung giới thiệu"
-            className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+            className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           </button>
@@ -261,9 +261,10 @@ export default function GeneralSettings() {
               type="button"
               onClick={handleAddLink}
               title="Thêm nút liên kết"
-              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all"
+              className="px-3 py-1.5 bg-white text-muted-foreground border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/50 transition-all flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
+              Thêm nút
             </button>
             <button
               onClick={() => handleSaveSection({
@@ -271,7 +272,7 @@ export default function GeneralSettings() {
               }, "danh sách liên kết")}
               disabled={isSaving}
               title="Lưu danh sách liên kết"
-              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+              className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </button>
