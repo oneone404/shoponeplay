@@ -26,12 +26,21 @@ export async function POST(req: Request) {
     if ((!topupProductId && !manualProduct) || !roleId || !roleName || !serverId) {
       return NextResponse.json({ success: false, error: "Thiếu thông tin bắt buộc" }, { status: 400 })
     }
-
+    
     let topupProduct: any = null
     let chargePrice = 0
     let productName = ""
     let vngProductId = ""
     let cardValue = 0
+
+    // ======== GET CONFIG FOR MARKUP ========
+    const configs = await prisma.config.findMany({
+      where: {
+        key: { in: ["NAP_GAME_MARKUP", "NAP_GAME_ROUNDING"] }
+      }
+    })
+    const markup = Number(configs.find(c => c.key === "NAP_GAME_MARKUP")?.value || "0")
+    const rounding = configs.find(c => c.key === "NAP_GAME_ROUNDING")?.value === "true"
 
     if (topupProductId) {
       // Kiem tra san pham tu dong nap co ton tai va dang bat
@@ -52,10 +61,24 @@ export async function POST(req: Request) {
       cardValue = topupProduct.cardValue
     } else if (manualProduct) {
       // Truong hop nap Manual (khong co trong database)
-      chargePrice = Number(manualProduct.price)
+      const basePrice = Number(manualProduct.price)
+      
+      // Tinh gia ban co markup
+      let calculatedPrice = basePrice + (basePrice * markup / 100)
+      
+      // Lam tron neu bat
+      if (rounding) {
+        if (calculatedPrice < 100000) {
+          calculatedPrice = Math.ceil(calculatedPrice / 5000) * 5000
+        } else {
+          calculatedPrice = Math.ceil(calculatedPrice / 10000) * 10000
+        }
+      }
+
+      chargePrice = calculatedPrice
       productName = manualProduct.name
       vngProductId = manualProduct.vngProductId
-      cardValue = Number(manualProduct.price) // Dung gia ban lam menh gia de check stock neu can (du manual khong check stock)
+      cardValue = basePrice // GIÁ GỐC GỬI CHO VNG
     }
 
     // ======== RATE LIMITING ========
