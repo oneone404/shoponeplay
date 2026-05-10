@@ -334,7 +334,7 @@ export default function AdminTopupHistoryClient({
           onClick={() => setSelectedOrder(null)}
         >
           <div 
-            className="bg-card border border-border w-full max-w-2xl rounded-[2rem] overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]"
+            className="bg-card border border-border w-full max-w-2xl rounded-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]"
             onClick={e => e.stopPropagation()}
           >
             <div className="p-8 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
@@ -358,7 +358,7 @@ export default function AdminTopupHistoryClient({
             <div className="p-8 overflow-y-auto space-y-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Info Card 1 */}
-                <div className="p-6 bg-secondary/20 rounded-[1.5rem] border border-border space-y-5">
+                <div className="p-6 bg-secondary/20 rounded-2xl border border-border space-y-5">
                   <div className="flex items-center gap-2 text-primary">
                     <UserIcon className="w-4 h-4" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Khách Hàng & Game</span>
