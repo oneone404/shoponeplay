@@ -84,7 +84,7 @@ export async function POST(req: Request) {
             balanceBefore: order.user.balance,
             balanceAfter: order.user.balance + order.amount,
             type: "REFUND",
-            description: `Hoan tien nap tu dong (NCC bao loi) - Don #${order.id.slice(-8).toUpperCase()}`
+            description: `Hoàn tiền nạp tự động (NCC báo lỗi) - Đơn #${order.id.slice(-8).toUpperCase()}`
           }
         }),
         prisma.topupOrder.update({

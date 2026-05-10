@@ -117,7 +117,7 @@ async function refundUser(orderId: string) {
         balanceBefore: order.user.balance,
         balanceAfter: order.user.balance + order.amount,
         type: "REFUND",
-        description: `Hoan tien nap tu dong - Don #${orderId.slice(-8).toUpperCase()}`
+        description: `Hoàn tiền nạp tự động - Đơn #${orderId.slice(-8).toUpperCase()}`
       }
     }),
     prisma.topupOrder.update({
