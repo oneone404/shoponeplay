@@ -42,7 +42,7 @@ export async function GET(req: Request) {
       order: {
         id: order.id,
         status: order.status,
-        productName: order.product.name,
+        productName: order.productName || order.product?.name || "N/A",
         roleId: order.roleId,
         roleName: order.roleName,
         amount: order.amount,

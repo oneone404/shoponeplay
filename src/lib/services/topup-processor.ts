@@ -1,3 +1,6 @@
+import crypto from "crypto"
+import { prisma } from "@/lib/prisma"
+import { buyCard, redownloadCard, getAgentBalance, checkStockAvailable } from "./card-gateway"
 import { quickAuth, getProducts, createOrder, createVietQROrder } from "./vng-billing"
 import { sendTopupNotification, sendTopupQRNotification } from "@/lib/telegram"
 import type { TopupOrderStatus } from "@prisma/client"
@@ -161,12 +164,13 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       const vngSession = await quickAuth(order.roleId)
       const products = await getProducts(vngSession)
       
+      const productName = order.productName || order.product?.name || ""
       const targetProductEntry = Object.entries(products).find(([id, p]) => 
-        p.productName.toLowerCase().trim() === order.product.name.toLowerCase().trim() && p.enable === 1
+        p.productName.toLowerCase().trim() === productName.toLowerCase().trim() && p.enable === 1
       )
 
       if (!targetProductEntry) {
-        throw new Error(`Goi "${order.product.name}" khong kha dung tren VNG cho nhan vat nay.`)
+        throw new Error(`Gói "${productName}" không khả dụng trên VNG cho nhân vật này.`)
       }
       
       await prisma.topupOrder.update({
@@ -200,7 +204,7 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       await logStep(orderId, "CHECK_BALANCE", "ERROR", `So du khong du: ${agentBalance} < ${order.cardValue}`)
       await updateOrderStatus(orderId, "ERROR", { errorMessage: `Số dư ví đại lý không đủ (${agentBalance.toLocaleString()} VND)` })
       await refundUser(orderId)
-      await sendTopupTelegramAlert(order, "ERROR", `Số dư ví đại lý không đủ: ${agentBalance.toLocaleString()} VND`)
+      await sendTopupNotification({ order, type: "ERROR", detail: `Số dư ví đại lý không đủ: ${agentBalance.toLocaleString()} VND` })
       return { success: false, orderId, status: "REFUNDED", message: "Số dư ví đại lý không đủ" }
     }
 
@@ -213,7 +217,8 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
 
     while (stockRetryCount < maxStockRetries) {
       try {
-        const stockResult = await checkStockAvailable(order.product.serviceCode, order.cardValue)
+        const serviceCode = order.product?.serviceCode || "ZING"
+        const stockResult = await checkStockAvailable(serviceCode, order.cardValue)
         if (stockResult.available) {
           stockAvailable = true
           await logStep(orderId, "CHECK_STOCK", "OK", "Con hang, bat dau mua the.")
@@ -235,22 +240,24 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
     }
 
     if (!stockAvailable) {
+      const serviceCode = order.product?.serviceCode || "ZING"
       await logStep(orderId, "CHECK_STOCK", "ERROR", "NCC het hang sau 5 lan thu lai.")
       await updateOrderStatus(orderId, "ERROR", { errorMessage: "NCC hết hàng sau 5 lần thử lại." })
       await refundUser(orderId)
-      await sendTopupTelegramAlert(order, "ERROR", `NCC hết hàng sau 5 lần thử lại (${order.product.serviceCode} - ${order.cardValue.toLocaleString()})`)
+      await sendTopupNotification({ order, type: "ERROR", detail: `NCC hết hàng sau 5 lần thử lại (${serviceCode} - ${order.cardValue.toLocaleString()})` })
       return { success: false, orderId, status: "REFUNDED", message: "NCC hết hàng" }
     }
 
     // ============ STEP 3: Mua the tu NCC ============
     await updateOrderStatus(orderId, "BUYING_CARD")
-    await logStep(orderId, "BUY_CARD", "OK", `Mua the ${order.product.serviceCode} menh gia ${order.cardValue.toLocaleString()} VND...`)
+    const serviceCode = order.product?.serviceCode || "ZING"
+    await logStep(orderId, "BUY_CARD", "OK", `Mua the ${serviceCode} menh gia ${order.cardValue.toLocaleString()} VND...`)
 
     let cardSerial: string | undefined
     let cardPin: string | undefined
-
+    let buyResult
     try {
-      const buyResult = await buyCard(order.cardValue, order.product.serviceCode)
+      buyResult = await buyCard(order.cardValue, serviceCode)
 
       await prisma.topupOrder.update({
         where: { id: orderId },
@@ -345,21 +352,22 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
     }
 
     // ============ STEP 4: Kiem tra goi kha dung & Tim VNG Product ID ============
-    let activeVngProductId = order.product.vngProductId || ""
+    let activeVngProductId = order.product?.vngProductId || ""
     try {
       const products = await getProducts(vngSession)
       
+      const productName = order.productName || order.product?.name || ""
       const targetProductEntry = Object.entries(products).find(([id, p]) => 
-        p.productName.toLowerCase().trim() === order.product.name.toLowerCase().trim() && p.enable === 1
+        p.productName.toLowerCase().trim() === productName.toLowerCase().trim() && p.enable === 1
       )
 
       if (!targetProductEntry) {
-        throw new Error(`Goi "${order.product.name}" khong kha dung hoac khong tim thay tren VNG`)
+        throw new Error(`Goi "${productName}" khong kha dung hoac khong tim thay tren VNG`)
       }
 
       activeVngProductId = targetProductEntry[0]
       
-      await logStep(orderId, "CHECK_PRODUCT", "OK", `Tim thay goi ${order.product.name} (VNG ID: ${activeVngProductId})`)
+      await logStep(orderId, "CHECK_PRODUCT", "OK", `Tim thay goi ${productName} (VNG ID: ${activeVngProductId})`)
     } catch (error: any) {
       await logStep(orderId, "CHECK_PRODUCT", "ERROR", error.message)
       await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi kiểm tra gói: " + error.message })
@@ -395,10 +403,13 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
         throw new Error(`VNG returnCode: ${vngResult.returnCode} - ${vngResult.message}`)
       }
     } catch (error: any) {
-      await logStep(orderId, "CREATE_ORDER", "ERROR", error.message)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi nạp thẻ VNG: " + error.message })
-      await sendTopupTelegramAlert(order, "ERROR", `Lỗi nạp thẻ VNG (thẻ đã mua): ${error.message}`)
-      return { success: false, orderId, status: "ERROR", message: "Lỗi nạp thẻ vào game" }
+      await logStep(orderId, "VNG_ERROR", "ERROR", error.message)
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi nạp vào VNG: " + error.message })
+      
+      // Thong bao Telegram
+      await sendTopupNotification({ order, type: "ERROR", detail: `Lỗi nạp vào VNG (thẻ đã mua): ${error.message}` })
+
+      return { success: false, orderId, status: "ERROR", message: error.message }
     }
   } catch (error: any) {
     console.error("[TOPUP_PROCESSOR] finishTopupProcess error:", error)
@@ -539,10 +550,8 @@ async function processManualQRTopup(orderId: string): Promise<ProcessResult> {
   }
 }
 
-  } catch (error) {
-    console.error("[TELEGRAM_QR] Error:", error)
-  }
-}
+
+
 
 /**
  * Xử lý hành động từ Telegram Admin (Xác nhận/Thử lại)

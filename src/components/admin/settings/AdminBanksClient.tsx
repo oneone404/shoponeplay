@@ -14,7 +14,8 @@ import {
   Settings,
   Info,
   Banknote,
-  Copy
+  Copy,
+  Loader2
 } from "lucide-react"
 import AdminHeader from "../AdminHeader"
 import { upsertBank, deleteBank, updateDepositConfig } from "@/app/admin/settings/banks/actions"
