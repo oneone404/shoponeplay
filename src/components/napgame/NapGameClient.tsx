@@ -26,7 +26,7 @@ interface Product {
 interface TopupProductConfig {
   id: string
   name: string
-  vngProductId: string
+  vngProductId?: string | null
   sellPrice: number
   enabled: boolean
 }
@@ -218,10 +218,10 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
     return bulkIdsInput.split('\n').map(id => id.trim()).filter(id => id.length > 0)
   }, [bulkIdsInput])
 
-  // Tim TopupProduct tuong ung voi san pham VNG hien tai
+  // Tim TopupProduct tuong ung voi san pham VNG hien tai bang ten
   const findTopupProduct = useCallback((product: Product) => {
     return topupProducts.find(tp => 
-      tp.enabled && tp.vngProductId === product.sellingProductID
+      tp.enabled && tp.name.toLowerCase().trim() === product.productName.toLowerCase().trim()
     )
   }, [topupProducts])
 
@@ -250,7 +250,8 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
                   topupProductId: topupProduct.id,
                   roleId: id,
                   roleName: id,
-                  serverId: character?.server || "2"
+                  serverId: character?.server || "2",
+                  expectedPrice: confirmingProduct.prices.VND.price
                 })
               })
               const data = await res.json()
@@ -273,7 +274,8 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
                 topupProductId: topupProduct.id,
                 roleId: character.id,
                 roleName: character.name,
-                serverId: character.server
+                serverId: character.server,
+                expectedPrice: confirmingProduct.prices.VND.price
               })
             })
             const data = await res.json()

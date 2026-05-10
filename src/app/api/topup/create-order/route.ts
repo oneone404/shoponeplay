@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { topupProductId, roleId, roleName, serverId } = body
+    const { topupProductId, roleId, roleName, serverId, expectedPrice } = body
 
     // ======== VALIDATION ========
     if (!topupProductId || !roleId || !roleName || !serverId) {
@@ -35,6 +35,11 @@ export async function POST(req: Request) {
     if (!topupProduct || !topupProduct.enabled) {
       return NextResponse.json({ success: false, error: "San pham nap tu dong khong ton tai hoac da tat" }, { status: 404 })
     }
+
+    // Tinh toan gia se tru: Uu tien gia tu client (da lam tron/markup) nhung phai >= gia goc the de tranh lo
+    const chargePrice = (expectedPrice && expectedPrice >= topupProduct.cardValue) 
+      ? Number(expectedPrice) 
+      : topupProduct.sellPrice
 
     // ======== RATE LIMITING ========
     // Kiem tra xem user co don hang nap tu dong nao moi tao trong vong 15 giay qua khong
@@ -64,10 +69,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Khong tim thay tai khoan" }, { status: 404 })
     }
 
-    if (user.balance < topupProduct.sellPrice) {
+    if (user.balance < chargePrice) {
       return NextResponse.json({ 
         success: false, 
-        error: `So du khong du. Can ${topupProduct.sellPrice.toLocaleString()} VND, hien co ${user.balance.toLocaleString()} VND`
+        error: `So du khong du. Can ${chargePrice.toLocaleString()} VND, hien co ${user.balance.toLocaleString()} VND`
       }, { status: 400 })
     }
 
@@ -76,14 +81,14 @@ export async function POST(req: Request) {
       // Tru tien user
       const updatedUser = await tx.user.update({
         where: { id: user.id },
-        data: { balance: { decrement: topupProduct.sellPrice } }
+        data: { balance: { decrement: chargePrice } }
       })
 
       // Tao transaction record
       await tx.transaction.create({
         data: {
           userId: user.id,
-          amount: -topupProduct.sellPrice,
+          amount: -chargePrice,
           balanceBefore: user.balance,
           balanceAfter: updatedUser.balance,
           type: "PURCHASE",
@@ -99,7 +104,7 @@ export async function POST(req: Request) {
           roleId,
           roleName,
           serverId,
-          amount: topupProduct.sellPrice,
+          amount: chargePrice,
           cardValue: topupProduct.cardValue,
           vngProductId: topupProduct.vngProductId,
           status: "PENDING",

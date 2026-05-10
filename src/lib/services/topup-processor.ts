@@ -275,16 +275,22 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
       return { success: false, orderId, status: "ERROR", message: "Loi xac thuc VNG" }
     }
 
-    // ============ STEP 4: Kiem tra goi kha dung ============
+    // ============ STEP 4: Kiem tra goi kha dung & Tim VNG Product ID ============
+    let activeVngProductId = order.product.vngProductId || ""
     try {
       const products = await getProducts(vngSession)
-      const targetProduct = products[order.product.vngProductId]
+      
+      const targetProductEntry = Object.entries(products).find(([id, p]) => 
+        p.productName.toLowerCase().trim() === order.product.name.toLowerCase().trim() && p.enable === 1
+      )
 
-      if (!targetProduct || targetProduct.enable !== 1) {
-        throw new Error(`Goi ${order.product.name} (${order.product.vngProductId}) khong kha dung cho nhan vat nay`)
+      if (!targetProductEntry) {
+        throw new Error(`Goi "${order.product.name}" khong kha dung hoac khong tim thay tren VNG`)
       }
 
-      await logStep(orderId, "CHECK_PRODUCT", "OK", `Goi ${order.product.name} kha dung`)
+      activeVngProductId = targetProductEntry[0]
+      
+      await logStep(orderId, "CHECK_PRODUCT", "OK", `Tim thay goi ${order.product.name} (VNG ID: ${activeVngProductId})`)
     } catch (error: any) {
       await logStep(orderId, "CHECK_PRODUCT", "ERROR", error.message)
       await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi kiem tra goi: " + error.message })
@@ -298,14 +304,14 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
         session: vngSession,
         cardSerial,
         cardPin, // Dung PIN goc de nap
-        productId: order.product.vngProductId,
+        productId: activeVngProductId,
         amount: order.cardValue,
       })
 
       await prisma.topupOrder.update({
         where: { id: orderId },
         data: {
-          vngProductId: order.product.vngProductId,
+          vngProductId: activeVngProductId,
           vngReturnCode: vngResult.returnCode,
         }
       })

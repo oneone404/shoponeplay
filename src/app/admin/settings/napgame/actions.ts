@@ -124,8 +124,7 @@ export async function getTopupProducts() {
 
 export async function createTopupProduct(data: {
   name: string
-  vngProductId: string
-  vngProductType: string
+  vngProductId?: string
   cardValue: number
   serviceCode: string
   sellPrice: number
@@ -149,7 +148,6 @@ export async function createTopupProduct(data: {
 export async function updateTopupProduct(id: string, data: {
   name?: string
   vngProductId?: string
-  vngProductType?: string
   cardValue?: number
   serviceCode?: string
   sellPrice?: number

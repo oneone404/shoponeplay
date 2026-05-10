@@ -15,6 +15,12 @@ Chào mừng bạn đến với ShopOnePlay, nền tảng thương mại điện
 - **Cloud Account Persistence**: Tự động ghi nhớ Game ID (AccountId) của người dùng trên hệ thống đám mây (Cloud), giúp đồng bộ hóa thông tin nhân vật trên mọi thiết bị khi đăng nhập. Hỗ trợ fallback localStorage cho khách vãng lai.
 - **Component Refactoring**: Tái cấu trúc trang Nạp Gói Game theo mô hình Server/Client Component giúp tăng tốc độ tải trang ban đầu và tối ưu hóa việc quản lý mã nguồn.
 - **UI/UX Premium**: Nâng cấp Modal chi tiết sản phẩm với hiệu ứng làm mờ nền (Blur background technique), đảm bảo ảnh gói nạp (dọc/ngang) luôn hiển thị đẹp mắt và phông chữ được chuẩn hóa (Max weight 700).
+- **Hệ thống Nạp Gói Game Tự Động (Auto-Topup)**: 
+  - Backend Orchestrator điều phối mua thẻ (TheGiare) và nạp VNG hoàn toàn tự động.
+  - Cơ chế retry polling và Callback API xác thực chữ ký bảo mật.
+  - Mã hóa AES-256 cho mã PIN thẻ cào và Rate Limiting chống spam API.
+  - Tự động hoàn tiền (Refund) cho người dùng khi giao dịch lỗi.
+  - Dashboard Admin quản lý toàn diện NCC, sản phẩm tự động và lịch sử đơn hàng.
 
 ---
 

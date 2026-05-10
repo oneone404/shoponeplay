@@ -597,12 +597,11 @@ enum TopupOrderStatus {
 
 model TopupProduct {
   id              String        @id @default(cuid())
-  name            String                                // Ten hien thi: "Goi Ngay", "Goi Tuan PLUS"
-  vngProductId    String                                // Product ID tren VNG: "92110005", "92110025"
-  vngProductType  String                                // Type tu VNG: "22" (Ngay), "30" (Tuan)
+  name            String                                // Ten hien thi va cung la ten de khop voi VNG: "Gói Ngày", "Gói Tuần PLUS"
+  vngProductId    String?                               // Product ID tren VNG (co the de trong, se tu lay theo name)
   cardValue       Int                                   // Menh gia the Zing can mua (VND): 20000, 100000
   serviceCode     String        @default("ZING")        // Loai the: ZING, GARENA...
-  sellPrice       Int                                   // Gia ban cho user (sau markup)
+  sellPrice       Int                                   // Gia ban cho user (Gia niem yet)
   enabled         Boolean       @default(true)          // Bat/tat san pham
   sortOrder       Int           @default(0)             // Thu tu hien thi
   createdAt       DateTime      @default(now())

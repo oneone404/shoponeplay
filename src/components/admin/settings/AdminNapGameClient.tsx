@@ -15,8 +15,7 @@ interface HotItem {
 interface TopupProductItem {
   id: string
   name: string
-  vngProductId: string
-  vngProductType: string
+  vngProductId?: string
   cardValue: number
   serviceCode: string
   sellPrice: number
@@ -240,7 +239,6 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
               const result = await createTopupProduct({
                 name: "Goi Moi",
                 vngProductId: "",
-                vngProductType: "",
                 cardValue: 20000,
                 serviceCode: "ZING",
                 sellPrice: 25000,
@@ -372,8 +370,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
 
 function TopupProductRow({ product, onUpdate, onDelete }: { product: any, onUpdate: (data: any) => void, onDelete: () => void }) {
   const [name, setName] = useState(product.name)
-  const [vngProductId, setVngProductId] = useState(product.vngProductId)
-  const [vngProductType, setVngProductType] = useState(product.vngProductType)
+  const [vngProductId, setVngProductId] = useState(product.vngProductId || "")
   const [cardValue, setCardValue] = useState(product.cardValue)
   const [sellPrice, setSellPrice] = useState(product.sellPrice)
   const [serviceCode, setServiceCode] = useState(product.serviceCode)
@@ -392,16 +389,11 @@ function TopupProductRow({ product, onUpdate, onDelete }: { product: any, onUpda
           <button onClick={onDelete} className="w-7 h-7 flex items-center justify-center text-rose-500 hover:bg-rose-500/10 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <div>
-          <label className="text-[9px] font-bold uppercase text-muted-foreground">VNG Product ID</label>
+          <label className="text-[9px] font-bold uppercase text-muted-foreground">VNG Product ID (Khong Bat Buoc)</label>
           <input value={vngProductId} onChange={e => setVngProductId(e.target.value)} onBlur={() => onUpdate({ vngProductId })}
-            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs" placeholder="92110025" />
-        </div>
-        <div>
-          <label className="text-[9px] font-bold uppercase text-muted-foreground">VNG Type</label>
-          <input value={vngProductType} onChange={e => setVngProductType(e.target.value)} onBlur={() => onUpdate({ vngProductType })}
-            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs" placeholder="30" />
+            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs" placeholder="Tu dong tim theo ten..." />
         </div>
         <div>
           <label className="text-[9px] font-bold uppercase text-muted-foreground">Menh gia the (VND)</label>
