@@ -343,7 +343,7 @@ export default function AdminTopupHistoryClient({
                   <History className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold tracking-tight">Chi Tiết Đơn Nạp Gói</h3>
+                  <h3 className="text-lg font-bold tracking-tight uppercase">Chi Tiết Đơn Nạp Gói</h3>
                   <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest mt-0.5">#{selectedOrder.id.toUpperCase()}</p>
                 </div>
               </div>
