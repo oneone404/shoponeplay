@@ -95,18 +95,16 @@ export async function getAgentBalance(): Promise<BalanceResult> {
     throw new Error("Chưa cấu hình Card Gateway. Vui lòng cấu hình trong Admin > Cài đặt > Nạp Gói.")
   }
 
-  const requestId = generateRequestId()
-  const sign = createSign(config.partnerKey, config.partnerId, "getbalance", requestId)
+  const sign = createSign(config.partnerKey, config.partnerId, "getbalance", "") // request_id = "" cho getbalance
 
   const params = new URLSearchParams({
     partner_id: config.partnerId,
     command: "getbalance",
     wallet_number: config.walletNumber,
-    request_id: requestId,
     sign,
   })
 
-  console.log("[CARD_GATEWAY] getbalance request:", { baseUrl: config.baseUrl, partnerId: config.partnerId, wallet: config.walletNumber, requestId })
+  console.log("[CARD_GATEWAY] getbalance request:", { baseUrl: config.baseUrl, partnerId: config.partnerId, wallet: config.walletNumber })
 
   const response = await fetch(`${config.baseUrl}/api/cardws`, {
     method: "POST",
@@ -134,8 +132,7 @@ export async function checkStockAvailable(
     throw new Error("Chưa cấu hình Card Gateway")
   }
 
-  const requestId = generateRequestId()
-  const sign = createSign(config.partnerKey, config.partnerId, "checkavailable", requestId)
+  const sign = createSign(config.partnerKey, config.partnerId, "checkavailable", "") // request_id = "" cho checkavailable
 
   const params = new URLSearchParams({
     partner_id: config.partnerId,
@@ -143,7 +140,6 @@ export async function checkStockAvailable(
     service_code: serviceCode,
     value: value.toString(),
     qty: qty.toString(),
-    request_id: requestId,
     sign,
   })
 
@@ -209,10 +205,16 @@ export async function buyCard(
   const data = await response.json()
   console.log("[CARD_GATEWAY] buycard result:", { status: data.status, message: data.message })
 
+  // Map "code" to "pin" if needed (mot so NCC dung code thay vi pin)
+  const cards = data.data?.cards?.map((c: any) => ({
+    ...c,
+    pin: c.pin || c.code
+  }))
+
   return {
     status: data.status,
     message: data.message || "",
-    cards: data.data?.cards || undefined,
+    cards: cards || undefined,
     orderCode: data.data?.order_code || undefined,
     requestId,
   }
@@ -257,10 +259,16 @@ export async function redownloadCard(
   const data = await response.json()
   console.log("[CARD_GATEWAY] redownload result:", { status: data.status })
 
+  // Map "code" to "pin" if needed
+  const cards = data.data?.cards?.map((c: any) => ({
+    ...c,
+    pin: c.pin || c.code
+  }))
+
   return {
     status: data.status,
     message: data.message || "",
-    cards: data.data?.cards || undefined,
+    cards: cards || undefined,
     orderCode: data.data?.order_code || orderCode || undefined,
     requestId,
   }
