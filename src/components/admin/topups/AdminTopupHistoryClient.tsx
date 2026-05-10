@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useMemo } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { 
   Search, 
   Filter, 
@@ -17,7 +17,6 @@ import {
   History,
   CreditCard,
   User as UserIcon,
-  Gamepad2,
   Calendar,
   Ban,
   ChevronDown,
@@ -49,6 +48,15 @@ interface TopupOrder {
   product: { name: string }
 }
 
+const STATUS_OPTIONS = [
+  { value: "ALL", label: "Tất cả trạng thái" },
+  { value: "COMPLETED", label: "Thành công" },
+  { value: "ERROR", label: "Lỗi" },
+  { value: "REFUNDED", label: "Đã hoàn tiền" },
+  { value: "PENDING", label: "Chờ xử lý" },
+  { value: "WAITING_CARD", label: "Đợi thẻ NCC" },
+]
+
 export default function AdminTopupHistoryClient({ 
   initialOrders, 
   totalPages, 
@@ -63,20 +71,42 @@ export default function AdminTopupHistoryClient({
   const { addMessage } = useUI()
   const [isPending, startTransition] = useTransition()
   const [selectedOrder, setSelectedOrder] = useState<TopupOrder | null>(null)
+  
+  // States for UI
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "ALL")
   const [isStatusOpen, setIsStatusOpen] = useState(false)
 
-  const handleSearch = () => {
+  // Sync state with URL when it changes (e.g. browser back/forward)
+  useEffect(() => {
+    setSearchTerm(searchParams.get("search") || "")
+    setStatusFilter(searchParams.get("status") || "ALL")
+  }, [searchParams])
+
+  const updateFilters = (newSearch?: string, newStatus?: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (searchTerm) params.set("search", searchTerm)
+    
+    const search = newSearch !== undefined ? newSearch : searchTerm
+    const status = newStatus !== undefined ? newStatus : statusFilter
+
+    if (search) params.set("search", search)
     else params.delete("search")
     
-    if (statusFilter !== "ALL") params.set("status", statusFilter)
+    if (status && status !== "ALL") params.set("status", status)
     else params.delete("status")
     
     params.set("page", "1")
     router.push(`?${params.toString()}`)
+  }
+
+  const handleSearch = () => {
+    updateFilters(searchTerm)
+  }
+
+  const handleStatusChange = (status: string) => {
+    setStatusFilter(status)
+    setIsStatusOpen(false)
+    updateFilters(undefined, status)
   }
 
   const changePage = (page: number) => {
@@ -114,15 +144,6 @@ export default function AdminTopupHistoryClient({
     }
   }
 
-  const STATUS_OPTIONS = [
-    { value: "ALL", label: "Tất cả trạng thái" },
-    { value: "COMPLETED", label: "Thành công" },
-    { value: "ERROR", label: "Lỗi" },
-    { value: "REFUNDED", label: "Đã hoàn tiền" },
-    { value: "PENDING", label: "Chờ xử lý" },
-    { value: "WAITING_CARD", label: "Đợi thẻ NCC" },
-  ]
-
   return (
     <div className="space-y-6">
       <AdminHeader 
@@ -146,40 +167,36 @@ export default function AdminTopupHistoryClient({
         
         <div className="relative">
           <button 
+            type="button"
             onClick={() => setIsStatusOpen(!isStatusOpen)}
             className="px-4 py-3 bg-card border border-border rounded-xl text-sm font-bold text-foreground flex items-center gap-2 hover:bg-secondary transition-all shadow-sm min-w-[200px]"
           >
             <Filter className="w-4 h-4 text-muted-foreground" />
             <span className="flex-1 text-left uppercase text-[10px] tracking-widest font-bold">
-              {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || "Trạng thái"}
+              {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || "Tất cả trạng thái"}
             </span>
             <ChevronDown className={cn("w-4 h-4 transition-transform", isStatusOpen && "rotate-180")} />
           </button>
           
           {isStatusOpen && (
-            <div className="absolute top-full right-0 mt-2 w-full bg-card border border-border rounded-xl shadow-xl z-10 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
-              {STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    setStatusFilter(opt.value);
-                    setIsStatusOpen(false);
-                    // Trigger search immediately on status change
-                    const params = new URLSearchParams(searchParams.toString())
-                    if (opt.value !== "ALL") params.set("status", opt.value)
-                    else params.delete("status")
-                    params.set("page", "1")
-                    router.push(`?${params.toString()}`)
-                  }}
-                  className={cn(
-                    "w-full px-4 py-2 text-left text-[10px] font-bold transition-colors uppercase tracking-widest",
-                    statusFilter === opt.value ? "bg-primary text-white" : "text-foreground hover:bg-secondary"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setIsStatusOpen(false)} />
+              <div className="absolute top-full right-0 mt-2 w-full bg-card border border-border rounded-xl shadow-xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
+                {STATUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleStatusChange(opt.value)}
+                    className={cn(
+                      "w-full px-4 py-2 text-left text-[10px] font-bold transition-colors uppercase tracking-widest",
+                      statusFilter === opt.value ? "bg-primary text-white" : "text-foreground hover:bg-secondary"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -262,6 +279,7 @@ export default function AdminTopupHistoryClient({
                       <td className="px-6 py-4">
                         <div className="flex justify-center items-center gap-2">
                           <button 
+                            type="button"
                             onClick={() => setSelectedOrder(order)}
                             className="p-2 bg-card border border-border rounded-lg hover:text-primary transition-all shadow-sm"
                             title="Xem chi tiết"
@@ -270,6 +288,7 @@ export default function AdminTopupHistoryClient({
                           </button>
                           {order.status === "ERROR" && (
                             <button 
+                              type="button"
                               onClick={() => handleRetry(order.id)}
                               className="p-2 bg-card border border-border rounded-lg text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
                               disabled={isPending}
@@ -294,6 +313,7 @@ export default function AdminTopupHistoryClient({
             <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Trang {currentPage} / {totalPages}</div>
             <div className="flex items-center space-x-2">
               <button 
+                type="button"
                 onClick={() => changePage(1)} 
                 disabled={currentPage === 1} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
@@ -301,6 +321,7 @@ export default function AdminTopupHistoryClient({
                 <ChevronsLeft className="w-4 h-4" />
               </button>
               <button 
+                type="button"
                 onClick={() => changePage(currentPage - 1)} 
                 disabled={currentPage === 1} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
@@ -309,6 +330,7 @@ export default function AdminTopupHistoryClient({
               </button>
               <div className="px-4 text-xs font-bold text-primary">{currentPage}</div>
               <button 
+                type="button"
                 onClick={() => changePage(currentPage + 1)} 
                 disabled={currentPage === totalPages} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
@@ -316,6 +338,7 @@ export default function AdminTopupHistoryClient({
                 <ChevronRight className="w-4 h-4" />
               </button>
               <button 
+                type="button"
                 onClick={() => changePage(totalPages)} 
                 disabled={currentPage === totalPages} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
@@ -327,7 +350,7 @@ export default function AdminTopupHistoryClient({
         )}
       </div>
 
-      {/* Details Modal (Glassmorphism & Premium Style) */}
+      {/* Details Modal */}
       {selectedOrder && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-300"
@@ -348,6 +371,7 @@ export default function AdminTopupHistoryClient({
                 </div>
               </div>
               <button 
+                type="button"
                 onClick={() => setSelectedOrder(null)} 
                 className="w-10 h-10 flex items-center justify-center bg-secondary/50 hover:bg-secondary hover:text-foreground border border-border rounded-xl transition-all"
               >
@@ -380,7 +404,7 @@ export default function AdminTopupHistoryClient({
                 </div>
 
                 {/* Info Card 2 */}
-                <div className="p-6 bg-secondary/20 rounded-[1.5rem] border border-border space-y-5">
+                <div className="p-6 bg-secondary/20 rounded-2xl border border-border space-y-5">
                   <div className="flex items-center gap-2 text-primary">
                     <CreditCard className="w-4 h-4" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Thẻ Cào NCC</span>
@@ -427,7 +451,7 @@ export default function AdminTopupHistoryClient({
                           <span className="text-[10px] font-bold uppercase tracking-tight text-foreground">{log.step}</span>
                           <span className="text-[9px] font-mono text-muted-foreground">{log.time ? new Date(log.time).toLocaleTimeString("vi-VN") : ""}</span>
                         </div>
-                        <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">{log.message}</p>
+                        <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">{log.detail || log.message}</p>
                       </div>
                     </div>
                   ))}
@@ -449,6 +473,7 @@ export default function AdminTopupHistoryClient({
             <div className="p-8 bg-secondary/30 border-t border-border flex justify-end gap-3 shrink-0">
               {selectedOrder.status === "ERROR" && (
                 <button 
+                  type="button"
                   onClick={() => handleRetry(selectedOrder.id)}
                   className="px-8 py-3 bg-emerald-500 text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center gap-2"
                   disabled={isPending}
