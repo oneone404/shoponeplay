@@ -70,6 +70,7 @@ export async function quickAuth(roleId: string): Promise<VNGSession> {
   })
 
   const text = await response.text()
+  console.log("[VNG_BILLING] auth/quick response:", text)
   let data: any
 
   try {
@@ -231,7 +232,7 @@ export async function createVietQROrder(params: {
 }> {
   const { session, productId, amount } = params
 
-  const products = JSON.stringify([{ productID: productId, quantity: 1, price: amount }])
+  const products = JSON.stringify([{ productID: productId, quantity: 1 }])
 
   // Format description giong VNG Shop (Base64)
   const descriptionText = `${session.roleName} nạp ${amount.toLocaleString("en-US")} VND vào game Play Together VNG qua VietQR tại Shop.vnggames.com`
@@ -244,21 +245,19 @@ export async function createVietQROrder(params: {
     paymentPartnerID: "1",
     providerID: "72",
     amount: amount.toString(),
-    payingAmount: amount.toString(),
+    description,
     currency: "VND",
     country: "VN",
     lang: "VI",
-    description,
     paymentMethodID: "72",
     paymentProviderID: "72",
+    payingAmount: amount.toString(),
+    serverName: "",
     jtoken: session.jtoken,
-    loginType: session.loginType || "9",
-    clientKey: VNG_CLIENT_KEY,
     serverID: session.serverID,
     userID: session.userID,
     roleID: session.roleID,
     roleName: session.roleName,
-    serverName: session.serverName || "",
     products,
   })
 
@@ -272,10 +271,16 @@ export async function createVietQROrder(params: {
       method: "POST",
       headers: {
         'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Origin': 'https://shop.vnggames.com',
         'Referer': 'https://shop.vnggames.com/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-site',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+        'X-Tracking-Client-Id': '1847328280.1778411111',
+        'X-Tracking-Session-Id': 's1778411110$o1$g1$t1778411164$j6$l1$h864872828',
       },
       body: body.toString(),
       signal: controller.signal
