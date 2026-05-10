@@ -232,7 +232,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
             <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-600">
               <ShoppingCart className="w-4 h-4" />
             </div>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">San Pham Nap Tu Dong</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Sản Phẩm Nạp Tự Động</h3>
           </div>
           <button
             onClick={async () => {
@@ -246,7 +246,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
                 sortOrder: initialTopupProducts.length
               })
               if (result.success) {
-                addMessage({ type: "success", text: "Da them san pham moi!" })
+                addMessage({ type: "success", text: "Đã thêm sản phẩm mới!" })
                 window.location.reload()
               } else {
                 addMessage({ type: "error", text: result.error || "Loi" })
