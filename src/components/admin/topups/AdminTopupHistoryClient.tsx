@@ -329,11 +329,17 @@ export default function AdminTopupHistoryClient({
 
       {/* Details Modal (Glassmorphism & Premium Style) */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-card/95 border border-border w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-300"
+          onClick={() => setSelectedOrder(null)}
+        >
+          <div 
+            className="bg-card border border-border w-full max-w-2xl rounded-[2rem] overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="p-8 border-b border-border bg-secondary/30 flex items-center justify-between shrink-0">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary border border-primary/20">
                   <History className="w-6 h-6" />
                 </div>
                 <div>
@@ -441,16 +447,10 @@ export default function AdminTopupHistoryClient({
             </div>
 
             <div className="p-8 bg-secondary/30 border-t border-border flex justify-end gap-3 shrink-0">
-              <button 
-                onClick={() => setSelectedOrder(null)}
-                className="px-8 py-3 bg-card border border-border text-foreground rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-secondary transition-all shadow-sm"
-              >
-                Đóng Cửa Sổ
-              </button>
               {selectedOrder.status === "ERROR" && (
                 <button 
                   onClick={() => handleRetry(selectedOrder.id)}
-                  className="px-8 py-3 bg-emerald-500 text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+                  className="px-8 py-3 bg-emerald-500 text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center gap-2"
                   disabled={isPending}
                 >
                   <RefreshCw className={cn("w-3.5 h-3.5", isPending && "animate-spin")} />
