@@ -89,7 +89,8 @@ model User {
   withdrawals          Withdrawal[]
   serviceOrders        ServiceOrder[]
   hackOrders           HackOrder[]
-  accountId            String?              // Game Account ID mặc định cho dịch vụ nạp game
+  topupOrders          TopupOrder[]
+  accountId            String?              // Game Account ID mac dinh cho dich vu nap game
   savedAccountIds      Json                 @default("[]") // Danh sách các ID đã lưu [{id, name}]
 }
 
@@ -579,4 +580,76 @@ model HackOrder {
 
   @@index([userId])
   @@index([hackId])
+}
+
+// --- Auto Topup System ---
+
+enum TopupOrderStatus {
+  PENDING          // Vua tao, chua xu ly
+  BUYING_CARD      // Dang mua the tu NCC
+  WAITING_CARD     // NCC dang xu ly (status=2), dang retry
+  CARD_READY       // Da co the, chuan bi nap VNG
+  PROCESSING_VNG   // Dang nap vao VNG
+  COMPLETED        // Nap thanh cong
+  ERROR            // Loi (can admin kiem tra)
+  REFUNDED         // Da hoan tien cho user
+}
+
+model TopupProduct {
+  id              String        @id @default(cuid())
+  name            String                                // Ten hien thi: "Goi Ngay", "Goi Tuan PLUS"
+  vngProductId    String                                // Product ID tren VNG: "92110005", "92110025"
+  vngProductType  String                                // Type tu VNG: "22" (Ngay), "30" (Tuan)
+  cardValue       Int                                   // Menh gia the Zing can mua (VND): 20000, 100000
+  serviceCode     String        @default("ZING")        // Loai the: ZING, GARENA...
+  sellPrice       Int                                   // Gia ban cho user (sau markup)
+  enabled         Boolean       @default(true)          // Bat/tat san pham
+  sortOrder       Int           @default(0)             // Thu tu hien thi
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  orders          TopupOrder[]
+}
+
+model TopupOrder {
+  id              String           @id @default(cuid())
+  userId          String
+  productId       String
+
+  // Thong tin nhan vat
+  roleId          String                                // Player ID
+  roleName        String                                // Ten nhan vat
+  serverId        String                                // Server ID
+
+  // Thong tin thanh toan
+  amount          Int                                   // So tien user tra
+  cardValue       Int                                   // Menh gia the mua tu NCC
+
+  // Thong tin the (tu NCC)
+  cardRequestId   String?                               // request_id gui cho NCC
+  cardOrderCode   String?                               // order_code tu NCC
+  cardSerial      String?                               // Serial the
+  cardPin         String?                               // PIN the (ma hoa truoc khi luu)
+
+  // Thong tin VNG
+  vngProductId    String?                               // Product ID VNG
+  vngUserId       String?                               // VNG userID
+  vngReturnCode   Int?                                  // Return code tu VNG createOrder
+
+  // Trang thai & Log
+  status          TopupOrderStatus @default(PENDING)
+  retryCount      Int              @default(0)          // So lan retry redownload
+  maxRetries      Int              @default(5)          // Toi da retry
+  errorMessage    String?                               // Thong bao loi (neu co)
+  statusLog       Json             @default("[]")       // Log tung buoc: [{step, status, time, detail}]
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  completedAt     DateTime?
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product         TopupProduct     @relation(fields: [productId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }

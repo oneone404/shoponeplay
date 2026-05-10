@@ -12,7 +12,6 @@ export const authConfig = {
     // Only basic JWT and session callbacks that are edge-compatible
     async jwt({ token, user, trigger }) {
       if (user) {
-        // @ts-expect-error - role is not in the default user type
         token.role = user.role;
         token.id = user.id;
       }

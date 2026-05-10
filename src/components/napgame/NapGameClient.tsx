@@ -23,12 +23,21 @@ interface Product {
   }
 }
 
+interface TopupProductConfig {
+  id: string
+  name: string
+  vngProductId: string
+  sellPrice: number
+  enabled: boolean
+}
+
 interface NapGameClientProps {
   initialHotConfig: any[]
   logoUrl?: string
+  topupProducts?: TopupProductConfig[]
 }
 
-export default function NapGameClient({ initialHotConfig, logoUrl }: NapGameClientProps) {
+export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts = [] }: NapGameClientProps) {
   const { data: session, status, update } = useSession()
   const searchParams = useSearchParams()
   const { addMessage } = useUI()
@@ -51,6 +60,8 @@ export default function NapGameClient({ initialHotConfig, logoUrl }: NapGameClie
   const [bulkIdsInput, setBulkIdsInput] = useState("")
   const [confirmingProduct, setConfirmingProduct] = useState<Product | null>(null)
   const lastSearchedId = useRef<string | null>(null)
+  const [topupOrderId, setTopupOrderId] = useState<string | null>(null)
+  const [topupStatus, setTopupStatus] = useState<string | null>(null)
 
   const DEFAULT_ID = "FKAD-BUZL-LMGY"
 
@@ -207,6 +218,13 @@ export default function NapGameClient({ initialHotConfig, logoUrl }: NapGameClie
     return bulkIdsInput.split('\n').map(id => id.trim()).filter(id => id.length > 0)
   }, [bulkIdsInput])
 
+  // Tim TopupProduct tuong ung voi san pham VNG hien tai
+  const findTopupProduct = useCallback((product: Product) => {
+    return topupProducts.find(tp => 
+      tp.enabled && tp.vngProductId === product.sellingProductID
+    )
+  }, [topupProducts])
+
   const executePurchase = async () => {
     if (!confirmingProduct) return
     
@@ -215,18 +233,94 @@ export default function NapGameClient({ initialHotConfig, logoUrl }: NapGameClie
       return
     }
 
+    const topupProduct = findTopupProduct(confirmingProduct)
+
     startTransition(async () => {
       try {
-        addMessage({ type: "info", text: "Đang xử lý yêu cầu nạp..." })
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        addMessage({ type: "success", text: "Yêu cầu nạp đã được gửi thành công!" })
+        if (isBulkMode) {
+          // Nap nhieu ID
+          for (const id of bulkIds) {
+            addMessage({ type: "info", text: `Dang xu ly nap cho ID: ${id}...` })
+            if (topupProduct) {
+              // Nap tu dong qua API
+              const res = await fetch("/api/topup/create-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  topupProductId: topupProduct.id,
+                  roleId: id,
+                  roleName: id,
+                  serverId: character?.server || "2"
+                })
+              })
+              const data = await res.json()
+              if (data.success) {
+                addMessage({ type: "success", text: `Da gui don nap cho ID ${id}` })
+                setTopupOrderId(data.orderId)
+              } else {
+                addMessage({ type: "error", text: `Loi nap ID ${id}: ${data.error}` })
+              }
+            }
+          }
+        } else {
+          // Nap 1 ID
+          if (topupProduct && character) {
+            addMessage({ type: "info", text: "Dang tao don nap tu dong..." })
+            const res = await fetch("/api/topup/create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                topupProductId: topupProduct.id,
+                roleId: character.id,
+                roleName: character.name,
+                serverId: character.server
+              })
+            })
+            const data = await res.json()
+            if (data.success) {
+              setTopupOrderId(data.orderId)
+              setTopupStatus("PENDING")
+              addMessage({ type: "success", text: "Don hang da tao! He thong dang nap tu dong..." })
+            } else {
+              addMessage({ type: "error", text: data.error || "Loi tao don nap" })
+            }
+          } else {
+            addMessage({ type: "warning", text: "San pham nay chua ho tro nap tu dong" })
+          }
+        }
         setConfirmingProduct(null)
         setSelectedProduct(null)
       } catch (error) {
-        addMessage({ type: "error", text: "Đã có lỗi xảy ra khi thực hiện nạp" })
+        addMessage({ type: "error", text: "Da co loi xay ra khi thuc hien nap" })
       }
     })
   }
+
+  // Polling trang thai don nap tu dong
+  useEffect(() => {
+    if (!topupOrderId) return
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/topup/status?orderId=${topupOrderId}`)
+        const data = await res.json()
+        if (data.success) {
+          setTopupStatus(data.order.status)
+          if (data.order.status === "COMPLETED") {
+            addMessage({ type: "success", text: `Nap thanh cong cho ${data.order.roleName}!` })
+            setTopupOrderId(null)
+            setTopupStatus(null)
+          } else if (data.order.status === "ERROR" || data.order.status === "REFUNDED") {
+            addMessage({ type: "error", text: data.order.errorMessage || "Loi nap tu dong" })
+            setTopupOrderId(null)
+            setTopupStatus(null)
+          }
+        }
+      } catch { /* ignore polling errors */ }
+    }, 10000) // Poll moi 10 giay
+
+    return () => clearInterval(interval)
+  }, [topupOrderId, addMessage])
 
   const groupedProducts = useMemo(() => {
     const groups: Record<string, Product[]> = {}
