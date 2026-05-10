@@ -9,11 +9,12 @@ export const metadata = {
 export default async function AdminTopupHistoryPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; status?: string }
+  searchParams: Promise<{ page?: string; search?: string; status?: string }>
 }) {
-  const page = Number(searchParams.page) || 1
-  const search = searchParams.search || ""
-  const status = searchParams.status || "ALL"
+  const params = await searchParams
+  const page = Number(params.page) || 1
+  const search = params.search || ""
+  const status = params.status || "ALL"
   const limit = 20
 
   const { orders, total, pages } = await getTopupOrders({ 
