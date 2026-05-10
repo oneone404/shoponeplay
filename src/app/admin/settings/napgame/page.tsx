@@ -20,7 +20,7 @@ export default async function AdminNapGamePage() {
     getNapGameConfig(),
     getTopupProducts(),
     getCardGatewayConfig(),
-    getTopupOrders(50),
+    getTopupOrders({ limit: 50 }),
   ])
   
   return (
@@ -30,7 +30,7 @@ export default async function AdminNapGamePage() {
       initialRounding={napGameConfig.rounding}
       initialTopupProducts={JSON.parse(JSON.stringify(topupProducts))}
       initialCardConfig={cardConfig}
-      initialTopupOrders={JSON.parse(JSON.stringify(topupOrders))}
+      initialTopupOrders={JSON.parse(JSON.stringify(topupOrders.orders))}
     />
   )
 }

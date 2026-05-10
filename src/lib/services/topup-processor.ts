@@ -462,3 +462,29 @@ ${icon} <b>${statusText}</b>
     console.error("[TOPUP_TELEGRAM] Error:", error)
   }
 }
+
+/**
+ * Thử nạp lại cho một đơn hàng đang bị lỗi.
+ * Thông minh: nếu đã có thẻ trong DB thì chỉ cần nạp tiếp vào VNG, nếu chưa có thẻ thì chạy lại từ đầu.
+ */
+export async function retryTopupOrder(orderId: string): Promise<ProcessResult> {
+  const order = await prisma.topupOrder.findUnique({
+    where: { id: orderId }
+  })
+  
+  if (!order) throw new Error("Đơn hàng không tồn tại")
+  
+  // Nếu đơn hàng đã hoàn thành hoặc đang chờ thì không cho retry
+  if (["COMPLETED", "REFUNDED"].includes(order.status)) {
+    throw new Error("Đơn hàng đã ở trạng thái cuối cùng, không thể thử lại")
+  }
+
+  // Nếu đã có thông tin thẻ (mã PIN) trong DB -> Chỉ cần thực hiện bước cuối (finishTopupProcess)
+  if (order.cardPin && order.cardSerial) {
+    const rawPin = decryptPin(order.cardPin)
+    return finishTopupProcess(orderId, order.cardSerial, rawPin)
+  }
+  
+  // Nếu chưa có thẻ -> Chạy lại từ đầu (processTopupOrder)
+  return processTopupOrder(orderId)
+}

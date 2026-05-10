@@ -92,7 +92,7 @@ export async function getAgentBalance(): Promise<BalanceResult> {
   const config = await getCardGatewayConfig()
 
   if (!config.baseUrl || !config.partnerId || !config.partnerKey) {
-    throw new Error("Chua cau hinh Card Gateway. Vui long cau hinh trong Admin > Cai dat > Nap Goi.")
+    throw new Error("Chưa cấu hình Card Gateway. Vui lòng cấu hình trong Admin > Cài đặt > Nạp Gói.")
   }
 
   const requestId = generateRequestId()
@@ -132,7 +132,7 @@ export async function buyCard(
   const config = await getCardGatewayConfig()
 
   if (!config.baseUrl || !config.partnerId || !config.partnerKey) {
-    throw new Error("Chua cau hinh Card Gateway")
+    throw new Error("Chưa cấu hình Card Gateway")
   }
 
   const requestId = generateRequestId()
@@ -181,7 +181,7 @@ export async function redownloadCard(
   const config = await getCardGatewayConfig()
 
   if (!config.baseUrl || !config.partnerId || !config.partnerKey) {
-    throw new Error("Chua cau hinh Card Gateway")
+    throw new Error("Chưa cấu hình Card Gateway")
   }
 
   const sign = createSign(config.partnerKey, config.partnerId, "redownload", requestId)

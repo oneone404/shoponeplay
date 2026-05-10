@@ -7,6 +7,10 @@ Chào mừng bạn đến với ShopOnePlay, nền tảng thương mại điện
 - **Seller Dashboard Modernization**: Giao diện quản lý dành cho người bán được đồng bộ 100% UI/UX với Admin dashboard (Premium glassmorphism design).
 - **Hệ thống thanh toán tự động**: Tự động trừ tiền người mua, cộng tiền cho người bán và trích xuất phí sàn vào quỹ hệ thống.
 - **Tối ưu hình ảnh**: Tự động chuyển đổi sang WebP và nén ảnh bằng Sharp để tăng tốc độ tải trang.
+- **Quy trình nạp an toàn (Pre-check)**: Đã thêm bước kiểm tra nhân vật và gói nạp trước khi mua thẻ.
+- **Quản lý lịch sử nạp gói**: Đã thêm trang Admin chuyên biệt để theo dõi, kiểm tra chi tiết lỗi và nạp bù (Retry) cho các đơn hàng nạp tự động.
+- **Bảo mật**: Mã hóa thẻ cào và xác thực callback NCC bằng chữ ký.
+- **Tiếng Việt có dấu**: Đã cập nhật toàn bộ UI và Logs sang tiếng Việt có dấu chuẩn.
 - **Dọn dẹp tài nguyên**: Tự động xóa file ảnh vật lý trên server khi sản phẩm bị xóa hoặc cập nhật ảnh mới.
 - **Quản lý lợi nhuận**: Dashboard dành cho Admin theo dõi chi tiết lợi nhuận thu được từ từng đơn hàng.
 - **Admin UI Standardization**: Đồng bộ hóa toàn diện giao diện trang cấu hình Ngân hàng & Thẻ cào với phong cách hiện đại (bg-card, rounded-2xl).

@@ -254,14 +254,59 @@ export async function checkAgentBalance() {
 
 // ===================== TOPUP ORDERS =====================
 
-export async function getTopupOrders(limit: number = 50) {
-  return prisma.topupOrder.findMany({
-    take: limit,
-    orderBy: { createdAt: "desc" },
-    include: {
-      product: { select: { name: true } },
-      user: { select: { name: true, email: true } }
+export async function getTopupOrders(options: { 
+  page?: number, 
+  limit?: number, 
+  search?: string, 
+  status?: string 
+} = {}) {
+  const { page = 1, limit = 50, search, status } = options
+  const skip = (page - 1) * limit
+
+  const where: any = {}
+  if (status && status !== "ALL") {
+    where.status = status
+  }
+  if (search) {
+    where.OR = [
+      { roleName: { contains: search } },
+      { roleId: { contains: search } },
+      { user: { name: { contains: search } } },
+      { id: { contains: search } },
+    ]
+  }
+
+  const [orders, total] = await Promise.all([
+    prisma.topupOrder.findMany({
+      where,
+      take: limit,
+      skip,
+      orderBy: { createdAt: "desc" },
+      include: {
+        product: { select: { name: true } },
+        user: { select: { name: true, email: true } }
+      }
+    }),
+    prisma.topupOrder.count({ where })
+  ])
+
+  return { orders, total, pages: Math.ceil(total / limit) }
+}
+
+export async function retryTopupOrder(orderId: string) {
+  try {
+    const session = await auth()
+    if (!session || (session.user as any).role !== "ADMIN") {
+      throw new Error("Không có quyền")
     }
-  })
+
+    const { retryTopupOrder: processorRetry } = await import("@/lib/services/topup-processor")
+    const result = await processorRetry(orderId)
+    
+    revalidatePath("/admin/topups")
+    return result
+  } catch (error: any) {
+    return { success: false, message: error.message }
+  }
 }
 

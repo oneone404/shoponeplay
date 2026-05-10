@@ -63,6 +63,7 @@ export default function AdminSidebar({
         { href: "/admin/accounts", label: "Lịch Sử Bán Acc" },
         { href: "/admin/deposits/bank", label: "Lịch Sử Nạp Bank" },
         { href: "/admin/deposits/card", label: "Lịch Sử Nạp Card" },
+        { href: ADMIN_ROUTES.TOPUPS.path, label: "Lịch Sử Nạp Gói" },
       ]
     },
     {

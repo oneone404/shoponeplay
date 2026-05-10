@@ -145,4 +145,8 @@ export const ADMIN_ROUTES = {
     path: `/admin/hacks/${id}`,
     title: name ? `${name}${SUFFIX}` : `Sửa Hack Tool${SUFFIX}`
   }),
+  TOPUPS: {
+    path: "/admin/topups",
+    title: `Lịch Sử Nạp Gói${SUFFIX}`
+  },
 } as const;
