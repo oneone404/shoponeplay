@@ -86,7 +86,16 @@ function ShopInner({
   }
 
   const getCategoryCount = (slug: string) => {
-    return products.filter(p => p.type !== 'SERVICE' && (slug === "all" || p.categorySlug === slug || p.groupSlug === slug)).length;
+    const items = products.filter(p => p.type !== 'SERVICE' && (slug === "all" || p.categorySlug === slug || p.groupSlug === slug));
+
+    // Nếu là danh mục Random (hoặc chứa sản phẩm Random), đếm tổng stock (số lượng acc)
+    const hasRandom = items.some(p => p.type === 'RANDOM');
+    if (hasRandom && slug !== "all") {
+      return items.reduce((acc, p) => acc + (p.stock || 0), 0);
+    }
+
+    // Mặc định đếm số lượng sản phẩm (như PLAY)
+    return items.length;
   }
 
   // Master Filter Logic
@@ -356,10 +365,10 @@ function ShopInner({
 
       {/* Categories Bar (Sticky) */}
       {!initialSlug && !params?.slug && (
-        <section className="sticky top-16 z-30 bg-background border-y border-border shadow-sm">
+        <section className="sticky top-16 z-30 bg-card border-y border-border shadow-sm">
           <div className="max-w-7xl mx-auto flex items-center h-[72px]">
             <div className="w-full overflow-x-auto no-scrollbar py-4">
-              <div className="inline-flex items-center space-x-2 px-4 md:px-6">
+              <div className="inline-flex items-center space-x-4 px-4 md:px-6">
                 {categories
                   .filter(cat => !cat.name.toLowerCase().includes("dịch vụ"))
                   .map((cat) => (
@@ -367,7 +376,7 @@ function ShopInner({
                       key={cat.slug}
                       onClick={() => handleCategoryChange(cat.slug)}
                       className={cn(
-                        "px-6 py-2 rounded-xl border text-xs font-bold uppercase tracking-tighter transition-all whitespace-nowrap",
+                        "px-6 py-2 rounded-xl border text-xs font-bold uppercase transition-all whitespace-nowrap",
                         activeCategory === cat.slug
                           ? "bg-primary text-white border-primary"
                           : "bg-background border-border text-foreground hover:border-primary/50 hover:bg-secondary/20"
@@ -397,13 +406,12 @@ function ShopInner({
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-6">
             {filteredProducts.map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
+              <ProductCard
+                key={product.id}
+                product={product}
                 onPreview={(src, alt) => setPreviewImage({ src, alt })}
               />
-            ))
-            }
+            ))}
           </div>
         ) : (
           <div className="py-20 text-center">
@@ -426,7 +434,6 @@ function ShopInner({
     </main>
   )
 }
-
 
 function ProductCard({ product, onPreview }: { product: any; onPreview: (src: string, alt: string) => void }) {
   const [qty, setQty] = useState<string | number>(1)
@@ -475,9 +482,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
   }
 
   return (
-    <div
-      className="group flex flex-col bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-primary transition-all duration-300"
-    >
+    <div className="group flex flex-col bg-card border-2 border-border rounded-2xl overflow-hidden hover:border-primary transition-all duration-300">
       {/* Thumbnail Area */}
       <div className="aspect-[16/9] relative overflow-hidden bg-secondary shrink-0">
         <Image
@@ -490,9 +495,17 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
           unoptimized={(product.thumbnail || product.images?.[0] || "").toLowerCase().endsWith(".gif")}
         />
 
-        {/* Discount Badge */}
+        {/* Account ID Badge (MS) */}
+        <div className="absolute top-0 left-0 z-20 px-3 py-1.5 bg-rose-500 text-white text-[11px] font-bold rounded-br-2xl shadow-lg border-r border-b border-white/20 uppercase tracking-wider">
+          MS: {product.id.slice(-6)}
+        </div>
+
+        {/* Discount Badge - Moved down if MS badge exists */}
         {product.oldPrice && product.oldPrice > product.price && (
-          <div className="absolute top-3 left-3 z-10 px-2.5 py-1 bg-red-500 text-white text-[10px] font-black rounded-lg shadow-lg shadow-red-500/30 animate-in fade-in zoom-in duration-300">
+          <div className={cn(
+            "absolute z-10 px-2.5 py-1 bg-red-500 text-white text-[10px] font-bold rounded-lg shadow-lg",
+            "top-10 left-2" // Positioned below MS badge
+          )}>
             -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
           </div>
         )}
@@ -512,7 +525,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
         )}
 
         {/* Overlay Action - Click anywhere to zoom */}
-        <div 
+        <div
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -520,20 +533,12 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
           }}
           className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-6 cursor-zoom-in"
         >
-          <Eye className="w-10 h-10 text-white/90 drop-shadow-xl animate-in zoom-in-50 duration-300" />
+          <Eye className="w-10 h-10 text-white/90 drop-shadow-xl" />
         </div>
       </div>
 
       {/* Content Area */}
       <div className="p-5 flex flex-col flex-1">
-        <div className="flex flex-col items-center mb-4 gap-2 text-center">
-          <h3 className="font-bold text-[13px] uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors leading-none">
-            {product.categoryName}
-          </h3>
-          <span className="text-[10px] font-bold text-muted-foreground/60 uppercase shrink-0">
-            #{product.id.slice(-6)}
-          </span>
-        </div>
 
         {/* Short Descriptions Section */}
         <div className="flex-1 space-y-1.5 mb-4">
@@ -561,7 +566,7 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
               <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden border border-border/10 shadow-inner relative">
                 <div
                   style={{ width: `${Math.min(((product.stock || 0) / 100) * 100, 100)}%` }}
-                  className="h-full bg-accent rounded-full shadow-sm shadow-accent/20 transition-all duration-1000 animate-progress-grow origin-left"
+                  className="h-full bg-accent rounded-full transition-all duration-1000 origin-left"
                 />
               </div>
             </div>
@@ -611,14 +616,14 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
             {product.type === "RANDOM" ? (
               <button
                 onClick={() => setShowBuyModal(true)}
-                className="flex-1 py-2.5 bg-background text-primary border border-primary/60 rounded-xl text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5 hover:bg-primary hover:text-white transition-all shadow-none group/buy"
+                className="flex-1 py-2.5 bg-background text-primary border border-primary/60 rounded-xl text-[10px] font-bold uppercase tracking-widest text-center flex items-center justify-center gap-1.5 hover:bg-primary hover:text-white transition-all shadow-none group/buy"
               >
                 <Zap className="w-3 h-3 fill-current" />
                 {t.common.buy_now}
               </button>
             ) : (
-              <Link 
-                href={ROUTES.PRODUCT_DETAIL(product.id)} 
+              <Link
+                href={ROUTES.PRODUCT_DETAIL(product.id)}
                 className="flex-1 py-2.5 bg-background text-foreground border border-border rounded-xl text-[10px] font-bold uppercase tracking-widest text-center flex items-center justify-center gap-1.5 hover:bg-secondary active:scale-95 transition-all shadow-sm group/btn"
               >
                 <Eye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
@@ -636,7 +641,6 @@ function ProductCard({ product, onPreview }: { product: any; onPreview: (src: st
         </div>
       </div>
 
-      {/* Direct Buy Confirmation Modal */}
       <ConfirmBuyModal
         isOpen={showBuyModal}
         onClose={() => setShowBuyModal(false)}

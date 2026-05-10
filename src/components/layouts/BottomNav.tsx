@@ -3,7 +3,7 @@
 import Link from "next/link"
 import {
   Home, LayoutGrid, Plus, Terminal, User, Wrench, Settings,
-  CreditCard, KeyRound, History, Package, FileSearch, Headphones
+  CreditCard, KeyRound, History, Package, FileSearch, Headphones, Gamepad2
 } from "lucide-react"
 import { useState, useCallback } from "react"
 import { cn } from "@/lib/utils"
@@ -32,14 +32,8 @@ export default function BottomNav() {
   }, [setToolsOpen])
 
   const tools = [
-    { icon: <Wrench className="w-[20px] h-[20px]" />, label: t.bottom_nav.services, action: () => router.push(ROUTES.SERVICES) },
-    { icon: <Settings className="w-[20px] h-[20px]" />, label: t.bottom_nav.settings, action: () => router.push(ROUTES.USER.SETTINGS) },
-    { icon: <CreditCard className="w-[20px] h-[20px]" />, label: t.bottom_nav.topup_packages, action: () => setDepositOpen(true) },
-    { icon: <KeyRound className="w-[20px] h-[20px]" />, label: t.bottom_nav.keys, action: () => router.push(ROUTES.USER.KEYS) },
-    { icon: <History className="w-[20px] h-[20px]" />, label: t.bottom_nav.tx_history, action: () => router.push(ROUTES.USER.HISTORY) },
-    { icon: <Package className="w-[20px] h-[20px]" />, label: t.bottom_nav.buy_history, action: () => router.push(ROUTES.ORDERS) },
-    { icon: <FileSearch className="w-[20px] h-[20px]" />, label: t.bottom_nav.track_order, action: () => router.push(ROUTES.TRACK) },
-    { icon: <Headphones className="w-[20px] h-[20px]" />, label: t.bottom_nav.support, action: () => setChatOpen(true) },
+    { icon: <Package className="w-[20px] h-[20px]" />, label: "Hacks", action: () => router.push(ROUTES.HACKS) },
+    { icon: <Gamepad2 className="w-[20px] h-[20px]" />, label: "Nạp Gói", action: () => router.push(ROUTES.NAPGAME) },
   ]
 
   // If in admin or seller panel, or if deposit modal is open, do not render BottomNav
@@ -61,7 +55,7 @@ export default function BottomNav() {
       <div
         className={cn(
           "fixed inset-x-0 bottom-0 z-40",
-          "rounded-t-[32px] bg-background px-4 pt-3 shadow-2xl md:hidden",
+          "rounded-t-[32px] bg-card px-4 pt-3 shadow-2xl md:hidden",
           "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]",
           "border-t border-border",
           "transition-transform duration-[400ms] will-change-transform"
@@ -94,7 +88,7 @@ export default function BottomNav() {
       </div>
 
       {/* Main Bottom Nav Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border/50 px-4 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border px-4 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between h-16 relative">
           <BottomNavItem href={ROUTES.HOME} icon={<Home className="w-5 h-5" />} label={t.nav.home} />
           <BottomNavItem href={ROUTES.SHOP} icon={<LayoutGrid className="w-5 h-5" />} label={t.nav.shop} />

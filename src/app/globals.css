@@ -17,7 +17,7 @@
 }
 
 :root {
-  --background: #f9fafb;
+  --background: #f1f5f9;
   --foreground: #0a0a0a;
   --primary: #8b5cf6;
   --primary-foreground: #ffffff;
@@ -29,23 +29,23 @@
   --muted-foreground: #6b7280;
   --card: #ffffff;
   --card-foreground: #0a0a0a;
-  --border: #e5e7eb;
+  --border: #e2e8f0;
 }
 
 .dark {
-  --background: #0b0e14; /* Deep Solid Bluish Black */
+  --background: #020617; /* Slate 950 - Deepest bluish black */
   --foreground: #f1f5f9;
   --primary: #8b5cf6;
   --primary-foreground: #ffffff;
-  --secondary: #161b22; /* Solid Dark Secondary */
+  --secondary: #0f172a; /* Slate 900 */
   --secondary-foreground: #ffffff;
   --accent: #f43f5e;
   --accent-foreground: #ffffff;
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
-  --card: #121721; /* Solid Solid Card Background */
+  --card: #0f172a; /* Slate 900 - Slightly lighter than background */
   --card-foreground: #f1f5f9;
-  --border: #1e293b; /* Solid Opaque Border */
+  --border: #1e293b; /* Slate 800 */
 }
 
 @layer base {

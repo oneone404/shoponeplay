@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+// Force reload for new schema models: FreeKeySession
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import 'dotenv/config'

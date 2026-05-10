@@ -29,14 +29,30 @@ export default async function Home() {
     }
   })
 
-  const randomGroup = await prisma.categoryGroup.findUnique({
+  const randomGroupRaw = await prisma.categoryGroup.findUnique({
     where: { slug: "tai-khoan-random" },
     include: { 
       categories: {
-        include: { _count: { select: { products: { where: { isHidden: false } } } } }
+        include: { 
+          products: {
+            where: { isHidden: false },
+            select: { stock: true }
+          }
+        }
       }
     }
   })
+
+  // Format random categories to have a virtual _count reflecting total stock
+  const randomGroup = randomGroupRaw ? {
+    ...randomGroupRaw,
+    categories: randomGroupRaw.categories.map(cat => ({
+      ...cat,
+      _count: {
+        products: cat.products.reduce((acc, p) => acc + (p.stock || 0), 0)
+      }
+    }))
+  } : null
 
   const latestPosts = await prisma.post.findMany({
     where: { published: true },
@@ -56,6 +72,10 @@ export default async function Home() {
     "User *******456 vừa nạp 500.000 VND qua ATM",
     "Giao dịch mới: Tài khoản Random Kim Cương đã được bán",
   ]
+
+  // Serialize data to plain objects for Client Components (important for Dates)
+  const safePlayCategories = playGroup ? JSON.parse(JSON.stringify(playGroup.categories)) : []
+  const safeRandomCategories = randomGroup ? JSON.parse(JSON.stringify(randomGroup.categories)) : []
 
   return (
     <main className="min-h-screen bg-background pb-20">
@@ -86,7 +106,7 @@ export default async function Home() {
               highlight: "", // Empty to trigger automatic split
               subtitle: "play_accounts"
             }}
-            categories={playGroup.categories}
+            categories={safePlayCategories}
             variant="neutral"
           />
         )}
@@ -100,7 +120,7 @@ export default async function Home() {
               highlight: "", // Empty to trigger automatic split
               subtitle: "play_accounts"
             }}
-            categories={randomGroup.categories}
+            categories={safeRandomCategories}
             variant="neutral"
           />
         )}

@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, Shield, X } from "lucide-react"
+import { CheckCircle2, Shield, X, AlertCircle, Info as InfoIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUI } from "@/providers/UIProvider"
 import { TOAST_CONFIG } from "@/config/toast.config"
@@ -11,7 +11,7 @@ export default function ToastContainer() {
 
   return (
     <div className={cn(
-      "fixed top-12 sm:top-20 left-4 right-4 sm:left-auto sm:right-6 z-[9999]",
+      "fixed top-6 sm:top-8 left-4 right-4 sm:left-auto sm:right-8 z-[100000]",
       "flex flex-col gap-3 items-center sm:items-end pointer-events-none"
     )}>
       <AnimatePresence mode="popLayout">
@@ -19,35 +19,72 @@ export default function ToastContainer() {
           <motion.div
             key={msg.id}
             layout
-            {...TOAST_CONFIG.ANIMATION}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className={cn(
-              "pointer-events-auto px-4 py-3 rounded-2xl shadow-2xl border flex items-start space-x-3 bg-card/95 backdrop-blur-md",
-              "w-full max-w-sm sm:w-auto overflow-hidden",
-              msg.type === "success" 
-                ? "border-emerald-500/40 text-emerald-500 shadow-emerald-500/10" 
-                : "border-rose-500/40 text-rose-500 shadow-rose-500/10"
+              "pointer-events-auto w-full max-w-sm sm:w-[360px] bg-background border-2 rounded-xl overflow-hidden relative",
+              "flex items-center p-4 space-x-4 shadow-sm", // Changed to items-center for better alignment with long text
+              msg.type === "success" ? "border-emerald-500/50" : 
+              msg.type === "error" ? "border-rose-500/50" : 
+              msg.type === "warning" ? "border-amber-500/50" : "border-blue-500/50"
             )}
           >
+            {/* Status Color Strip (Pill style) */}
             <div className={cn(
-              "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5",
-              msg.type === "success" ? "bg-emerald-500/20" : "bg-rose-500/20"
+              "absolute top-3 bottom-3 left-1 w-1 rounded-full",
+              msg.type === "success" ? "bg-emerald-500" : 
+              msg.type === "error" ? "bg-rose-500" : 
+              msg.type === "warning" ? "bg-amber-500" : "bg-blue-500"
+            )} />
+
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+              msg.type === "success" ? "bg-emerald-500/10 text-emerald-500" : 
+              msg.type === "error" ? "bg-rose-500/10 text-rose-500" : 
+              msg.type === "warning" ? "bg-amber-500/10 text-amber-500" : "bg-blue-500/10 text-blue-500"
             )}>
-              {msg.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+              {msg.type === "success" ? <CheckCircle2 className="w-5 h-5" /> : 
+               msg.type === "error" ? <Shield className="w-5 h-5" /> : 
+               msg.type === "warning" ? <AlertCircle className="w-5 h-5" /> : <InfoIcon className="w-5 h-5" />}
             </div>
-            <div className="flex flex-col flex-1 min-w-0 pr-1">
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] leading-tight mb-1 opacity-60">
-                {msg.type === "success" ? "Thành Công" : "Lỗi hệ thống"}
+
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-1.5",
+                msg.type === "success" ? "text-emerald-500" : 
+                msg.type === "error" ? "text-rose-500" : 
+                msg.type === "warning" ? "text-amber-500" : "text-blue-500"
+              )}>
+                {msg.type === "success" ? "Thành công" : 
+                 msg.type === "error" ? "Lỗi hệ thống" : 
+                 msg.type === "warning" ? "Cảnh báo" : "Thông báo"}
               </span>
-              <p className="text-[11px] font-bold leading-relaxed break-words">
+              <p className="text-[12px] font-bold text-foreground leading-snug">
                 {msg.text}
               </p>
             </div>
+
             <button 
               onClick={() => removeMessage(msg.id)}
-              className="mt-0.5 p-1 hover:bg-white/5 rounded-lg opacity-40 hover:opacity-100 transition-all shrink-0"
+              className="p-1 text-muted-foreground/50 hover:text-foreground transition-colors"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
+
+            {/* Progress Bar Timer */}
+            <motion.div 
+              initial={{ width: "100%" }}
+              animate={{ width: "0%" }}
+              transition={{ duration: TOAST_CONFIG.DURATION / 1000, ease: "linear" }}
+              className={cn(
+                "absolute bottom-0 left-0 h-0.5",
+                msg.type === "success" ? "bg-emerald-500" : 
+                msg.type === "error" ? "bg-rose-500" : 
+                msg.type === "warning" ? "bg-amber-500" : "bg-blue-500"
+              )}
+            />
           </motion.div>
         ))}
       </AnimatePresence>

@@ -89,14 +89,14 @@ export default function ServiceListClient({ initialServices }: ServiceListClient
                 unoptimized
               />
               <div className="absolute top-4 left-4">
-                <span className="px-3 py-1.5 bg-background/90 backdrop-blur-md rounded-xl text-[9px] font-black uppercase tracking-widest text-primary border border-primary/10 shadow-sm">
+                <span className="px-3 py-1.5 bg-background/90 backdrop-blur-md rounded-xl text-[9px] font-bold uppercase tracking-widest text-primary border border-primary/10 shadow-sm">
                   {service.type === 'LEVELING' ? 'Cày Thuê' : 'Nạp Game'}
                 </span>
               </div>
             </div>
 
             <div className="p-6 flex flex-col flex-1">
-              <h3 className="text-lg font-black text-foreground group-hover:text-primary transition-colors line-clamp-1 uppercase tracking-tight">
+              <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1 uppercase tracking-tight">
                 {service.name}
               </h3>
               
@@ -107,7 +107,7 @@ export default function ServiceListClient({ initialServices }: ServiceListClient
               <div className="mt-6 pt-6 border-t border-border flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Lựa chọn</span>
-                  <span className="text-sm font-black text-foreground">{service._count.options} gói giá tốt</span>
+                  <span className="text-sm font-bold text-foreground">{service._count.options} gói giá tốt</span>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                   <ArrowRight className="w-5 h-5" />
@@ -120,7 +120,7 @@ export default function ServiceListClient({ initialServices }: ServiceListClient
             <div className="w-20 h-20 bg-secondary rounded-[2.5rem] flex items-center justify-center mb-6">
               <Search className="w-8 h-8 text-muted-foreground opacity-20" />
             </div>
-            <h3 className="text-xl font-black text-foreground uppercase tracking-tight">Không tìm thấy kết quả</h3>
+            <h3 className="text-xl font-bold text-foreground uppercase tracking-tight">Không tìm thấy kết quả</h3>
             <p className="text-muted-foreground text-sm font-medium mt-2">Vui lòng thử tìm kiếm với từ khóa khác.</p>
           </div>
         )}

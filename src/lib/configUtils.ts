@@ -26,6 +26,17 @@ export interface SiteConfig {
   SELLER_FEE: string; // Phí sàn (%)
   TELEGRAM_NOTIFY_ORDER: string; // Thông báo đơn hàng mới
   TELEGRAM_NOTIFY_WITHDRAW: string; // Thông báo rút tiền
+  HACKVIET_BASE_URL: string;
+  HACKVIET_EMAIL: string;
+  HACKVIET_PASSWORD: string;
+  HACKVIET_SHOP_SLUG: string;
+  HACKVIET_GAME_SLUG: string;
+  HACKVIET_KEEP_ALIVE_MINUTES: string;
+  DEPOSIT_PREFIX: string;
+  DEPOSIT_SUFFIX: string;
+  DEPOSIT_MIN_AMOUNT: string;
+  PAY2S_TOKEN: string;
+  LINK4M_API_TOKEN: string;
 }
 
 const defaultConfig: SiteConfig = {
@@ -56,7 +67,18 @@ const defaultConfig: SiteConfig = {
   TELEGRAM_ENABLED: "false",
   SELLER_FEE: "10", // Mặc định 10%
   TELEGRAM_NOTIFY_ORDER: "true",
-  TELEGRAM_NOTIFY_WITHDRAW: "true"
+  TELEGRAM_NOTIFY_WITHDRAW: "true",
+  HACKVIET_BASE_URL: "https://hackviet.io",
+  HACKVIET_EMAIL: "",
+  HACKVIET_PASSWORD: "",
+  HACKVIET_SHOP_SLUG: "",
+  HACKVIET_GAME_SLUG: "",
+  HACKVIET_KEEP_ALIVE_MINUTES: "90",
+  DEPOSIT_PREFIX: "",
+  DEPOSIT_SUFFIX: "chuyen tien",
+  DEPOSIT_MIN_AMOUNT: "10000",
+  PAY2S_TOKEN: "",
+  LINK4M_API_TOKEN: ""
 };
 
 export async function getSiteConfig(): Promise<SiteConfig> {

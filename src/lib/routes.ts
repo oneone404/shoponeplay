@@ -20,6 +20,7 @@ export const ROUTES = {
   SIGNUP: USER_ROUTES.SIGNUP.path,
   FORGOT_PASSWORD: USER_ROUTES.FORGOT_PASSWORD.path,
   TRACK: USER_ROUTES.TRACK.path,
+  NAPGAME: USER_ROUTES.NAPGAME.path,
   
   // User Pages
   USER: {
@@ -36,6 +37,7 @@ export const ROUTES = {
   SHOP_CATEGORY: (slug: string) => USER_ROUTES.SHOP_CATEGORY(slug).path,
   PRODUCT_DETAIL: (id: string) => USER_ROUTES.PRODUCT_DETAIL(id).path,
   BLOG_DETAIL: (slug: string) => USER_ROUTES.BLOG_DETAIL(slug).path,
+  HACK_DETAIL: (slug: string) => USER_ROUTES.HACK_DETAIL(slug).path,
 
   // Giữ lại các API Routes (vì thường không cần Title Tab)
   API: {

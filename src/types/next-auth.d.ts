@@ -12,6 +12,31 @@ declare module "next-auth" {
       totalDeposited: number
       emailVerified: Date | null
       twoFactorEnabled: boolean
+      accountId: string | null
+      savedAccountIds: any[]
     } & DefaultSession["user"]
+  }
+
+  interface User {
+    role?: string
+    balance?: number
+    totalDeposited?: number
+    emailVerified?: Date | null
+    twoFactorEnabled?: boolean
+    accountId?: string | null
+    savedAccountIds?: any
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role?: string
+    id?: string
+    balance?: number
+    totalDeposited?: number
+    emailVerified?: Date | null
+    twoFactorEnabled?: boolean
+    accountId?: string | null
+    savedAccountIds?: any
   }
 }

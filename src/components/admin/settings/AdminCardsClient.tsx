@@ -83,14 +83,14 @@ export default function AdminCardsClient({
       />
 
       <div className="w-full">
-        <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-sm">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
           {/* Header Card với các Nút Action ở góc phải */}
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/20">
-            <div className="flex items-center space-x-3">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+            <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                 <Settings2 className="w-4 h-4" />
               </div>
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">Thông Tin Kết Nối</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Thông Tin Kết Nối</h3>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -115,7 +115,7 @@ export default function AdminCardsClient({
               <button
                 disabled={loading}
                 onClick={handleSave}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-foreground text-background hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
                 title="Lưu cấu hình"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

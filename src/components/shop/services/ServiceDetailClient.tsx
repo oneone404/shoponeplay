@@ -94,14 +94,14 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
           </div>
           <div className="flex flex-col justify-center flex-1">
             <div className="flex items-center gap-2 mb-3">
-              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/10">
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest border border-primary/10">
                 {service.type === 'LEVELING' ? 'Cày Thuê' : 'Nạp Game'}
               </span>
               <span className="flex items-center gap-1 text-[10px] font-bold text-green-500 uppercase tracking-widest">
                 <ShieldCheck className="w-3 h-3" /> Bảo mật 100%
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-foreground uppercase tracking-tight leading-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground uppercase tracking-tight leading-tight">
               {service.name}
             </h1>
             <p className="text-muted-foreground text-sm mt-3 font-medium leading-relaxed">
@@ -112,13 +112,13 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-primary">
                   <Zap className="w-4 h-4" />
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-tight">Tốc độ cao</span>
+                <span className="text-[11px] font-bold uppercase tracking-tight">Tốc độ cao</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-primary">
                   <Clock className="w-4 h-4" />
                 </div>
-                <span className="text-[11px] font-black uppercase tracking-tight">Xử lý ngay</span>
+                <span className="text-[11px] font-bold uppercase tracking-tight">Xử lý ngay</span>
               </div>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
 
         {/* Package Selection */}
         <div className="space-y-6">
-          <h2 className="text-lg font-black text-foreground uppercase tracking-tight flex items-center gap-3">
+          <h2 className="text-lg font-bold text-foreground uppercase tracking-tight flex items-center gap-3">
             <span className="w-1.5 h-6 bg-primary rounded-full"></span>
             Bước 1: Chọn gói dịch vụ
           </h2>
@@ -145,7 +145,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
                 <div className="flex flex-col h-full justify-between gap-4">
                   <div className="flex justify-between items-start">
                     <h4 className={cn(
-                      "text-sm font-black uppercase tracking-tight transition-colors",
+                      "text-sm font-bold uppercase tracking-tight transition-colors",
                       selectedOptionId === option.id ? "text-primary" : "text-foreground"
                     )}>
                       {option.name}
@@ -158,7 +158,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Giá thanh toán</p>
-                    <p className="text-xl font-black text-foreground tabular-nums">
+                    <p className="text-xl font-bold text-foreground tabular-nums">
                       {option.price.toLocaleString('vi-VN')} <span className="text-xs">đ</span>
                     </p>
                   </div>
@@ -173,7 +173,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
 
         {/* Dynamic Form Fields */}
         <div className="space-y-6">
-          <h2 className="text-lg font-black text-foreground uppercase tracking-tight flex items-center gap-3">
+          <h2 className="text-lg font-bold text-foreground uppercase tracking-tight flex items-center gap-3">
             <span className="w-1.5 h-6 bg-primary rounded-full"></span>
             Bước 2: Thông tin yêu cầu
           </h2>
@@ -182,7 +182,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {service.fields.map((field: any) => (
                   <div key={field.name} className={cn("space-y-2", field.type === 'textarea' ? "md:col-span-2" : "")}>
-                    <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
                       {field.label} {field.required && <span className="text-rose-500">*</span>}
                     </label>
                     
@@ -238,7 +238,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
           <div className="bg-card border border-border rounded-[2.5rem] p-6 md:p-8 shadow-xl shadow-primary/5 space-y-6 overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
             
-            <h3 className="text-lg font-black text-foreground uppercase tracking-tight">Chi tiết thanh toán</h3>
+            <h3 className="text-lg font-bold text-foreground uppercase tracking-tight">Chi tiết thanh toán</h3>
             
             <div className="space-y-4">
               <div className="flex justify-between items-center text-sm">
@@ -251,7 +251,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
               </div>
               <div className="pt-4 border-t border-border flex justify-between items-end">
                 <span className="text-muted-foreground font-bold uppercase tracking-widest text-[11px]">Tổng cộng</span>
-                <span className="text-3xl font-black text-primary tabular-nums">
+                <span className="text-3xl font-bold text-primary tabular-nums">
                   {selectedOption?.price.toLocaleString('vi-VN') || 0} <span className="text-sm">đ</span>
                 </span>
               </div>
@@ -275,7 +275,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
                 userBalance < (selectedOption?.price || 0) && (
                   <Link 
                     href="/deposit"
-                    className="flex items-center justify-center gap-2 w-full py-3 bg-secondary text-foreground rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-secondary/80 transition-all"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-secondary text-foreground rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-secondary/80 transition-all"
                   >
                     <CreditCard className="w-4 h-4" /> Nạp thêm tiền
                   </Link>
@@ -283,7 +283,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
               ) : (
                 <Link 
                   href="/signin"
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-secondary text-foreground rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-secondary/80 transition-all"
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-secondary text-foreground rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-secondary/80 transition-all"
                 >
                   <User className="w-4 h-4" /> Đăng nhập để mua
                 </Link>
@@ -293,7 +293,7 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
             <button
               onClick={handleCheckout}
               disabled={isLoading || !selectedOption || (isLoggedIn && userBalance < selectedOption.price)}
-              className="w-full py-4 bg-primary text-primary-foreground rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-2"
+              className="w-full py-4 bg-primary text-primary-foreground rounded-2xl text-xs font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-2"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-5 h-5" />}
               Thanh toán ngay
@@ -314,11 +314,11 @@ export default function ServiceDetailClient({ service, isLoggedIn, userBalance }
 
           {/* Support Widget */}
           <div className="p-6 bg-secondary/50 border border-border rounded-[2rem] space-y-3">
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-foreground">Hỗ trợ kỹ thuật</h4>
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-foreground">Hỗ trợ kỹ thuật</h4>
             <p className="text-[10px] text-muted-foreground leading-relaxed">
               Bạn gặp khó khăn trong việc cung cấp thông tin? Liên hệ Fanpage hoặc Hotline để được hỗ trợ 24/7.
             </p>
-            <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Liên hệ ngay</button>
+            <button className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">Liên hệ ngay</button>
           </div>
         </div>
       </div>

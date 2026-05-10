@@ -15,13 +15,17 @@ export const USER_ROUTES = {
   },
 
   TOOLS: {
-    path: "/tools",
+    path: "/app",
     title: `Công Cụ Game${SUFFIX}`
+  },
+  NAPGAME: {
+    path: "/app/napgame",
+    title: `Nạp Gói Game${SUFFIX}`
   },
 
   HACKS: {
-    path: "/hacks",
-    title: `Phần Mềm Hỗ Trợ${SUFFIX}`
+    path: "/app/hacks",
+    title: `Công Cụ Hỗ Trợ${SUFFIX}`
   },
   SERVICES: {
     path: "/services",
@@ -58,6 +62,8 @@ export const USER_ROUTES = {
     BANK: { path: "/orders/bank", title: `Lịch Sử Nạp Bank${SUFFIX}` },
     CARD: { path: "/orders/card", title: `Lịch Sử Nạp Card${SUFFIX}` },
     ORDERS: { path: "/orders", title: `Đơn Hàng Đã Mua${SUFFIX}` },
+    ACCOUNTS: { path: "/orders/accounts", title: `Lịch Sử Mua Tài Khoản${SUFFIX}` },
+    HACKS: { path: "/orders/hacks", title: `Lịch Sử Mua Key${SUFFIX}` },
     SERVICES: { path: "/orders/services", title: `Lịch Sử Dịch Vụ${SUFFIX}` },
   },
   KEYS: {
@@ -80,5 +86,9 @@ export const USER_ROUTES = {
   ORDER_DETAIL: (id: string) => ({
     path: `/orders/${id}`,
     title: `Đơn Hàng #${id.slice(-12).toUpperCase()}${SUFFIX}`
+  }),
+  HACK_DETAIL: (slug: string, name?: string) => ({
+    path: `/app/hacks/${slug}`,
+    title: `${(name || slug).toUpperCase()}${SUFFIX}`
   })
 } as const;

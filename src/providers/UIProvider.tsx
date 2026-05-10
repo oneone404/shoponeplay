@@ -14,8 +14,8 @@ interface UIContextType {
   depositOpen: boolean
   setDepositOpen: (open: boolean) => void
   closeAll: () => void
-  messages: Array<{ id: string, type: "success" | "error", text: string }>
-  addMessage: (msg: { type: "success" | "error", text: string }) => void
+  messages: Array<{ id: string, type: "success" | "error" | "warning" | "info", text: string }>
+  addMessage: (msg: { type: "success" | "error" | "warning" | "info", text: string }) => void
   removeMessage: (id: string) => void
 }
 
@@ -27,13 +27,13 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [chatOpen, setChatOpenRaw] = useState(false)
   const [chatMinimized, setChatMinimizedRaw] = useState(false)
   const [depositOpen, setDepositOpenRaw] = useState(false)
-  const [messages, setMessages] = useState<Array<{ id: string, type: "success" | "error", text: string }>>([])
+  const [messages, setMessages] = useState<Array<{ id: string, type: "success" | "error" | "warning" | "info", text: string }>>([])
 
   const removeMessage = useCallback((id: string) => {
     setMessages((prev) => prev.filter((m) => m.id !== id))
   }, [])
 
-  const addMessage = useCallback((msg: { type: "success" | "error", text: string }) => {
+  const addMessage = useCallback((msg: { type: "success" | "error" | "warning" | "info", text: string }) => {
     const id = Math.random().toString(36).substring(2, 9)
     setMessages((prev) => {
       const next = [...prev, { ...msg, id }]

@@ -101,6 +101,10 @@ export const ADMIN_ROUTES = {
     path: "/admin/settings/cards",
     title: `Cấu Hình Nạp Card${SUFFIX}`
   },
+  NAPGAME: {
+    path: "/admin/settings/napgame",
+    title: `Cấu Hình Nạp Gói${SUFFIX}`
+  },
   USER_ACTIVITY: (id: string) => ({
     path: `/admin/users/${id}/activity`,
     title: `Lịch Sử Người Dùng${SUFFIX}`
@@ -112,5 +116,33 @@ export const ADMIN_ROUTES = {
   ACCOUNTS_HISTORY: {
     path: "/admin/accounts",
     title: `Lịch Sử Bán Acc${SUFFIX}`
-  }
+  },
+  SERVICES: {
+    path: "/admin/services",
+    title: `Quản Lý Dịch Vụ${SUFFIX}`
+  },
+  SERVICES_ADD: {
+    path: "/admin/services/add",
+    title: `Thêm Dịch Vụ${SUFFIX}`
+  },
+  SERVICES_EDIT: (id: string) => ({
+    path: `/admin/services/${id}`,
+    title: `Sửa Dịch Vụ${SUFFIX}`
+  }),
+  SERVICES_ORDERS: {
+    path: "/admin/services/orders",
+    title: `Đơn Hàng Dịch Vụ${SUFFIX}`
+  },
+  HACKS: {
+    path: "/admin/hacks",
+    title: `Quản Lý Hack Tools${SUFFIX}`
+  },
+  HACKS_ADD: {
+    path: "/admin/hacks/add",
+    title: `Thêm Hack Tool${SUFFIX}`
+  },
+  HACKS_EDIT: (id: string, name?: string) => ({
+    path: `/admin/hacks/${id}`,
+    title: name ? `${name}${SUFFIX}` : `Sửa Hack Tool${SUFFIX}`
+  }),
 } as const;

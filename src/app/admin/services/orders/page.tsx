@@ -1,11 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminServiceOrdersClient from "@/components/admin/services/AdminServiceOrdersClient";
 
 export const metadata = {
-  title: "Quản lý Đơn hàng Dịch vụ | ShopOnePlay Admin",
+  title: ADMIN_ROUTES.SERVICES_ORDERS.title,
 };
 
 export default async function AdminServiceOrdersPage() {

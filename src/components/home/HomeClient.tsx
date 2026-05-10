@@ -90,7 +90,7 @@ export default function HomeClient({
                     </span>
                   </h1>
 
-                  <div className="mt-2 md:mt-6 bg-accent/90 px-3 py-1.5 md:px-6 md:py-2.5 -skew-x-6 rounded-full shadow-lg shadow-accent/30 flex items-center justify-center animate-banner-sub">
+                  <div className="mt-2 md:mt-6 bg-accent/90 px-3 py-1.5 md:px-6 md:py-2.5 -skew-x-6 rounded-full flex items-center justify-center animate-banner-sub">
                     <span className="text-[7.5px] md:text-xl font-bold tracking-widest text-white italic leading-none">
                       {heroSub || t.home.banner_sub}
                     </span>
@@ -104,10 +104,10 @@ export default function HomeClient({
 
       {/* 2. Enhanced Notification Marquee */}
       <section className="px-4 max-w-7xl mx-auto mt-6">
-        <div className="relative bg-card/40 backdrop-blur-md border border-primary/1 pr-4 flex items-center h-9 md:h-11 overflow-hidden rounded-xl md:rounded-[18px] group shadow-sm">
+        <div className="relative bg-card/40 backdrop-blur-md border border-border pr-4 flex items-center h-9 md:h-11 overflow-hidden rounded-xl md:rounded-[18px] group">
 
           {/* Static Shopping Cart Icon Label */}
-          <div className="relative z-20 flex items-center h-full pl-5 pr-4 md:pl-7 md:pr-5 bg-gradient-to-r from-accent to-rose-600 text-white skew-x-[-12deg] -ml-1 mr-5 md:mr-7 shadow-lg">
+          <div className="relative z-20 flex items-center h-full pl-5 pr-4 md:pl-7 md:pr-5 bg-gradient-to-r from-accent to-rose-600 text-white skew-x-[-12deg] -ml-1 mr-5 md:mr-7">
             <div className="skew-x-[12deg] flex items-center justify-center">
               <ShoppingCart className="w-3.5 h-3.5 md:w-5 md:h-5 text-white/90" />
             </div>

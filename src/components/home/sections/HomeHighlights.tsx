@@ -32,7 +32,7 @@ export function HomeHighlights({
 
   return (
     <section className="py-6 max-w-7xl mx-auto px-4">
-      <div className="bg-card border border-border rounded-2xl md:rounded-[24px] p-5 md:p-7 relative overflow-hidden shadow-xl shadow-primary/5">
+      <div className="bg-card border-2 border-border rounded-2xl md:rounded-[24px] p-5 md:p-7 relative overflow-hidden">
         {/* Background Decorations */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent/5 rounded-full -ml-16 -mb-16 blur-3xl" />
@@ -86,9 +86,9 @@ export function HomeHighlights({
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center justify-center space-x-2 ${bgColor} px-2.5 py-2 md:py-2.5 rounded-xl border transition-all group shadow-sm active:scale-95`}
+                    className={`flex items-center justify-center space-x-2 ${bgColor} px-2.5 py-2 md:py-2.5 rounded-xl border transition-all group active:scale-95`}
                   >
-                    <div className="w-6 h-6 md:w-7 h-7 bg-white rounded-lg p-0.5 md:p-1 border-2 border-white/50 flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm shrink-0">
+                    <div className="w-6 h-6 md:w-7 h-7 bg-white rounded-lg p-0.5 md:p-1 border-2 border-white/50 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
                       <div className="w-full h-full relative flex items-center justify-center">
                         {link.icon ? (
                           <img src={link.icon} alt={link.label} className="w-full h-full object-contain" />

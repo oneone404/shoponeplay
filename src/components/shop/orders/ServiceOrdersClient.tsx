@@ -66,20 +66,20 @@ export default function ServiceOrdersClient({ initialOrders }: ServiceOrdersClie
                 </div>
 
                 <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-sm font-black text-foreground uppercase tracking-tight">{order.service.name}</h3>
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-tight">{order.service.name}</h3>
                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">{order.option.name}</p>
                   <p className="text-[9px] font-bold text-muted-foreground mt-1 tabular-nums">#{order.id.slice(-8).toUpperCase()} • {new Date(order.createdAt).toLocaleString('vi-VN')}</p>
                 </div>
 
                 <div className="flex flex-col items-center md:items-end gap-2 shrink-0">
                   <span className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.1em] border",
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-[0.1em] border",
                     status.color
                   )}>
                     {status.icon}
                     {status.label}
                   </span>
-                  <span className="text-sm font-black text-foreground">{order.totalAmount.toLocaleString('vi-VN')} đ</span>
+                  <span className="text-sm font-bold text-foreground">{order.totalAmount.toLocaleString('vi-VN')} đ</span>
                 </div>
 
                 <div className="p-2 text-muted-foreground">
@@ -94,7 +94,7 @@ export default function ServiceOrdersClient({ initialOrders }: ServiceOrdersClie
                     
                     {/* Dữ liệu đã nhập */}
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                         <CheckCircle2 className="w-3 h-3" /> Thông tin bạn đã cung cấp
                       </h4>
                       <div className="p-4 bg-background rounded-2xl border border-border space-y-3 shadow-inner">
@@ -109,7 +109,7 @@ export default function ServiceOrdersClient({ initialOrders }: ServiceOrdersClie
 
                     {/* Phản hồi từ Admin */}
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-2">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-500 flex items-center gap-2">
                         <MessageSquare className="w-3 h-3" /> Phản hồi từ hệ thống
                       </h4>
                       <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 space-y-3 min-h-[80px] flex flex-col justify-center">
@@ -130,7 +130,7 @@ export default function ServiceOrdersClient({ initialOrders }: ServiceOrdersClie
             <div className="w-20 h-20 bg-secondary rounded-[2.5rem] flex items-center justify-center mb-6">
               <History className="w-8 h-8 text-muted-foreground opacity-20" />
             </div>
-            <h3 className="text-xl font-black text-foreground uppercase tracking-tight">Bạn chưa có đơn hàng nào</h3>
+            <h3 className="text-xl font-bold text-foreground uppercase tracking-tight">Bạn chưa có đơn hàng nào</h3>
             <p className="text-muted-foreground text-sm font-medium mt-2">Hãy khám phá các dịch vụ hấp dẫn của chúng tôi.</p>
           </div>
         )}

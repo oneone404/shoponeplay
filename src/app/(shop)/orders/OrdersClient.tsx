@@ -16,7 +16,8 @@ import {
   ChevronsRight,
   CreditCard,
   CheckCircle,
-  ExternalLink
+  ExternalLink,
+  Key
 } from "lucide-react"
 import { useLanguage } from "@/providers/LanguageProvider"
 import { useRouter } from "next/navigation"
@@ -201,7 +202,9 @@ export default function OrdersClient() {
                                 {order.items.length > 1 ? (
                                   <p className="text-[9px] font-bold text-primary uppercase tracking-tighter mt-0.5">+{order.items.length - 1} Sản Phẩm Khác</p>
                                 ) : (
-                                  <p className="text-[9px] text-muted-foreground font-medium uppercase mt-0.5">Mã SP: {order.items[0]?.productId?.slice(-8)}</p>
+                                  <p className="text-[9px] text-muted-foreground font-medium uppercase mt-0.5">
+                                    {order.items[0]?.typeSnapshot === "HACK" ? "Loại: HACK TOOL" : `Mã SP: ${order.items[0]?.productId?.slice(-8)}`}
+                                  </p>
                                 )}
                               </div>
                             </div>
@@ -222,13 +225,23 @@ export default function OrdersClient() {
 
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end">
-                              <button
-                                onClick={() => router.push(`/orders/${order.id}`)}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm group/btn"
-                              >
-                                <Eye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
-                                <span>Xem Tài Khoản</span>
-                              </button>
+                              {order.items[0]?.typeSnapshot === "HACK" ? (
+                                <button
+                                  onClick={() => router.push(`/orders/hacks?search=${order.id}`)}
+                                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 text-amber-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-amber-500 hover:text-white active:scale-95 transition-all shadow-sm group/btn"
+                                >
+                                  <Key className="w-3.5 h-3.5 group-hover/btn:rotate-12 transition-transform" />
+                                  <span>Quản Lý Key</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => router.push(`/orders/${order.id}`)}
+                                  className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm group/btn"
+                                >
+                                  <Eye className="w-3.5 h-3.5 group-hover/btn:scale-110 transition-transform" />
+                                  <span>Xem Tài Khoản</span>
+                                </button>
+                              )}
                             </div>
                           </td>
                         </motion.tr>

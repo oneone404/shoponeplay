@@ -105,7 +105,7 @@ export default function CardDepositClient() {
         <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-2xl mb-4">
           <CreditCard className="w-8 h-8 text-primary" />
         </div>
-        <h1 className="text-4xl font-black uppercase tracking-tight italic">
+        <h1 className="text-4xl font-bold uppercase tracking-tight italic">
           Nạp Thẻ <span className="text-primary">Cào</span>
         </h1>
         <p className="text-muted-foreground text-sm font-bold uppercase tracking-widest opacity-60">

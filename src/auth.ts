@@ -60,7 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { email: true, name: true, role: true, image: true, balance: true, totalDeposited: true, emailVerified: true, twoFactorEnabled: true },
+          select: { email: true, name: true, role: true, image: true, balance: true, totalDeposited: true, emailVerified: true, twoFactorEnabled: true, accountId: true, savedAccountIds: true },
         });
         if (dbUser) {
           token.email = dbUser.email;
@@ -71,6 +71,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.totalDeposited = dbUser.totalDeposited;
           token.emailVerified = dbUser.emailVerified;
           token.twoFactorEnabled = dbUser.twoFactorEnabled;
+          token.accountId = dbUser.accountId;
+          token.savedAccountIds = dbUser.savedAccountIds;
         } else {
           // USER DELETED FROM DB -> INVALIDATE TOKEN
           return null;
@@ -91,6 +93,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.totalDeposited = (token.totalDeposited as number) || 0;
         session.user.emailVerified = token.emailVerified as Date | null;
         session.user.twoFactorEnabled = token.twoFactorEnabled as boolean;
+        session.user.accountId = token.accountId as string | null;
+        session.user.savedAccountIds = (token.savedAccountIds as string[]) || [];
       }
       return session;
     }

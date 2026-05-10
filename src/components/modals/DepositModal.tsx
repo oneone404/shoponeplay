@@ -175,7 +175,7 @@ export default function DepositModal() {
               </div>
               <div>
                 <h2 className="text-sm font-bold uppercase tracking-widest">{t.deposit.title}</h2>
-                <p className="text-[10px] text-muted-foreground font-bold opacity-60 tracking-tighter">{t.deposit.subtitle}</p>
+                <p className="text-[10px] text-muted-foreground font-bold tracking-tighter">{t.deposit.subtitle}</p>
               </div>
             </div>
             <button
@@ -199,7 +199,7 @@ export default function DepositModal() {
                 }}
                 className={cn(
                   "flex-1 py-3 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-2",
-                  method === "BANK" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  method === "BANK" ? "bg-white dark:bg-card text-foreground shadow-md border border-border/50" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <QrCode className="w-4 h-4" />
@@ -211,7 +211,7 @@ export default function DepositModal() {
                 }}
                 className={cn(
                   "flex-1 py-3 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-2",
-                  method === "CARD" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  method === "CARD" ? "bg-white dark:bg-card text-foreground shadow-md border border-border/50" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <CreditCard className="w-4 h-4" />
@@ -265,7 +265,7 @@ export default function DepositModal() {
                       <button
                         disabled={amount < config.minAmount}
                         onClick={() => setStep(2)}
-                        className="w-full h-14 bg-background border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50 disabled:grayscale group/btn"
+                        className="w-full h-14 bg-white dark:bg-card border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:grayscale group/btn"
                       >
                         <span>{t.common.continue}</span>
                         <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
@@ -314,7 +314,7 @@ export default function DepositModal() {
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                     {/* Column 1: QR Code */}
                     <div className="md:col-span-2 bg-card border border-border rounded-3xl overflow-hidden p-8 flex flex-col items-center justify-center space-y-4 shadow-sm">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground opacity-60">Quét mã QR</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Quét mã QR</p>
                       <div className="relative group p-4 bg-white rounded-3xl shadow-2xl shadow-black/5 transition-transform hover:scale-[1.02] duration-500">
                         <img src={qrUrl} alt="QR Code" className="w-56 h-56" />
                       </div>
@@ -322,18 +322,19 @@ export default function DepositModal() {
                         <Info className="w-3.5 h-3.5" />
                         <span>Tự Động Nhận Tiền Trong 5 Giây</span>
                       </div>
+
+                      <button
+                        onClick={() => setStep(1)}
+                        className="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors mt-2 group"
+                      >
+                        <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                        <span>Quay lại nhập số tiền</span>
+                      </button>
                     </div>
 
                     {/* Column 2: Information */}
                     <div className="md:col-span-3 space-y-4 flex flex-col">
                       <div className="bg-card border border-border rounded-3xl overflow-hidden p-6 space-y-3 shadow-sm flex-1">
-                        <button
-                          onClick={() => setStep(1)}
-                          className="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-widest text-primary/70 hover:text-primary transition-colors mb-4 ml-1 group"
-                        >
-                          <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                          <span>Quay lại nhập số tiền</span>
-                        </button>
                         {[
                           { label: "Ngân hàng", value: selectedBank?.bankName, icon: <Building2 className="w-3 h-3" /> },
                           { label: "Số tài khoản", value: selectedBank?.accountNumber, icon: <Hash className="w-3 h-3" /> },
@@ -361,7 +362,7 @@ export default function DepositModal() {
 
                       <button
                         onClick={() => setStep(3)}
-                        className="w-full h-14 bg-background border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center space-x-2 mt-2 group/btn"
+                        className="w-full h-14 bg-white dark:bg-card border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all flex items-center justify-center space-x-2 mt-2 group/btn"
                       >
                         <Check className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
                         <span>Xác Nhận Đã Chuyển Tiền</span>
@@ -488,7 +489,7 @@ export default function DepositModal() {
                     <button
                       disabled={loading}
                       type="submit"
-                      className="w-full h-14 bg-background border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50 group/btn"
+                      className="w-full h-14 bg-white dark:bg-card border-2 border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 group/btn"
                     >
                       {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><span>Gửi Thẻ Ngay</span><Send className="w-4 h-4 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" /></>}
                     </button>
@@ -538,7 +539,7 @@ export default function DepositModal() {
                               </div>
                               <div>
                                 <p className="text-[11px] font-bold uppercase tracking-tight">{item.cardType} - {new Intl.NumberFormat('vi-VN').format(item.declaredValue)}</p>
-                                <p className="text-[9px] text-muted-foreground font-bold opacity-60 uppercase">{new Date(item.createdAt).toLocaleTimeString()}</p>
+                                <p className="text-[9px] text-muted-foreground font-bold uppercase">{new Date(item.createdAt).toLocaleTimeString()}</p>
                               </div>
                             </div>
                             <div className={cn(

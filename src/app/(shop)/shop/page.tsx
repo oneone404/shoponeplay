@@ -50,7 +50,7 @@ export default async function ShopPage() {
 
   return (
     <ShopContent 
-      initialProducts={formattedProducts} 
+      initialProducts={JSON.parse(JSON.stringify(formattedProducts))} 
       categories={categories} 
     />
   )

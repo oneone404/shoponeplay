@@ -147,18 +147,18 @@ export default function AdminBanksClient({
 
       <div className="space-y-8">
         {/* Top Section: General Config (Horizontal) */}
-        <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-sm">
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/20">
-            <div className="flex items-center space-x-3">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+            <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                 <Settings className="w-4 h-4" />
               </div>
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">Quy tắc nạp tiền tự động</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Quy tắc nạp tiền tự động</h3>
             </div>
             <button
               onClick={handleSaveConfig}
               disabled={isPending}
-              className="p-2.5 bg-foreground text-background rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm disabled:opacity-50"
+              className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
               title="Lưu cấu hình"
             >
               <Save className="w-4 h-4" />
@@ -230,20 +230,20 @@ export default function AdminBanksClient({
 
         {/* Bottom Section: Bank List (Full Width) */}
         <div className="space-y-6">
-          <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-sm h-fit">
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/20">
-              <div className="flex items-center space-x-3">
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm h-fit">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+              <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
                   <Building2 className="w-4 h-4" />
                 </div>
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">Danh sách ngân hàng nhận</h3>
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Danh sách ngân hàng nhận</h3>
               </div>
               <button
                 onClick={() => {
                   setEditingBank({ isActive: true })
                   setShowForm(true)
                 }}
-                className="px-4 py-2 bg-background border border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all flex items-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-primary/20 active:scale-95 transition-all flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Thêm ngân hàng
@@ -252,13 +252,13 @@ export default function AdminBanksClient({
 
             <div className="p-6 space-y-6">
               {showForm && (
-                <div className="bg-secondary/30 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-sm animate-in slide-in-from-top-4 duration-300 mb-8">
-                  <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-secondary/20">
-                    <div className="flex items-center space-x-3">
+                <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm animate-in slide-in-from-top-4 duration-300 mb-8">
+                  <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+                    <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                         {editingBank?.id ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                       </div>
-                      <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground/80">
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
                         {editingBank?.id ? "Chỉnh sửa ngân hàng" : "Thêm ngân hàng mới"}
                       </h3>
                     </div>
@@ -326,7 +326,7 @@ export default function AdminBanksClient({
                       <button
                         onClick={handleSaveBank}
                         disabled={isPending}
-                        className="px-10 py-3.5 bg-primary text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-primary/20 flex items-center space-x-2"
+                        className="px-10 py-3.5 bg-primary/10 text-primary border border-primary/20 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-primary/20 active:scale-95 transition-all flex items-center space-x-2"
                       >
                         <Save className="w-4 h-4" />
                         <span>{editingBank?.id ? "Cập nhật ngân hàng" : "Lưu ngân hàng"}</span>
@@ -339,7 +339,7 @@ export default function AdminBanksClient({
               <div className="grid grid-cols-1 gap-4">
                 {initialBanks.map((bank) => (
                   <div key={bank.id} className={cn(
-                    "group relative bg-background/30 border border-border rounded-2xl p-4 transition-all hover:border-primary/20 flex flex-col md:flex-row items-center justify-between gap-4",
+                    "group relative bg-background border border-border rounded-2xl p-4 transition-all hover:border-primary/20 hover:shadow-md flex flex-col md:flex-row items-center justify-between gap-4",
                     !bank.isActive && "opacity-60 grayscale-[0.5]"
                   )}>
                     <div className="flex items-center space-x-4 flex-1 w-full">

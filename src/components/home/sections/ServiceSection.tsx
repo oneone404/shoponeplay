@@ -26,9 +26,8 @@ export function ServiceSection({ services = [] }: { services?: any[] }) {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-6">
         {services.map((srv, idx) => (
-          <Link key={idx} href={`/services/${srv.slug}`} className="group bg-card border border-border rounded-xl overflow-hidden shadow-md transition-all duration-500 active:scale-[0.97]">
-            <div className="p-1.5 md:p-3 pb-0">
-              <div className="aspect-[16/9] relative overflow-hidden rounded-2xl border-2 md:border-4 border-background shadow-sm">
+          <Link key={idx} href={`/services/${srv.slug}`} className="group bg-card border-[3px] border-border rounded-xl overflow-hidden transition-all duration-500 active:scale-[0.97]">
+            <div className="aspect-[16/9] relative overflow-hidden bg-secondary shrink-0">
                 <Image
                   src={srv.thumbnail}
                   alt={srv.name}
@@ -37,24 +36,24 @@ export function ServiceSection({ services = [] }: { services?: any[] }) {
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
-            </div>
 
-            <div className="p-4 md:p-6">
+            <div className="p-4 md:p-6 flex flex-col items-center">
               <div className="mb-4 text-center">
-                <h3 className="text-xs md:text-sm font-bold uppercase tracking-tighter text-foreground line-clamp-1 group-hover:text-foreground transition-colors mb-1">
+                <h3 className="text-xs md:text-lg font-bold uppercase tracking-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors mb-1">
                   {srv.name}
                 </h3>
               </div>
 
-              <div className="flex items-center justify-center gap-1.5 py-1.5 bg-background/50 border border-border rounded-full shadow-sm md:py-2">
-                <span className="text-[7px] md:text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-none">{t.common.status}:</span>
-                <span className="text-[9px] md:text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest leading-none">Sẵn sàng</span>
+              <div className="flex items-center justify-center gap-2 md:gap-3 mb-1 w-full">
+                <div className="px-2 py-0.5 md:px-3 md:py-0.5 border md:border-2 border-border rounded-full flex items-center gap-1 md:gap-1.5 bg-background">
+                  <span className="text-[8px] md:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase whitespace-nowrap leading-none">{t.common.status}</span>
+                  <div className="h-3 md:h-5 w-[1px] bg-border" />
+                  <span className="text-[8px] md:text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest leading-none">Sẵn sàng</span>
+                </div>
               </div>
 
-              <div className="mt-5">
-                <div className="w-full py-2.5 bg-secondary/50 border border-border text-foreground rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-secondary active:scale-95 transition-all shadow-sm flex items-center justify-center group/btn">
-                  <span>{t.common.view_more.toUpperCase()}</span>
-                </div>
+              <div className="mt-0 w-full max-w-[200px] active:scale-95 transition-all">
+                <img src="/images/buttons/xemtatca.png" alt="Xem Chi Tiết" className="w-full h-auto object-contain mx-auto" />
               </div>
             </div>
           </Link>

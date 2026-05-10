@@ -28,21 +28,21 @@ export function NewsSection({ posts }: NewsSectionProps) {
           <Link 
             key={post.id} 
             href={ROUTES.BLOG_DETAIL(post.slug)} 
-            className="group block bg-card border border-border p-4 rounded-2xl hover:border-primary/50 transition-all shadow-sm hover:shadow-md"
+            className="group block bg-card border-[3px] border-border rounded-2xl hover:border-primary/50 transition-all overflow-hidden"
           >
-            <div className="aspect-[16/9] relative rounded-xl overflow-hidden mb-5">
-              <Image
-                src={post.image || `/images/categories/cat_play.png`}
-                alt={post.title}
-                fill
-                sizes="(max-width: 640px) 100vw, 400px"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                <span className="text-[10px] font-bold text-white uppercase tracking-widest bg-primary px-3 py-1.5 rounded-lg ml-auto">{t.common.read_more}</span>
+            <div className="aspect-[16/9] relative overflow-hidden bg-secondary shrink-0">
+                <Image
+                  src={post.image || `/images/categories/cat_play.png`}
+                  alt={post.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, 400px"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                  <span className="text-[10px] font-bold text-white uppercase tracking-widest bg-primary px-3 py-1.5 rounded-lg ml-auto">{t.common.read_more}</span>
+                </div>
               </div>
-            </div>
-            <div className="space-y-3 px-1 pb-2">
+            <div className="space-y-3 p-5">
               <div className="flex items-center space-x-2 text-[10px] font-bold text-primary uppercase tracking-widest">
                 <BookOpen className="w-3 h-3" />
                 <span>

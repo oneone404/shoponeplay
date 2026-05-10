@@ -5,7 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Users, ShoppingBag, Receipt, Settings, FolderTree, LogOut, X, ChevronRight, ChevronDown, History, ShoppingCart, Globe, PackageCheck } from "lucide-react"
+import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+import { LayoutDashboard, Users, ShoppingBag, Receipt, Settings, FolderTree, LogOut, X, ChevronRight, ChevronDown, History, ShoppingCart, Globe, PackageCheck, Gamepad2 } from "lucide-react"
 
 export default function AdminSidebar({
   onCloseMobile,
@@ -38,13 +39,18 @@ export default function AdminSidebar({
       ]
     },
     {
-      href: "/admin/services",
+      href: ADMIN_ROUTES.SERVICES.path,
       label: "Dịch vụ Game",
       icon: PackageCheck,
       subItems: [
-        { href: "/admin/services", label: "Tất cả dịch vụ" },
-        { href: "/admin/services/orders", label: "Đơn hàng dịch vụ" },
+        { href: ADMIN_ROUTES.SERVICES.path, label: "Tất cả dịch vụ" },
+        { href: ADMIN_ROUTES.SERVICES_ORDERS.path, label: "Đơn hàng dịch vụ" },
       ]
+    },
+    {
+      href: ADMIN_ROUTES.HACKS.path,
+      label: "Hack Tools",
+      icon: Gamepad2,
     },
     {
       href: "/admin/history",
@@ -69,6 +75,7 @@ export default function AdminSidebar({
         { href: "/admin/settings/seller", label: "Cấu Hình Seller" },
         { href: "/admin/settings/banks", label: "Cấu Hình Nạp Bank" },
         { href: "/admin/settings/cards", label: "Cấu Hình Nạp Card" },
+        { href: "/admin/settings/napgame", label: "Cấu Hình Nạp Gói" },
         { href: "/admin/settings/branding", label: "Giao diện & Branding" },
         { href: "/admin/settings/system", label: "Trạng thái hệ thống" }
       ]

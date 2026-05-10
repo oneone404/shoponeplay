@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn, Store, ChevronRight, ChevronLeft, Zap } from "lucide-react"
+import { ShoppingCart, User, Sun, Moon, Plus, LogOut, Settings, History, Package, Terminal, Home, LayoutGrid, BookOpen, Globe, LogIn, Store, ChevronRight, ChevronLeft, Zap, Gamepad2, Key } from "lucide-react"
 import { useTheme } from "@/providers/ThemeProvider"
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
@@ -66,7 +66,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
   }
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-background border-b border-border">
+    <nav className="fixed top-0 w-full z-50 bg-card border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -246,6 +246,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                           <div className="space-y-0.5">
                             <p className="px-5 py-1 text-[8px] font-black text-muted-foreground uppercase tracking-[0.2em]">Tài khoản của tôi</p>
                             <DropdownItem href={USER_ROUTES.SETTINGS.path} icon={<User className="w-4 h-4" />} onClick={(e) => handleProtectedClick(e, USER_ROUTES.SETTINGS.path)}>{t.nav.user_profile}</DropdownItem>
+                            <DropdownItem href={USER_ROUTES.HACKS.path} icon={<Package className="w-4 h-4" />} onClick={closeAll}>{t.nav.hacks}</DropdownItem>
 
                             {/* History Switcher Button */}
                             <button
@@ -284,11 +285,13 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                             </button>
                           </div>
 
-                          <DropdownItem href={USER_ROUTES.HISTORY.ORDERS.path} icon={<Package className="w-4 h-4" />} onClick={closeAll}>Đơn Hàng Đã Mua</DropdownItem>
-                          <DropdownItem href={USER_ROUTES.HISTORY.BALANCE.path} icon={<ArrowRightLeft className="w-4 h-4" />} onClick={closeAll}>Biến Động Số Dư</DropdownItem>
-                          <DropdownItem href={USER_ROUTES.HISTORY.BANK.path} icon={<Building2 className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Bank</DropdownItem>
-                          <DropdownItem href={USER_ROUTES.HISTORY.SERVICES.path} icon={<Zap className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Dịch Vụ</DropdownItem>
-                          <DropdownItem href={USER_ROUTES.HISTORY.CARD.path} icon={<CreditCard className="w-4 h-4" />} onClick={closeAll}>Lịch Sử Nạp Card</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.ORDERS.path} icon={<Package className="w-4 h-4" />} onClick={closeAll}>ĐƠN HÀNG ĐÃ MUA</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.ACCOUNTS.path} icon={<Gamepad2 className="w-4 h-4" />} onClick={closeAll}>LỊCH SỬ MUA TÀI KHOẢN</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.HACKS.path} icon={<Key className="w-4 h-4" />} onClick={closeAll}>LỊCH SỬ MUA KEY</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.BALANCE.path} icon={<ArrowRightLeft className="w-4 h-4" />} onClick={closeAll}>BIẾN ĐỘNG SỐ DƯ</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.BANK.path} icon={<Building2 className="w-4 h-4" />} onClick={closeAll}>LỊCH SỬ NẠP BANK</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.SERVICES.path} icon={<Zap className="w-4 h-4" />} onClick={closeAll}>LỊCH SỬ DỊCH VỤ</DropdownItem>
+                          <DropdownItem href={USER_ROUTES.HISTORY.CARD.path} icon={<CreditCard className="w-4 h-4" />} onClick={closeAll}>LỊCH SỬ NẠP CARD</DropdownItem>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -365,7 +368,7 @@ function DropdownItem({ href, children, icon, onClick }: { href: string; childre
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center space-x-3 px-4 py-2.5 text-[10.5px] font-bold uppercase tracking-widest text-foreground hover:bg-secondary transition-colors"
+      className="flex items-center space-x-3 px-5 py-2.5 text-[10.5px] font-bold uppercase tracking-widest text-foreground hover:bg-secondary transition-colors"
     >
       {icon}
       <span>{children}</span>

@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
-  allowedDevOrigins: ['shoponeplay.com'],
+  allowedDevOrigins: ['shoponeplay.com', '192.168.1.109', '192.168.1.109:3000'],
   images: {
     qualities: [75],
     localPatterns: [

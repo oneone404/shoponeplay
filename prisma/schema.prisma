@@ -88,6 +88,9 @@ model User {
   uploadedSecrets      AccountSecret[]      @relation("SecretUploader")
   withdrawals          Withdrawal[]
   serviceOrders        ServiceOrder[]
+  hackOrders           HackOrder[]
+  accountId            String?              // Game Account ID mặc định cho dịch vụ nạp game
+  savedAccountIds      Json                 @default("[]") // Danh sách các ID đã lưu [{id, name}]
 }
 
 // --- NEW: Game Services Models ---
@@ -364,14 +367,14 @@ model Order {
 model OrderItem {
   id               String          @id @default(cuid())
   orderId          String
-  productId        String
+  productId        String?
   quantity         Int
   priceAtPurchase  Float
   titleSnapshot    String
   typeSnapshot     String
   deliveredSecrets AccountSecret[]
   order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product          Product         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product          Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([productId])
@@ -508,4 +511,72 @@ enum WithdrawStatus {
   COMPLETED
   CANCELLED
   REJECTED
+}
+
+// --- Hack Tools ---
+
+enum HackStatus {
+  ACTIVE
+  MAINTENANCE
+  HIDDEN
+}
+
+model HackTool {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  version       String
+  description   String?     @db.Text
+  externalId    Int?                            // ID Game trên HackViet.io
+  thumbnail     String?
+  downloadUrl   Json?
+  fileName      String?
+  fileSize      String?
+  features      Json?                           // [{name, category, icon}]
+  requirements  String?     @db.Text
+  changelog     Json?                           // [{version, content, date}]
+  prices        Json?                           // [{label: "1 Ngày", price: 10000}]
+  videoUrl      String?
+  status        HackStatus  @default(ACTIVE)
+  totalDownload Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  orders           HackOrder[]
+  freeKeySessions  FreeKeySession[]
+}
+
+model FreeKeySession {
+  id            String   @id @default(cuid())
+  token         String   @unique                 // Token nội bộ gửi cho Link4M
+  hackId        String
+  sessionCode   String?                          // session_code từ HackViet
+  visitorId     String?                          // Định danh trình duyệt
+  status        String   @default("PENDING")     // PENDING, VERIFIED, CLAIMED
+  key           String?                          // Key nhận được sau khi hoàn tất
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  hack          HackTool @relation(fields: [hackId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([visitorId])
+}
+
+model HackOrder {
+  id          String    @id @default(cuid())
+  userId      String
+  hackId      String
+  duration    String    // Ví dụ: "1 Ngày", "1 Tuần"
+  machines    Int       @default(1)
+  totalPrice  Float
+  key         String?   // Key sau khi mua thành công (giả lập hoặc sinh ra)
+  status      String    @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hack        HackTool  @relation(fields: [hackId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([hackId])
 }
