@@ -252,6 +252,8 @@ export async function createVietQROrder(params: {
     paymentMethodID: "72",
     paymentProviderID: "72",
     jtoken: session.jtoken,
+    loginType: session.loginType || "9",
+    clientKey: VNG_CLIENT_KEY,
     serverID: session.serverID,
     userID: session.userID,
     roleID: session.roleID,
@@ -266,33 +268,53 @@ export async function createVietQROrder(params: {
     amount
   })
 
-  const response = await fetch("https://billing.vnggames.com/fe/api/multiitemorder/createOrder", {
-    method: "POST",
-    headers: VNG_COMMON_HEADERS,
-    body: body.toString(),
-  })
-
-  const text = await response.text()
-  let data: any
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
 
   try {
-    data = JSON.parse(text)
-  } catch {
-    console.error("[VNG_BILLING] createVietQR invalid JSON:", text.slice(0, 300))
-    throw new Error("Lỗi tạo mã QR VNG: Response không hợp lệ")
-  }
+    const response = await fetch("https://billing.vnggames.com/fe/api/multiitemorder/createOrder", {
+      method: "POST",
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Origin': 'https://shop.vnggames.com',
+        'Referer': 'https://shop.vnggames.com/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+      },
+      body: body.toString(),
+      signal: controller.signal
+    })
 
-  if (data.returnCode === 1 && data.data?.payData?.qrCode) {
-    return {
-      returnCode: 1,
-      qrCode: data.data.payData.qrCode,
-      orderNumber: data.data.orderNumberStr || String(data.data.orderNumber),
-      message: "Thành công"
+    const text = await response.text()
+    console.log("[VNG_BILLING] createVietQR response:", text)
+    clearTimeout(timeoutId)
+    
+    let data: any
+    try {
+      data = JSON.parse(text)
+    } catch {
+      console.error("[VNG_BILLING] createVietQR invalid JSON:", text.slice(0, 300))
+      throw new Error("Lỗi tạo mã QR VNG: Response không hợp lệ")
     }
-  }
 
-  return {
-    returnCode: data.returnCode,
-    message: data.returnMessage || data.data?.message || "Không thể tạo mã QR",
+    if (data.returnCode === 1 && data.data?.payData?.qrCode) {
+      console.log("[VNG_BILLING] createVietQR success:", data.data.orderNumberStr)
+      return {
+        returnCode: 1,
+        qrCode: data.data.payData.qrCode,
+        orderNumber: data.data.orderNumberStr || String(data.data.orderNumber),
+        message: "Thành công"
+      }
+    }
+
+    console.warn("[VNG_BILLING] createVietQR failed:", data.returnCode, data.returnMessage)
+    return {
+      returnCode: data.returnCode,
+      message: data.returnMessage || data.data?.message || "Không thể tạo mã QR",
+    }
+  } catch (err: any) {
+    clearTimeout(timeoutId)
+    console.error("[VNG_BILLING] createVietQR error:", err.message)
+    throw err
   }
 }

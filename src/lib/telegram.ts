@@ -310,7 +310,7 @@ Dùng App Ngân hàng quét mã dưới đây để thanh toán. Sau khi thanh t
     `.trim();
 
     const url = `https://api.telegram.org/bot${config.token}/sendPhoto`;
-    await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -328,6 +328,8 @@ Dùng App Ngân hàng quét mã dưới đây để thanh toán. Sau khi thanh t
         }
       })
     });
+    const result = await response.json();
+    console.log("[TELEGRAM_QR] send result:", result);
   } catch (error) {
     console.error("[TELEGRAM_QR_EXCEPTION]", error);
   }
