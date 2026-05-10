@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Save, Plus, Trash2, GripVertical, Loader2, Star, AlertCircle, Zap, Settings, ShoppingCart, RefreshCw, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUI } from "@/providers/UIProvider"
-import { updateNapGameConfig, createTopupProduct, updateTopupProduct, deleteTopupProduct, updateCardGatewayConfig, checkAgentBalance } from "@/app/admin/settings/napgame/actions"
+import { updateNapGameConfig, createTopupProduct, updateTopupProduct, deleteTopupProduct, updateCardGatewayConfig, checkAgentBalance, checkProductStock } from "@/app/admin/settings/napgame/actions"
 import AdminHeader from "../AdminHeader"
 
 interface HotItem {
@@ -352,6 +352,9 @@ function TopupProductCard({ product, onUpdate, onDelete }: { product: any, onUpd
   const [enabled, setEnabled] = useState(product.enabled)
   const [loading, setLoading] = useState(false)
   const [hasChanged, setHasChanged] = useState(false)
+  const [checkingStock, setCheckingStock] = useState(false)
+  const [stockInfo, setStockInfo] = useState<{ available: boolean; message: string } | null>(null)
+  const { addMessage } = useUI()
 
   // Track changes to show "Save" button
   useEffect(() => {
@@ -412,6 +415,33 @@ function TopupProductCard({ product, onUpdate, onDelete }: { product: any, onUpd
               "absolute top-1 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm", 
               enabled ? "left-6" : "left-1"
             )} />
+          </button>
+          <button 
+            type="button"
+            onClick={async () => {
+              setCheckingStock(true)
+              const result = await checkProductStock(serviceCode, cardValue)
+              setCheckingStock(false)
+              if (result.success) {
+                setStockInfo({ available: result.available, message: result.message })
+                addMessage({ 
+                  type: result.available ? "success" : "warning", 
+                  text: `Tồn kho [${serviceCode} - ${cardValue.toLocaleString()}]: ${result.message}` 
+                })
+              } else {
+                addMessage({ type: "error", text: result.message || "Lỗi khi kiểm tra tồn kho" })
+              }
+            }}
+            disabled={checkingStock}
+            className={cn(
+              "w-8 h-8 flex items-center justify-center rounded-xl transition-all border",
+              stockInfo ? (stockInfo.available ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20") : "bg-white text-muted-foreground border-border hover:bg-secondary/50"
+            )}
+            title="Kiểm tra tồn kho NCC"
+          >
+            {checkingStock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (
+              stockInfo ? (stockInfo.available ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />) : <RefreshCw className="w-3.5 h-3.5" />
+            )}
           </button>
           <button 
             onClick={onDelete} 

@@ -121,6 +121,53 @@ export async function getAgentBalance(): Promise<BalanceResult> {
 }
 
 /**
+ * Kiem tra ton kho the tai NCC
+ */
+export async function checkStockAvailable(
+  serviceCode: string,
+  value: number,
+  qty: number = 1
+): Promise<{ success: boolean; available: boolean; message: string }> {
+  const config = await getCardGatewayConfig()
+
+  if (!config.baseUrl || !config.partnerId || !config.partnerKey) {
+    throw new Error("Chưa cấu hình Card Gateway")
+  }
+
+  const requestId = generateRequestId()
+  const sign = createSign(config.partnerKey, config.partnerId, "checkavailable", requestId)
+
+  const params = new URLSearchParams({
+    partner_id: config.partnerId,
+    command: "checkavailable",
+    service_code: serviceCode,
+    value: value.toString(),
+    qty: qty.toString(),
+    request_id: requestId,
+    sign,
+  })
+
+  try {
+    const response = await fetch(`${config.baseUrl}/api/cardws`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    })
+
+    const data = await response.json()
+    console.log("[CARD_GATEWAY] checkavailable:", data)
+
+    return { 
+      success: true, 
+      available: !!data.stock_available, 
+      message: data.message || (data.stock_available ? "Còn hàng" : "Hết hàng") 
+    }
+  } catch (error) {
+    return { success: false, available: false, message: (error as Error).message }
+  }
+}
+
+/**
  * Mua the tu NCC
  * @param value - Menh gia the (VND): 20000, 50000, 100000...
  * @param serviceCode - Loai the: "ZING", "GARENA", "VIETTEL"...

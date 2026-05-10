@@ -252,6 +252,16 @@ export async function checkAgentBalance() {
   }
 }
 
+export async function checkProductStock(serviceCode: string, value: number) {
+  try {
+    const { checkStockAvailable } = await import("@/lib/services/card-gateway")
+    const result = await checkStockAvailable(serviceCode, value)
+    return result
+  } catch (error) {
+    return { success: false, available: false, message: (error as Error).message }
+  }
+}
+
 // ===================== TOPUP ORDERS =====================
 
 export async function getTopupOrders(options: { 
