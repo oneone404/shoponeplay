@@ -231,11 +231,11 @@ export async function createVietQROrder(params: {
 }> {
   const { session, productId, amount } = params
 
-  const description = Buffer.from(
-    `${session.roleName} nạp ${amount.toLocaleString()} VND vào game Play Together VNG qua VietQR`
-  ).toString("base64")
+  const products = JSON.stringify([{ productID: productId, quantity: 1, price: amount }])
 
-  const products = JSON.stringify([{ productID: productId, quantity: 1 }])
+  // Format description giong VNG Shop (Base64)
+  const descriptionText = `${session.roleName} nạp ${amount.toLocaleString("en-US")} VND vào game Play Together VNG qua VietQR tại Shop.vnggames.com`
+  const description = Buffer.from(descriptionText).toString("base64")
 
   const body = new URLSearchParams({
     pmcID: "72",
@@ -262,11 +262,7 @@ export async function createVietQROrder(params: {
     products,
   })
 
-  console.log("[VNG_BILLING] createVietQROrder:", {
-    roleId: session.roleID,
-    productId,
-    amount
-  })
+  console.log("[VNG_BILLING] createVietQROrder Request Body:", body.toString())
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10000)
