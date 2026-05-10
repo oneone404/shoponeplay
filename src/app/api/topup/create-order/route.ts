@@ -20,6 +20,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
+    console.log("[TOPUP_CREATE_ORDER] Incoming body:", JSON.stringify(body))
     const { topupProductId, roleId, roleName, serverId, expectedPrice, manualProduct } = body
 
     // ======== VALIDATION ========

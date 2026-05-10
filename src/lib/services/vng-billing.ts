@@ -70,6 +70,7 @@ export async function quickAuth(roleId: string): Promise<VNGSession> {
   })
 
   const text = await response.text()
+  console.log("[VNG_BILLING] auth/quick response:", text)
   let data: any
 
   try {

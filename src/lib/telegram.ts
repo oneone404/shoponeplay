@@ -286,13 +286,21 @@ ${icon} <b>${statusText}</b>
 export async function sendTopupQRNotification(orderId: string) {
   try {
     const config = await getTelegramConfig();
-    if (!config.isEnabled || !config.token || !config.chatId) return;
+    console.log("[TELEGRAM_QR] Notification attempt:", { orderId, hasToken: !!config.token, hasChatId: !!config.chatId });
+    
+    if (!config.token || !config.chatId) {
+      console.warn("[TELEGRAM_QR] Aborted: Config missing");
+      return;
+    }
 
     const order = await prisma.topupOrder.findUnique({
       where: { id: orderId },
       include: { user: true }
     });
-    if (!order || !order.vngQrCode) return;
+    if (!order || !order.vngQrCode) {
+      console.warn("[TELEGRAM_QR] Aborted: Order or QR code not found");
+      return;
+    }
 
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(order.vngQrCode)}&size=400x400`;
     

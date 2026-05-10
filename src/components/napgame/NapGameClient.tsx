@@ -304,15 +304,18 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
           } else if (character) {
             // Nap Manual QR
             addMessage({ type: "info", text: "Sản phẩm nạp qua QR. Đang gửi yêu cầu cho Admin..." })
+             const manualProductData = {
+                name: confirmingProduct.productName,
+                vngProductId: confirmingProduct.sellingProductID,
+                price: (confirmingProduct.prices.VND as any).basePrice || confirmingProduct.prices.VND.price
+              };
+              console.log("[DEBUG_NAPGAME] Sending manual product:", manualProductData);
+
               const res = await fetch("/api/topup/create-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  manualProduct: {
-                    name: confirmingProduct.productName,
-                    vngProductId: confirmingProduct.sellingProductID,
-                    price: (confirmingProduct.prices.VND as any).basePrice || confirmingProduct.prices.VND.price
-                  },
+                  manualProduct: manualProductData,
                   roleId: character.id,
                   roleName: character.name,
                   serverId: character.server,
