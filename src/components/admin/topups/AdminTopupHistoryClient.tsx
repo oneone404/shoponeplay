@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition, useMemo, useRef, useEffect } from "react"
 import { 
   Search, 
   Filter, 
@@ -25,7 +25,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useUI } from "@/providers/UIProvider"
 import { retryTopupOrder } from "@/app/admin/settings/napgame/actions"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import AdminHeader from "../AdminHeader"
 
 interface TopupOrder {
@@ -58,64 +58,63 @@ const STATUS_OPTIONS = [
 ]
 
 export default function AdminTopupHistoryClient({ 
-  initialOrders, 
-  totalPages, 
-  currentPage 
+  initialOrders 
 }: { 
-  initialOrders: any[], 
-  totalPages: number, 
-  currentPage: number 
+  initialOrders: TopupOrder[] 
 }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { addMessage } = useUI()
   const [isPending, startTransition] = useTransition()
-  const [selectedOrder, setSelectedOrder] = useState<TopupOrder | null>(null)
   
-  // URL as source of truth
-  const currentStatus = searchParams.get("status") || "ALL"
-  const currentSearch = searchParams.get("search") || ""
-
-  // Local state only for the input field to make it snappy
-  const [searchTerm, setSearchTerm] = useState(currentSearch)
+  // UI States
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("ALL")
   const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<TopupOrder | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 15
+  
+  const statusDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Sync input field if URL changes (e.g. back button)
+  // Client-side filtering logic
+  const filteredOrders = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase()
+    return initialOrders.filter((order) => {
+      const matchesSearch = !keyword || 
+        order.id.toLowerCase().includes(keyword) ||
+        order.roleName?.toLowerCase().includes(keyword) ||
+        order.roleId?.toLowerCase().includes(keyword) ||
+        order.user?.email?.toLowerCase().includes(keyword) ||
+        order.user?.name?.toLowerCase().includes(keyword)
+
+      const matchesStatus = statusFilter === "ALL" || order.status === statusFilter
+      
+      return matchesSearch && matchesStatus
+    })
+  }, [initialOrders, searchTerm, statusFilter])
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+  const currentOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page)
+  }
+
+  // Reset page when filtering
   useEffect(() => {
-    setSearchTerm(currentSearch)
-  }, [currentSearch])
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
 
-  const updateFilters = (newSearch?: string, newStatus?: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    
-    const search = newSearch !== undefined ? newSearch : searchTerm
-    const status = newStatus !== undefined ? newStatus : currentStatus
-
-    if (search) params.set("search", search)
-    else params.delete("search")
-    
-    if (status && status !== "ALL") params.set("status", status)
-    else params.delete("status")
-    
-    params.set("page", "1")
-    router.push(`?${params.toString()}`)
-  }
-
-  const handleSearch = () => {
-    updateFilters(searchTerm)
-  }
-
-  const handleStatusChange = (status: string) => {
-    setIsStatusOpen(false)
-    updateFilters(undefined, status)
-  }
-
-  const changePage = (page: number) => {
-    if (page < 1 || page > totalPages) return
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("page", page.toString())
-    router.push(`?${params.toString()}`)
-  }
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setIsStatusOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const handleRetry = async (orderId: string) => {
     if (!confirm("Bạn có chắc chắn muốn thử lại đơn hàng này?")) return
@@ -152,7 +151,7 @@ export default function AdminTopupHistoryClient({
         subtitle="Quản lý và kiểm tra chi tiết các đơn nạp VNG tự động"
       />
 
-      {/* Filters */}
+      {/* Filters (Client-side style) */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -160,13 +159,12 @@ export default function AdminTopupHistoryClient({
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
             placeholder="Tìm theo ID, Tên nhân vật, Email..."
             className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm font-bold"
           />
         </div>
         
-        <div className="relative">
+        <div className="relative" ref={statusDropdownRef}>
           <button 
             type="button"
             onClick={() => setIsStatusOpen(!isStatusOpen)}
@@ -174,30 +172,30 @@ export default function AdminTopupHistoryClient({
           >
             <Filter className="w-4 h-4 text-muted-foreground" />
             <span className="flex-1 text-left uppercase text-[10px] tracking-widest font-bold">
-              {STATUS_OPTIONS.find(o => o.value === currentStatus)?.label || "Tất cả trạng thái"}
+              {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || "Tất cả trạng thái"}
             </span>
             <ChevronDown className={cn("w-4 h-4 transition-transform", isStatusOpen && "rotate-180")} />
           </button>
           
           {isStatusOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setIsStatusOpen(false)} />
-              <div className="absolute top-full right-0 mt-2 w-full bg-card border border-border rounded-xl shadow-xl z-20 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
-                {STATUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => handleStatusChange(opt.value)}
-                    className={cn(
-                      "w-full px-4 py-2 text-left text-[10px] font-bold transition-colors uppercase tracking-widest",
-                      currentStatus === opt.value ? "bg-primary text-white" : "text-foreground hover:bg-secondary"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </>
+            <div className="absolute top-full right-0 mt-2 w-full bg-card border border-border rounded-xl shadow-xl z-10 py-1 overflow-hidden animate-in fade-in zoom-in duration-200">
+              {STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(opt.value)
+                    setIsStatusOpen(false)
+                  }}
+                  className={cn(
+                    "w-full px-4 py-2 text-left text-[10px] font-bold transition-colors uppercase tracking-widest",
+                    statusFilter === opt.value ? "bg-primary text-white" : "text-foreground hover:bg-secondary"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -218,7 +216,7 @@ export default function AdminTopupHistoryClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-[11px] font-bold">
-              {initialOrders.length === 0 ? (
+              {currentOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
@@ -230,7 +228,7 @@ export default function AdminTopupHistoryClient({
                   </td>
                 </tr>
               ) : (
-                initialOrders.map((order) => {
+                currentOrders.map((order) => {
                   const status = getStatusConfig(order.status)
                   const StatusIcon = status.icon
                   return (
@@ -247,7 +245,11 @@ export default function AdminTopupHistoryClient({
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-secondary border border-border overflow-hidden shrink-0 relative flex items-center justify-center text-muted-foreground">
-                            <UserIcon className="w-4 h-4" />
+                            {order.user?.image ? (
+                              <img src={order.user.image} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <UserIcon className="w-4 h-4" />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <p className="text-[11px] font-bold text-foreground truncate">{order.user?.name || "Khách hàng"}</p>
@@ -315,7 +317,7 @@ export default function AdminTopupHistoryClient({
             <div className="flex items-center space-x-2">
               <button 
                 type="button"
-                onClick={() => changePage(1)} 
+                onClick={() => goToPage(1)} 
                 disabled={currentPage === 1} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
               >
@@ -323,7 +325,7 @@ export default function AdminTopupHistoryClient({
               </button>
               <button 
                 type="button"
-                onClick={() => changePage(currentPage - 1)} 
+                onClick={() => goToPage(currentPage - 1)} 
                 disabled={currentPage === 1} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
               >
@@ -332,7 +334,7 @@ export default function AdminTopupHistoryClient({
               <div className="px-4 text-xs font-bold text-primary">{currentPage}</div>
               <button 
                 type="button"
-                onClick={() => changePage(currentPage + 1)} 
+                onClick={() => goToPage(currentPage + 1)} 
                 disabled={currentPage === totalPages} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
               >
@@ -340,7 +342,7 @@ export default function AdminTopupHistoryClient({
               </button>
               <button 
                 type="button"
-                onClick={() => changePage(totalPages)} 
+                onClick={() => goToPage(totalPages)} 
                 disabled={currentPage === totalPages} 
                 className="p-2 bg-card border border-border rounded-lg disabled:opacity-20 hover:text-primary transition-all shadow-sm"
               >

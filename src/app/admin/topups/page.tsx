@@ -1,34 +1,30 @@
 import { getTopupOrders } from "@/app/admin/settings/napgame/actions"
 import AdminTopupHistoryClient from "@/components/admin/topups/AdminTopupHistoryClient"
 import { ADMIN_ROUTES } from "@/lib/config/admin-routes"
+import { prisma } from "@/lib/prisma"
 
 export const metadata = {
   title: ADMIN_ROUTES.TOPUPS.title,
 }
 
-export default async function AdminTopupHistoryPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; search?: string; status?: string }>
-}) {
-  const params = await searchParams
-  const page = Number(params.page) || 1
-  const search = params.search || ""
-  const status = params.status || "ALL"
-  const limit = 20
+export const dynamic = 'force-dynamic'
 
-  const { orders, total, pages } = await getTopupOrders({ 
-    page, 
-    limit, 
-    search, 
-    status 
+export default async function AdminTopupHistoryPage() {
+  // Fetch all orders for client-side filtering (following transactions history style)
+  const orders = await prisma.topupOrder.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      product: { select: { name: true } },
+      user: { select: { name: true, email: true, image: true } }
+    }
   })
+
+  // Serialize data
+  const serializedOrders = JSON.parse(JSON.stringify(orders))
 
   return (
     <AdminTopupHistoryClient 
-      initialOrders={orders}
-      totalPages={pages}
-      currentPage={page}
+      initialOrders={serializedOrders}
     />
   )
 }
