@@ -237,3 +237,98 @@ ${isTest ? "✅ <i>Đây Là Thông Báo Kiểm Tra Hệ Thống.</i>" : "✅ <i
  * Hàm cũ (để tương thích ngược nếu cần, nên chuyển sang dùng hàm mới)
  */
 export const sendTelegramNotification = sendWithdrawalNotification;
+
+/**
+ * Thông báo nạp gói thành công/lỗi (Topup)
+ */
+export async function sendTopupNotification(details: {
+  order: any;
+  type: "SUCCESS" | "ERROR";
+  detail: string;
+}) {
+  try {
+    const config = await getTelegramConfig();
+    if (!config.isEnabled || !config.token || !config.chatId) return;
+
+    const { order, type, detail } = details;
+    const icon = type === "SUCCESS" ? "✅" : "❌";
+    const statusText = type === "SUCCESS" ? "NẠP THÀNH CÔNG" : "LỖI NẠP TỰ ĐỘNG";
+
+    const message = `
+${icon} <b>${statusText}</b>
+
+<b>ĐƠN HÀNG:</b> <code>#${order.id.slice(-8).toUpperCase()}</code>
+<b>NHÂN VẬT:</b> ${order.roleName} (ID: ${order.roleId})
+<b>GÓI:</b> ${order.productName || order.product?.name || "N/A"}
+<b>SỐ TIỀN:</b> ${order.amount?.toLocaleString()} VND
+<b>CHI TIẾT:</b> ${detail}
+<b>THỜI GIAN:</b> ${new Date().toLocaleString("vi-VN")}
+    `.trim();
+
+    const url = `https://api.telegram.org/bot${config.token}/sendMessage`;
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: config.chatId,
+        text: message,
+        parse_mode: "HTML",
+      })
+    });
+  } catch (error) {
+    console.error("[TELEGRAM_TOPUP_EXCEPTION]", error);
+  }
+}
+
+/**
+ * Gửi mã QR nạp tiền vào Telegram Admin (Manual QR)
+ */
+export async function sendTopupQRNotification(orderId: string) {
+  try {
+    const config = await getTelegramConfig();
+    if (!config.isEnabled || !config.token || !config.chatId) return;
+
+    const order = await prisma.topupOrder.findUnique({
+      where: { id: orderId },
+      include: { user: true }
+    });
+    if (!order || !order.vngQrCode) return;
+
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(order.vngQrCode)}&size=400x400`;
+    
+    const caption = `
+🔔 <b>ĐƠN NẠP MANUAL (VIETQR)</b>
+
+<b>KHÁCH HÀNG:</b> ${order.user.name || "N/A"}
+<b>NHÂN VẬT:</b> ${order.roleName} (ID: ${order.roleId})
+<b>GÓI NẠP:</b> ${order.productName || "N/A"}
+<b>SỐ TIỀN:</b> <code>${order.amount.toLocaleString()} VND</code>
+<b>MÃ ĐƠN VNG:</b> <code>${order.vngOrderNumber || "N/A"}</code>
+
+⚠️ <i>Mã QR này sẽ hết hạn vào lúc: ${order.vngQrExpiredAt?.toLocaleTimeString("vi-VN")}</i>
+Dùng App Ngân hàng quét mã dưới đây để thanh toán. Sau khi thanh toán xong hãy nhấn nút xác nhận.
+    `.trim();
+
+    const url = `https://api.telegram.org/bot${config.token}/sendPhoto`;
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: config.chatId,
+        photo: qrImageUrl,
+        caption: caption,
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✅ ĐÃ THANH TOÁN", callback_data: `topqr_done_${order.id}` },
+              { text: "🔄 TẠO LẠI QR", callback_data: `topqr_retry_${order.id}` }
+            ]
+          ]
+        }
+      })
+    });
+  } catch (error) {
+    console.error("[TELEGRAM_QR_EXCEPTION]", error);
+  }
+}

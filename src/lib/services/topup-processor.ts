@@ -1,7 +1,5 @@
-import crypto from "crypto"
-import { prisma } from "@/lib/prisma"
-import { buyCard, redownloadCard, getAgentBalance, checkStockAvailable } from "./card-gateway"
-import { quickAuth, getProducts, createOrder } from "./vng-billing"
+import { quickAuth, getProducts, createOrder, createVietQROrder } from "./vng-billing"
+import { sendTopupNotification, sendTopupQRNotification } from "@/lib/telegram"
 import type { TopupOrderStatus } from "@prisma/client"
 
 // ===================== TYPES =====================
@@ -282,9 +280,9 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       }
     } catch (error: any) {
       await logStep(orderId, "BUY_CARD", "ERROR", error.message)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi mua thẻ: " + error.message })
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: error.message })
       await refundUser(orderId)
-      await sendTopupTelegramAlert(order, "ERROR", `Lỗi mua thẻ: ${error.message}`)
+      await sendTopupNotification({ order, type: "ERROR", detail: `Lỗi mua thẻ: ${error.message}` })
       return { success: false, orderId, status: "REFUNDED", message: "Lỗi mua thẻ từ NCC" }
     }
 
@@ -342,7 +340,7 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
     } catch (error: any) {
       await logStep(orderId, "VNG_AUTH", "ERROR", error.message)
       await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi xác thực VNG: " + error.message })
-      await sendTopupTelegramAlert(order, "ERROR", `Lỗi xác thực VNG (thẻ đã mua): ${error.message}`)
+      await sendTopupNotification({ order, type: "ERROR", detail: `Lỗi xác thực VNG (thẻ đã mua): ${error.message}` })
       return { success: false, orderId, status: "ERROR", message: "Lỗi xác thực VNG" }
     }
 
@@ -365,7 +363,7 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
     } catch (error: any) {
       await logStep(orderId, "CHECK_PRODUCT", "ERROR", error.message)
       await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi kiểm tra gói: " + error.message })
-      await sendTopupTelegramAlert(order, "ERROR", `Lỗi kiểm tra gói (thẻ đã mua): ${error.message}`)
+      await sendTopupNotification({ order, type: "ERROR", detail: `Lỗi kiểm tra gói (thẻ đã mua): ${error.message}` })
       return { success: false, orderId, status: "ERROR", message: "Gói nạp không khả dụng" }
     }
 
@@ -390,9 +388,8 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
       if (vngResult.returnCode === 1) {
         // THANH CONG!
         await updateOrderStatus(orderId, "COMPLETED", { completedAt: new Date() })
-        await logStep(orderId, "CREATE_ORDER", "OK", `Nạp thành công: ${vngResult.message}`)
-        await sendTopupTelegramAlert(order, "SUCCESS", `Nạp thành công cho ${order.roleName}`)
-
+        await logStep(orderId, "COMPLETED", "OK", "Nap thanh cong vao VNG")
+        await sendTopupNotification({ order, type: "SUCCESS", detail: "Nạp thành công vào VNG" })
         return { success: true, orderId, status: "COMPLETED", message: "Nạp thành công!" }
       } else {
         throw new Error(`VNG returnCode: ${vngResult.returnCode} - ${vngResult.message}`)
@@ -457,56 +454,7 @@ async function waitForCard(
   return null // Het retry, khong co the
 }
 
-// ===================== TELEGRAM =====================
-
-/**
- * Gui thong bao Telegram khi nap tu dong thanh cong/loi
- */
-async function sendTopupTelegramAlert(
-  order: any,
-  type: "SUCCESS" | "ERROR",
-  detail: string
-) {
-  try {
-    // Lay cau hinh Telegram
-    const configs = await prisma.config.findMany({
-      where: { key: { in: ["TELEGRAM_TOKEN", "TELEGRAM_ID", "TELEGRAM_ENABLED"] } }
-    })
-    const configMap = new Map(configs.map(c => [c.key, c.value]))
-
-    if (configMap.get("TELEGRAM_ENABLED") !== "true") return
-
-    const token = configMap.get("TELEGRAM_TOKEN")
-    const chatId = configMap.get("TELEGRAM_ID")
-    if (!token || !chatId) return
-
-    const icon = type === "SUCCESS" ? "V" : "X"
-    const statusText = type === "SUCCESS" ? "NAP THANH CONG" : "LOI NAP TU DONG"
-
-    const message = `
-${icon} <b>${statusText}</b>
-
-<b>DON HANG:</b> <code>#${order.id.slice(-8).toUpperCase()}</code>
-<b>NHAN VAT:</b> ${order.roleName} (ID: ${order.roleId})
-<b>GOI:</b> ${order.product?.name || "N/A"}
-<b>SO TIEN:</b> ${order.amount?.toLocaleString()} VND
-<b>CHI TIET:</b> ${detail}
-<b>THOI GIAN:</b> ${new Date().toLocaleString("vi-VN")}
-    `.trim()
-
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      })
-    })
-  } catch (error) {
-    console.error("[TOPUP_TELEGRAM] Error:", error)
-  }
-}
+// ===================== RETRY LOGIC =====================
 
 /**
  * Thử nạp lại cho một đơn hàng đang bị lỗi.
@@ -574,7 +522,7 @@ async function processManualQRTopup(orderId: string): Promise<ProcessResult> {
     await logStep(orderId, "WAITING_PAY", "OK", "Đã tạo mã QR. Đang đợi Admin thanh toán...")
 
     // Gui Telegram cho Admin
-    await sendTopupQRTelegram(orderId)
+    await sendTopupQRNotification(orderId)
 
     return { 
       success: true, 
@@ -591,60 +539,6 @@ async function processManualQRTopup(orderId: string): Promise<ProcessResult> {
   }
 }
 
-/**
- * Gửi mã QR nạp tiền vào Telegram Admin
- */
-async function sendTopupQRTelegram(orderId: string) {
-  try {
-    const order = await prisma.topupOrder.findUnique({
-      where: { id: orderId },
-      include: { user: true }
-    })
-    if (!order) return
-
-    const configs = await prisma.config.findMany({
-      where: { key: { in: ["TELEGRAM_TOKEN", "TELEGRAM_ID", "TELEGRAM_ENABLED"] } }
-    })
-    const configMap = new Map(configs.map(c => [c.key, c.value]))
-    if (configMap.get("TELEGRAM_ENABLED") !== "true") return
-
-    const token = configMap.get("TELEGRAM_TOKEN")
-    const chatId = configMap.get("TELEGRAM_ID")
-    if (!token || !chatId) return
-
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(order.vngQrCode || "")}&size=400x400`
-    
-    const caption = `
-🔔 <b>ĐƠN NẠP MANUAL (VIETQR)</b>
-
-<b>KHÁCH HÀNG:</b> ${order.user.name || "N/A"}
-<b>NHÂN VẬT:</b> ${order.roleName} (ID: ${order.roleId})
-<b>GÓI NẠP:</b> ${order.productName || "N/A"}
-<b>SỐ TIỀN:</b> <code>${order.amount.toLocaleString()} VND</code>
-<b>MÃ ĐƠN VNG:</b> <code>${order.vngOrderNumber || "N/A"}</code>
-
-⚠️ <i>Mã QR này sẽ hết hạn vào lúc: ${order.vngQrExpiredAt?.toLocaleTimeString("vi-VN")}</i>
-Dùng App Ngân hàng quét mã dưới đây để thanh toán. Sau khi thanh toán xong hãy nhấn nút xác nhận.
-    `.trim()
-
-    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        photo: qrImageUrl,
-        caption: caption,
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: "✅ ĐÃ THANH TOÁN", callback_data: `topqr_done_${order.id}` },
-              { text: "🔄 TẠO LẠI QR", callback_data: `topqr_retry_${order.id}` }
-            ]
-          ]
-        }
-      })
-    })
   } catch (error) {
     console.error("[TELEGRAM_QR] Error:", error)
   }
