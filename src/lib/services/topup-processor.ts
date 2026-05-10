@@ -150,7 +150,33 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       return { success: false, orderId, status: order.status, message: "Don hang da duoc xu ly" }
     }
 
-    // ============ STEP 1: Kiem tra so du dai ly ============
+    // ============ STEP 1: Kiem tra VNG (Pre-check) truoc khi mua the ============
+    await logStep(orderId, "PRE_CHECK", "OK", "Kiem tra nhan vat va goi tren VNG...")
+    try {
+      const vngSession = await quickAuth(order.roleId)
+      const products = await getProducts(vngSession)
+      
+      const targetProductEntry = Object.entries(products).find(([id, p]) => 
+        p.productName.toLowerCase().trim() === order.product.name.toLowerCase().trim() && p.enable === 1
+      )
+
+      if (!targetProductEntry) {
+        throw new Error(`Goi "${order.product.name}" khong kha dung tren VNG cho nhan vat nay.`)
+      }
+      
+      await prisma.topupOrder.update({
+        where: { id: orderId },
+        data: { vngUserId: vngSession.userID, vngProductId: targetProductEntry[0] }
+      })
+      await logStep(orderId, "PRE_CHECK", "OK", `Nhan vat va goi hop le (VNG ID: ${targetProductEntry[0]})`)
+    } catch (error: any) {
+      await logStep(orderId, "PRE_CHECK", "ERROR", error.message)
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Pre-check VNG that bai: " + error.message })
+      await refundUser(orderId)
+      return { success: false, orderId, status: "REFUNDED", message: "Goi nap khong kha dung hoac sai ID." }
+    }
+
+    // ============ STEP 2: Kiem tra so du dai ly ============
     await logStep(orderId, "CHECK_BALANCE", "OK", "Kiem tra so du dai ly NCC...")
     
     let agentBalance: number
@@ -173,7 +199,7 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       return { success: false, orderId, status: "REFUNDED", message: "So du vi dai ly khong du" }
     }
 
-    // ============ STEP 2: Mua the tu NCC ============
+    // ============ STEP 3: Mua the tu NCC ============
     await updateOrderStatus(orderId, "BUYING_CARD")
     await logStep(orderId, "BUY_CARD", "OK", `Mua the ${order.product.serviceCode} menh gia ${order.cardValue.toLocaleString()} VND...`)
 
