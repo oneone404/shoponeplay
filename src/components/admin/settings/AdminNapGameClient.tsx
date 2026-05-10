@@ -43,6 +43,7 @@ interface AdminNapGameClientProps {
 export default function AdminNapGameClient({ initialHotConfig, initialMarkup, initialRounding, initialTopupProducts = [], initialCardConfig }: AdminNapGameClientProps) {
   const { addMessage } = useUI()
   const [loading, setLoading] = useState(false)
+  const [checkingBalance, setCheckingBalance] = useState(false)
   const [items, setItems] = useState<HotItem[]>(initialHotConfig.sort((a, b) => a.order - b.order))
   const [markup, setMarkup] = useState<number>(initialMarkup)
   const [rounding, setRounding] = useState<boolean>(initialRounding)
@@ -122,7 +123,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Price Markup Section */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-2 pb-2 border-b border-border/50">
+              <div className="flex items-center space-x-2 pb-2 border-border/50 border-b">
                 <Zap className="w-4 h-4 text-primary" />
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Cấu Hình Giá Bán</h4>
               </div>
@@ -177,7 +178,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
 
             {/* Hot Items Section */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-2 pb-2 border-b border-border/50">
+              <div className="flex items-center space-x-2 pb-2 border-border/50 border-b">
                 <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Danh Sách Gói HOT (Hiển thị đầu trang)</h4>
               </div>
@@ -300,18 +301,21 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Card Gateway (Kết nối NCC Thẻ)</h3>
           </div>
           <button
+            disabled={checkingBalance}
             onClick={async () => {
+              setCheckingBalance(true)
               const result = await checkAgentBalance()
+              setCheckingBalance(false)
               if (result.success) {
                 addMessage({ type: "success", text: `Số dư đại lý: ${result.balance.toLocaleString()} VND` })
               } else {
                 addMessage({ type: "error", text: result.error || "Lỗi khi kiểm tra" })
               }
             }}
-            className="px-3 py-1.5 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500/20 transition-all flex items-center space-x-2"
+            className="px-3 py-1.5 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500/20 transition-all flex items-center space-x-2 disabled:opacity-50"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Kiểm tra số dư NCC</span>
+            {checkingBalance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            <span>{checkingBalance ? "Đang kiểm tra..." : "Kiểm tra số dư NCC"}</span>
           </button>
         </div>
 
@@ -321,8 +325,6 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
           else addMessage({ type: "error", text: result.error || "Lỗi" })
         }} />
       </div>
-
-
     </div>
   )
 }

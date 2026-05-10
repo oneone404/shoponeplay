@@ -106,6 +106,8 @@ export async function getAgentBalance(): Promise<BalanceResult> {
     sign,
   })
 
+  console.log("[CARD_GATEWAY] getbalance request:", { baseUrl: config.baseUrl, partnerId: config.partnerId, wallet: config.walletNumber, requestId })
+
   const response = await fetch(`${config.baseUrl}/api/cardws`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -113,7 +115,7 @@ export async function getAgentBalance(): Promise<BalanceResult> {
   })
 
   const data = await response.json()
-  console.log("[CARD_GATEWAY] getbalance:", data)
+  console.log("[CARD_GATEWAY] getbalance response:", data)
 
   return { balance: data.balance || 0 }
 }
