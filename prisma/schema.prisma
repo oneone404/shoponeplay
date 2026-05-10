@@ -586,6 +586,7 @@ model HackOrder {
 
 enum TopupOrderStatus {
   PENDING          // Vua tao, chua xu ly
+  WAITING_STOCK    // NCC het hang, dang doi thu lai
   BUYING_CARD      // Dang mua the tu NCC
   WAITING_CARD     // NCC dang xu ly (status=2), dang retry
   CARD_READY       // Da co the, chuan bi nap VNG

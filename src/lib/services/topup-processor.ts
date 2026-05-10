@@ -1,6 +1,6 @@
 import crypto from "crypto"
 import { prisma } from "@/lib/prisma"
-import { buyCard, redownloadCard, getAgentBalance } from "./card-gateway"
+import { buyCard, redownloadCard, getAgentBalance, checkStockAvailable } from "./card-gateway"
 import { quickAuth, getProducts, createOrder } from "./vng-billing"
 import type { TopupOrderStatus } from "@prisma/client"
 
@@ -197,6 +197,44 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       await refundUser(orderId)
       await sendTopupTelegramAlert(order, "ERROR", `Số dư ví đại lý không đủ: ${agentBalance.toLocaleString()} VND`)
       return { success: false, orderId, status: "REFUNDED", message: "Số dư ví đại lý không đủ" }
+    }
+
+    // ============ STEP 2.5: Kiem tra ton kho (Check Stock) ============
+    await logStep(orderId, "CHECK_STOCK", "OK", "Kiem tra ton kho NCC...")
+    let stockAvailable = false
+    let stockRetryCount = 0
+    const maxStockRetries = 5
+    const stockRetryInterval = 5 * 60 * 1000 // 5 minutes
+
+    while (stockRetryCount < maxStockRetries) {
+      try {
+        const stockResult = await checkStockAvailable(order.product.serviceCode, order.cardValue)
+        if (stockResult.available) {
+          stockAvailable = true
+          await logStep(orderId, "CHECK_STOCK", "OK", "Con hang, bat dau mua the.")
+          break
+        } else {
+          stockRetryCount++
+          await updateOrderStatus(orderId, "WAITING_STOCK")
+          await logStep(orderId, "CHECK_STOCK", "WAITING", `Het hang. Se thu lai sau 5 phut (Lan ${stockRetryCount}/${maxStockRetries})`)
+          if (stockRetryCount < maxStockRetries) {
+            await new Promise(resolve => setTimeout(resolve, stockRetryInterval))
+          }
+        }
+      } catch (err: any) {
+        // Neu loi API check stock thi cu mac dinh la cho phep mua thu de tranh block don hang
+        await logStep(orderId, "CHECK_STOCK", "ERROR", `Loi check stock: ${err.message}. Se thu mua luon.`)
+        stockAvailable = true
+        break
+      }
+    }
+
+    if (!stockAvailable) {
+      await logStep(orderId, "CHECK_STOCK", "ERROR", "NCC het hang sau 5 lan thu lai.")
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "NCC hết hàng sau 5 lần thử lại." })
+      await refundUser(orderId)
+      await sendTopupTelegramAlert(order, "ERROR", `NCC hết hàng sau 5 lần thử lại (${order.product.serviceCode} - ${order.cardValue.toLocaleString()})`)
+      return { success: false, orderId, status: "REFUNDED", message: "NCC hết hàng" }
     }
 
     // ============ STEP 3: Mua the tu NCC ============
