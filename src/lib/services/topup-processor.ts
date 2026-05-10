@@ -1,9 +1,4 @@
-/**
- * Topup Processor (Orchestrator)
- * Dieu phoi toan bo luong nap tu dong: mua the -> xac thuc VNG -> nap the vao game.
- * Su dung Huong B: Goi lai auth/quick o phia server de lay jtoken moi moi lan nap.
- */
-
+import crypto from "crypto"
 import { prisma } from "@/lib/prisma"
 import { buyCard, redownloadCard, getAgentBalance } from "./card-gateway"
 import { quickAuth, getProducts, createOrder } from "./vng-billing"
@@ -19,6 +14,43 @@ interface ProcessResult {
 }
 
 // ===================== HELPERS =====================
+
+/**
+ * Ma hoa PIN (AES-256-CBC)
+ */
+export function encryptPin(pin: string): string {
+  try {
+    const secretKey = crypto.createHash('sha256').update(String(process.env.NEXTAUTH_SECRET || 'default_secret')).digest('base64').substring(0, 32)
+    const iv = crypto.randomBytes(16)
+    const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(secretKey), iv)
+    let encrypted = cipher.update(pin, 'utf8', 'hex')
+    encrypted += cipher.final('hex')
+    return iv.toString('hex') + ':' + encrypted
+  } catch (e) {
+    console.error("[ENCRYPTION_ERROR]", e)
+    return "***"
+  }
+}
+
+/**
+ * Giai ma PIN (AES-256-CBC)
+ */
+export function decryptPin(encryptedPin: string): string {
+  try {
+    if (!encryptedPin || encryptedPin === "***" || !encryptedPin.includes(':')) return encryptedPin
+    
+    const [ivHex, encrypted] = encryptedPin.split(':')
+    const secretKey = crypto.createHash('sha256').update(String(process.env.NEXTAUTH_SECRET || 'default_secret')).digest('base64').substring(0, 32)
+    const iv = Buffer.from(ivHex, 'hex')
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(secretKey), iv)
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8')
+    decrypted += decipher.final('utf8')
+    return decrypted
+  } catch (e) {
+    console.error("[DECRYPTION_ERROR]", e)
+    return encryptedPin
+  }
+}
 
 /**
  * Ghi log tung buoc vao statusLog cua TopupOrder
@@ -186,32 +218,42 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
     }
 
     if (!cardSerial || !cardPin) {
-      await logStep(orderId, "BUY_CARD", "ERROR", "Khong nhan duoc the sau 5 lan retry")
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Khong nhan duoc the tu NCC sau 5 lan thu" })
-      await refundUser(orderId)
-      await sendTopupTelegramAlert(order, "ERROR", "Khong nhan duoc the tu NCC sau 5 lan retry")
-      return { success: false, orderId, status: "REFUNDED", message: "Het thoi gian cho the tu NCC" }
+      await logStep(orderId, "BUY_CARD", "ERROR", "Khong nhan duoc the sau 5 lan retry (se doi callback)")
+      await updateOrderStatus(orderId, "WAITING_CARD", { errorMessage: "Dang doi NCC tra the qua callback..." })
+      // Khong refund ngay vi status 2 (dang xu ly) thi khong refund duoc, phai doi callback status 3 moi refund
+      return { success: true, orderId, status: "WAITING_CARD", message: "Dang doi the tu NCC" }
     }
 
+    // Neu da co the tu buycard hoac redownload, tiep tuc nap VNG
+    return finishTopupProcess(orderId, cardSerial, cardPin)
+
+  } catch (error: any) {
+    console.error("[TOPUP_PROCESSOR] Unexpected error:", error)
+    await logStep(orderId, "SYSTEM", "ERROR", error.message)
+    await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi he thong: " + error.message })
+    return { success: false, orderId, status: "ERROR", message: "Loi he thong khong xac dinh" }
+  }
+}
+
+/**
+ * Buoc cuoi: Nap the vao game VNG
+ * Duoc goi boi ca processTopupOrder (Job) va /api/topup/callback (Webhook)
+ */
+export async function finishTopupProcess(orderId: string, cardSerial: string, cardPin: string): Promise<ProcessResult> {
+  try {
+    const order = await prisma.topupOrder.findUnique({
+      where: { id: orderId },
+      include: { product: true, user: true }
+    })
+
+    if (!order) return { success: false, orderId, status: "ERROR", message: "Don hang khong ton tai" }
+
     // Luu thong tin the (ma hoa PIN truoc khi luu vao DB)
-    let encryptedPin = cardPin
-    try {
-      const crypto = require('crypto')
-      const secretKey = crypto.createHash('sha256').update(String(process.env.NEXTAUTH_SECRET || 'default_secret')).digest('base64').substring(0, 32)
-      const iv = crypto.randomBytes(16)
-      const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(secretKey), iv)
-      let encrypted = cipher.update(cardPin, 'utf8', 'hex')
-      encrypted += cipher.final('hex')
-      encryptedPin = iv.toString('hex') + ':' + encrypted
-    } catch (e) {
-      console.error("[ENCRYPTION_ERROR]", e)
-      // Neu loi ma hoa, fall back de khong luu PIN plain text vao DB nham bao mat
-      encryptedPin = "***" 
-    }
+    const encryptedPin = encryptPin(cardPin)
 
     await updateOrderStatus(orderId, "CARD_READY", {
       cardSerial,
-      cardPin: encryptedPin, 
+      cardPin: encryptedPin,
     })
     await logStep(orderId, "CARD_READY", "OK", "Da co the, chuan bi nap VNG...")
 
@@ -229,8 +271,7 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
     } catch (error: any) {
       await logStep(orderId, "VNG_AUTH", "ERROR", error.message)
       await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi xac thuc VNG: " + error.message })
-      // Khong hoan tien ngay vi the da mua, can admin kiem tra
-      await sendTopupTelegramAlert(order, "ERROR", `Loi xac thuc VNG (the da mua, can xu ly thu cong): ${error.message}`)
+      await sendTopupTelegramAlert(order, "ERROR", `Loi xac thuc VNG (the da mua): ${error.message}`)
       return { success: false, orderId, status: "ERROR", message: "Loi xac thuc VNG" }
     }
 
@@ -256,7 +297,7 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       const vngResult = await createOrder({
         session: vngSession,
         cardSerial,
-        cardPin,
+        cardPin, // Dung PIN goc de nap
         productId: order.product.vngProductId,
         amount: order.cardValue,
       })
@@ -286,10 +327,8 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       return { success: false, orderId, status: "ERROR", message: "Loi nap the vao game" }
     }
   } catch (error: any) {
-    console.error("[TOPUP_PROCESSOR] Unexpected error:", error)
-    await logStep(orderId, "SYSTEM", "ERROR", error.message)
-    await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi he thong: " + error.message })
-    return { success: false, orderId, status: "ERROR", message: "Loi he thong khong xac dinh" }
+    console.error("[TOPUP_PROCESSOR] finishTopupProcess error:", error)
+    return { success: false, orderId, status: "ERROR", message: error.message }
   }
 }
 
