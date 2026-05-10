@@ -20,26 +20,43 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { topupProductId, roleId, roleName, serverId, expectedPrice } = body
+    const { topupProductId, roleId, roleName, serverId, expectedPrice, manualProduct } = body
 
     // ======== VALIDATION ========
-    if (!topupProductId || !roleId || !roleName || !serverId) {
+    if ((!topupProductId && !manualProduct) || !roleId || !roleName || !serverId) {
       return NextResponse.json({ success: false, error: "Thiếu thông tin bắt buộc" }, { status: 400 })
     }
 
-    // Kiem tra san pham tu dong nap co ton tai va dang bat
-    const topupProduct = await prisma.topupProduct.findUnique({
-      where: { id: topupProductId }
-    })
+    let topupProduct: any = null
+    let chargePrice = 0
+    let productName = ""
+    let vngProductId = ""
+    let cardValue = 0
 
-    if (!topupProduct || !topupProduct.enabled) {
-      return NextResponse.json({ success: false, error: "Sản phẩm nạp tự động không tồn tại hoặc đã tắt" }, { status: 404 })
+    if (topupProductId) {
+      // Kiem tra san pham tu dong nap co ton tai va dang bat
+      topupProduct = await prisma.topupProduct.findUnique({
+        where: { id: topupProductId }
+      })
+
+      if (!topupProduct || !topupProduct.enabled) {
+        return NextResponse.json({ success: false, error: "Sản phẩm nạp tự động không tồn tại hoặc đã tắt" }, { status: 404 })
+      }
+      
+      chargePrice = (expectedPrice && expectedPrice >= topupProduct.cardValue) 
+        ? Number(expectedPrice) 
+        : topupProduct.sellPrice
+      
+      productName = topupProduct.name
+      vngProductId = topupProduct.vngProductId
+      cardValue = topupProduct.cardValue
+    } else if (manualProduct) {
+      // Truong hop nap Manual (khong co trong database)
+      chargePrice = Number(manualProduct.price)
+      productName = manualProduct.name
+      vngProductId = manualProduct.vngProductId
+      cardValue = Number(manualProduct.price) // Dung gia ban lam menh gia de check stock neu can (du manual khong check stock)
     }
-
-    // Tinh toan gia se tru: Uu tien gia tu client (da lam tron/markup) nhung phai >= gia goc the de tranh lo
-    const chargePrice = (expectedPrice && expectedPrice >= topupProduct.cardValue) 
-      ? Number(expectedPrice) 
-      : topupProduct.sellPrice
 
     // ======== RATE LIMITING ========
     // Kiem tra xem user co don hang nap tu dong nao moi tao trong vong 15 giay qua khong
@@ -92,7 +109,7 @@ export async function POST(req: Request) {
           balanceBefore: user.balance,
           balanceAfter: updatedUser.balance,
           type: "PURCHASE",
-          description: `Nạp tự động: ${topupProduct.name} cho ${roleName} (${roleId})`
+          description: `Nạp tự động: ${productName} cho ${roleName} (${roleId})`
         }
       })
 
@@ -100,15 +117,16 @@ export async function POST(req: Request) {
       const newOrder = await tx.topupOrder.create({
         data: {
           userId: user.id,
-          productId: topupProduct.id,
+          productId: topupProductId || null, 
+          productName: productName,
           roleId,
           roleName,
           serverId,
           amount: chargePrice,
-          cardValue: topupProduct.cardValue,
-          vngProductId: topupProduct.vngProductId,
+          cardValue: cardValue,
+          vngProductId: vngProductId,
           status: "PENDING",
-          statusLog: [{ step: "CREATED", status: "OK", time: new Date().toISOString(), detail: `Don hang tao boi ${user.name || "User"}` }]
+          statusLog: [{ step: "CREATED", status: "OK", time: new Date().toISOString(), detail: `Don hang tao boi ${user.name || "User"} (${topupProductId ? "Tu dong" : "Manual QR"})` }]
         }
       })
 

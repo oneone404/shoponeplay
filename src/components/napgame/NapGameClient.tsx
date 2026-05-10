@@ -301,8 +301,31 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
             } else {
               addMessage({ type: "error", text: data.error || "Lỗi tạo đơn nạp" })
             }
-          } else {
-            addMessage({ type: "warning", text: "Sản phẩm này chưa hỗ trợ nạp tự động" })
+          } else if (character) {
+            // Nap Manual QR
+            addMessage({ type: "info", text: "Sản phẩm nạp qua QR. Đang gửi yêu cầu cho Admin..." })
+            const res = await fetch("/api/topup/create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                manualProduct: {
+                  name: confirmingProduct.productName,
+                  vngProductId: confirmingProduct.sellingProductID,
+                  price: confirmingProduct.prices.VND.price
+                },
+                roleId: character.id,
+                roleName: character.name,
+                serverId: character.server,
+              })
+            })
+            const data = await res.json()
+            if (data.success) {
+              setTopupOrderId(data.orderId)
+              setTopupStatus("WAITING_ADMIN_PAY")
+              addMessage({ type: "success", text: "Yêu cầu đã gửi! Vui lòng đợi Admin quét mã nạp." })
+            } else {
+              addMessage({ type: "error", text: data.error || "Lỗi tạo đơn nạp QR" })
+            }
           }
         }
         setConfirmingProduct(null)

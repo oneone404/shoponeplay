@@ -215,3 +215,84 @@ export async function createOrder(params: {
     message: data.data?.message || data.returnMessage || "",
   }
 }
+
+/**
+ * Tao don hang VietQR manual tren VNG (Shop VNG logic)
+ */
+export async function createVietQROrder(params: {
+  session: VNGSession
+  productId: string
+  amount: number
+}): Promise<{ 
+  returnCode: number; 
+  qrCode?: string; 
+  orderNumber?: string;
+  message: string 
+}> {
+  const { session, productId, amount } = params
+
+  const description = Buffer.from(
+    `${session.roleName} nạp ${amount.toLocaleString()} VND vào game Play Together VNG qua VietQR`
+  ).toString("base64")
+
+  const products = JSON.stringify([{ productID: productId, quantity: 1 }])
+
+  const body = new URLSearchParams({
+    pmcID: "72",
+    paymentGatewayID: "1",
+    paymentGroupID: "vietqr",
+    paymentPartnerID: "1",
+    providerID: "72",
+    amount: amount.toString(),
+    payingAmount: amount.toString(),
+    currency: "VND",
+    country: "VN",
+    lang: "VI",
+    description,
+    paymentMethodID: "72",
+    paymentProviderID: "72",
+    jtoken: session.jtoken,
+    serverID: session.serverID,
+    userID: session.userID,
+    roleID: session.roleID,
+    roleName: session.roleName,
+    serverName: session.serverName || "",
+    products,
+  })
+
+  console.log("[VNG_BILLING] createVietQROrder:", {
+    roleId: session.roleID,
+    productId,
+    amount
+  })
+
+  const response = await fetch("https://billing.vnggames.com/fe/api/multiitemorder/createOrder", {
+    method: "POST",
+    headers: VNG_COMMON_HEADERS,
+    body: body.toString(),
+  })
+
+  const text = await response.text()
+  let data: any
+
+  try {
+    data = JSON.parse(text)
+  } catch {
+    console.error("[VNG_BILLING] createVietQR invalid JSON:", text.slice(0, 300))
+    throw new Error("Lỗi tạo mã QR VNG: Response không hợp lệ")
+  }
+
+  if (data.returnCode === 1 && data.data?.payData?.qrCode) {
+    return {
+      returnCode: 1,
+      qrCode: data.data.payData.qrCode,
+      orderNumber: data.data.orderNumberStr || String(data.data.orderNumber),
+      message: "Thành công"
+    }
+  }
+
+  return {
+    returnCode: data.returnCode,
+    message: data.returnMessage || data.data?.message || "Không thể tạo mã QR",
+  }
+}

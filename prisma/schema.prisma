@@ -587,6 +587,7 @@ model HackOrder {
 enum TopupOrderStatus {
   PENDING          // Vua tao, chua xu ly
   WAITING_STOCK    // NCC het hang, dang doi thu lai
+  WAITING_ADMIN_PAY // Cho Admin quet ma QR thanh toan manual
   BUYING_CARD      // Dang mua the tu NCC
   WAITING_CARD     // NCC dang xu ly (status=2), dang retry
   CARD_READY       // Da co the, chuan bi nap VNG
@@ -613,7 +614,8 @@ model TopupProduct {
 model TopupOrder {
   id              String           @id @default(cuid())
   userId          String
-  productId       String
+  productId       String?
+  productName     String?                               // Ten goi nap (Snapshot)
 
   // Thong tin nhan vat
   roleId          String                                // Player ID
@@ -634,6 +636,9 @@ model TopupOrder {
   vngProductId    String?                               // Product ID VNG
   vngUserId       String?                               // VNG userID
   vngReturnCode   Int?                                  // Return code tu VNG createOrder
+  vngQrCode       String?                               // Ma VietQR tu VNG
+  vngOrderNumber  String?                               // So don hang tu VNG (Manual)
+  vngQrExpiredAt  DateTime?                             // Thoi gian het han QR (15p)
 
   // Trang thai & Log
   status          TopupOrderStatus @default(PENDING)
@@ -647,7 +652,7 @@ model TopupOrder {
   completedAt     DateTime?
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product         TopupProduct     @relation(fields: [productId], references: [id])
+  product         TopupProduct?    @relation(fields: [productId], references: [id])
 
   @@index([userId])
   @@index([status])

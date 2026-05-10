@@ -150,6 +150,13 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       return { success: false, orderId, status: order.status, message: "Don hang da duoc xu ly" }
     }
 
+    // ============ NHAN DIEN LOAI DON HANG ============
+    const isManual = !order.productId
+
+    if (isManual) {
+      return processManualQRTopup(orderId)
+    }
+
     // ============ STEP 1: Kiem tra VNG (Pre-check) truoc khi mua the ============
     await logStep(orderId, "PRE_CHECK", "OK", "Kiem tra nhan vat va goi tren VNG...")
     try {
@@ -525,4 +532,172 @@ export async function retryTopupOrder(orderId: string): Promise<ProcessResult> {
   
   // Nếu chưa có thẻ -> Chạy lại từ đầu (processTopupOrder)
   return processTopupOrder(orderId)
+}
+
+/**
+ * Xử lý nạp qua mã QR (Manual)
+ */
+async function processManualQRTopup(orderId: string): Promise<ProcessResult> {
+  const order = await prisma.topupOrder.findUnique({
+    where: { id: orderId }
+  })
+  if (!order) throw new Error("Order not found")
+
+  await logStep(orderId, "AUTH_VNG", "OK", "Xác thực nhân vật VNG...")
+  try {
+    const vngSession = await quickAuth(order.roleId)
+    
+    await logStep(orderId, "CREATE_QR", "OK", "Đang tạo mã QR VNG...")
+    const qrResult = await createVietQROrder({
+      session: vngSession,
+      productId: order.vngProductId || "",
+      amount: order.cardValue, // Dung menh gia de tao QR
+    })
+
+    if (qrResult.returnCode !== 1 || !qrResult.qrCode) {
+      throw new Error(qrResult.message || "Không thể tạo mã QR từ VNG")
+    }
+
+    // Luu thong tin QR
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 phut
+    await prisma.topupOrder.update({
+      where: { id: orderId },
+      data: {
+        status: "WAITING_ADMIN_PAY",
+        vngQrCode: qrResult.qrCode,
+        vngOrderNumber: qrResult.orderNumber,
+        vngQrExpiredAt: expiresAt,
+        vngUserId: vngSession.userID
+      }
+    })
+
+    await logStep(orderId, "WAITING_PAY", "OK", "Đã tạo mã QR. Đang đợi Admin thanh toán...")
+
+    // Gui Telegram cho Admin
+    await sendTopupQRTelegram(orderId)
+
+    return { 
+      success: true, 
+      orderId, 
+      status: "WAITING_ADMIN_PAY", 
+      message: "Đơn hàng đang chờ Admin thanh toán qua QR." 
+    }
+
+  } catch (error: any) {
+    await logStep(orderId, "MANUAL_ERROR", "ERROR", error.message)
+    await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi nạp Manual: " + error.message })
+    await refundUser(orderId)
+    return { success: false, orderId, status: "REFUNDED", message: error.message }
+  }
+}
+
+/**
+ * Gửi mã QR nạp tiền vào Telegram Admin
+ */
+async function sendTopupQRTelegram(orderId: string) {
+  try {
+    const order = await prisma.topupOrder.findUnique({
+      where: { id: orderId },
+      include: { user: true }
+    })
+    if (!order) return
+
+    const configs = await prisma.config.findMany({
+      where: { key: { in: ["TELEGRAM_TOKEN", "TELEGRAM_ID", "TELEGRAM_ENABLED"] } }
+    })
+    const configMap = new Map(configs.map(c => [c.key, c.value]))
+    if (configMap.get("TELEGRAM_ENABLED") !== "true") return
+
+    const token = configMap.get("TELEGRAM_TOKEN")
+    const chatId = configMap.get("TELEGRAM_ID")
+    if (!token || !chatId) return
+
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(order.vngQrCode || "")}&size=400x400`
+    
+    const caption = `
+🔔 <b>ĐƠN NẠP MANUAL (VIETQR)</b>
+
+<b>KHÁCH HÀNG:</b> ${order.user.name || "N/A"}
+<b>NHÂN VẬT:</b> ${order.roleName} (ID: ${order.roleId})
+<b>GÓI NẠP:</b> ${order.productName || "N/A"}
+<b>SỐ TIỀN:</b> <code>${order.amount.toLocaleString()} VND</code>
+<b>MÃ ĐƠN VNG:</b> <code>${order.vngOrderNumber || "N/A"}</code>
+
+⚠️ <i>Mã QR này sẽ hết hạn vào lúc: ${order.vngQrExpiredAt?.toLocaleTimeString("vi-VN")}</i>
+Dùng App Ngân hàng quét mã dưới đây để thanh toán. Sau khi thanh toán xong hãy nhấn nút xác nhận.
+    `.trim()
+
+    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        photo: qrImageUrl,
+        caption: caption,
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "✅ ĐÃ THANH TOÁN", callback_data: `topqr_done_${order.id}` },
+              { text: "🔄 TẠO LẠI QR", callback_data: `topqr_retry_${order.id}` }
+            ]
+          ]
+        }
+      })
+    })
+  } catch (error) {
+    console.error("[TELEGRAM_QR] Error:", error)
+  }
+}
+
+/**
+ * Xử lý hành động từ Telegram Admin (Xác nhận/Thử lại)
+ */
+export async function processTopupQRAction(params: {
+  orderId: string
+  action: "done" | "retry"
+  adminId: string
+  adminName: string
+}) {
+  const { orderId, action, adminId, adminName } = params
+
+  const order = await prisma.topupOrder.findUnique({
+    where: { id: orderId }
+  })
+
+  if (!order) throw new Error("Đơn hàng không tồn tại")
+
+  if (action === "done") {
+    if (order.status === "COMPLETED") return { success: true, message: "Đơn hàng đã hoàn thành trước đó" }
+
+    await prisma.topupOrder.update({
+      where: { id: orderId },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+        statusLog: {
+          push: {
+            step: "MANUAL_PAY",
+            status: "OK",
+            time: new Date().toISOString(),
+            detail: `Admin ${adminName} xác nhận đã nạp tiền qua QR.`
+          }
+        }
+      }
+    })
+
+    return { success: true, message: `✅ Đã xác nhận nạp tiền cho đơn #${orderId.slice(-8).toUpperCase()}` }
+  }
+
+  if (action === "retry") {
+    // Regenerate QR
+    await logStep(orderId, "RETRY_QR", "OK", `Admin ${adminName} yêu cầu tạo lại mã QR.`)
+    
+    // Luu y: processManualQRTopup se tu dong gui tin nhan Tele moi
+    await processManualQRTopup(orderId)
+
+    return { success: true, message: `🔄 Đang tạo lại mã QR mới cho đơn #${orderId.slice(-8).toUpperCase()}...` }
+  }
+
+  throw new Error("Hành động không hợp lệ")
 }

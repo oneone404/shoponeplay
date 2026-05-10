@@ -35,29 +35,45 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true })
     }
 
-    // 3. Parse Action and Withdrawal ID
-    // Format: wd_done_ID or wd_cancel_ID
     const parts = data.split("_")
     if (parts.length < 3) return NextResponse.json({ ok: true })
 
-    const action = parts[1] // done or cancel
-    const withdrawalId = parts.slice(2).join("_")
+    const prefix = parts[0] // wd or topqr
+    const action = parts[1] // done, cancel, retry...
+    const entityId = parts.slice(2).join("_")
 
-    // 4. Process the action
     let resultMessage = ""
     let success = false
 
-    try {
-      const result = await processWithdrawalAction({
-        withdrawalId,
-        action: action as "done" | "cancel",
-        adminId: String(from.id),
-        adminName: from.first_name || from.username || "Admin Tele"
-      })
-      resultMessage = result.message
-      success = true
-    } catch (err: any) {
-      resultMessage = `⚠️ LỖI: ${err.message}`
+    if (prefix === "wd") {
+      // Logic rut tien
+      try {
+        const result = await processWithdrawalAction({
+          withdrawalId: entityId,
+          action: action as "done" | "cancel",
+          adminId: String(from.id),
+          adminName: from.first_name || from.username || "Admin Tele"
+        })
+        resultMessage = result.message
+        success = true
+      } catch (err: any) {
+        resultMessage = `⚠️ LỖI: ${err.message}`
+      }
+    } else if (prefix === "topqr") {
+      // Logic nap Manual QR
+      try {
+        const { processTopupQRAction } = await import("@/lib/services/topup-processor")
+        const result = await processTopupQRAction({
+          orderId: entityId,
+          action: action as "done" | "retry",
+          adminId: String(from.id),
+          adminName: from.first_name || from.username || "Admin Tele"
+        })
+        resultMessage = result.message
+        success = true
+      } catch (err: any) {
+        resultMessage = `⚠️ LỖI: ${err.message}`
+      }
     }
 
     // 5. Update the Telegram Message
