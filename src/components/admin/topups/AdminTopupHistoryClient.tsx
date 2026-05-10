@@ -72,22 +72,24 @@ export default function AdminTopupHistoryClient({
   const [isPending, startTransition] = useTransition()
   const [selectedOrder, setSelectedOrder] = useState<TopupOrder | null>(null)
   
-  // States for UI
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "ALL")
+  // URL as source of truth
+  const currentStatus = searchParams.get("status") || "ALL"
+  const currentSearch = searchParams.get("search") || ""
+
+  // Local state only for the input field to make it snappy
+  const [searchTerm, setSearchTerm] = useState(currentSearch)
   const [isStatusOpen, setIsStatusOpen] = useState(false)
 
-  // Sync state with URL when it changes (e.g. browser back/forward)
+  // Sync input field if URL changes (e.g. back button)
   useEffect(() => {
-    setSearchTerm(searchParams.get("search") || "")
-    setStatusFilter(searchParams.get("status") || "ALL")
-  }, [searchParams])
+    setSearchTerm(currentSearch)
+  }, [currentSearch])
 
   const updateFilters = (newSearch?: string, newStatus?: string) => {
     const params = new URLSearchParams(searchParams.toString())
     
     const search = newSearch !== undefined ? newSearch : searchTerm
-    const status = newStatus !== undefined ? newStatus : statusFilter
+    const status = newStatus !== undefined ? newStatus : currentStatus
 
     if (search) params.set("search", search)
     else params.delete("search")
@@ -104,7 +106,6 @@ export default function AdminTopupHistoryClient({
   }
 
   const handleStatusChange = (status: string) => {
-    setStatusFilter(status)
     setIsStatusOpen(false)
     updateFilters(undefined, status)
   }
@@ -173,7 +174,7 @@ export default function AdminTopupHistoryClient({
           >
             <Filter className="w-4 h-4 text-muted-foreground" />
             <span className="flex-1 text-left uppercase text-[10px] tracking-widest font-bold">
-              {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label || "Tất cả trạng thái"}
+              {STATUS_OPTIONS.find(o => o.value === currentStatus)?.label || "Tất cả trạng thái"}
             </span>
             <ChevronDown className={cn("w-4 h-4 transition-transform", isStatusOpen && "rotate-180")} />
           </button>
@@ -189,7 +190,7 @@ export default function AdminTopupHistoryClient({
                     onClick={() => handleStatusChange(opt.value)}
                     className={cn(
                       "w-full px-4 py-2 text-left text-[10px] font-bold transition-colors uppercase tracking-widest",
-                      statusFilter === opt.value ? "bg-primary text-white" : "text-foreground hover:bg-secondary"
+                      currentStatus === opt.value ? "bg-primary text-white" : "text-foreground hover:bg-secondary"
                     )}
                   >
                     {opt.label}
