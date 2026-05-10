@@ -114,12 +114,13 @@ export async function POST(req: Request) {
           const product = productData.data.products[id]
           if (product.prices?.VND?.price) {
             let price = product.prices.VND.price
+            product.prices.VND.basePrice = price // LƯU GIÁ GỐC
             
             // Apply markup
             if (markupPercent > 0) {
               price = price + (price * (markupPercent / 100))
             }
-
+ 
             // Apply rounding: < 50k round to nearest 5k, >= 50k round to nearest 10k
             if (isRoundingEnabled) {
               if (price < 50000) {
@@ -128,7 +129,7 @@ export async function POST(req: Request) {
                 price = Math.ceil(price / 10000) * 10000
               }
             }
-
+ 
             product.prices.VND.price = price
           }
         })

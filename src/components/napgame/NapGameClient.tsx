@@ -311,7 +311,7 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
                 manualProduct: {
                   name: confirmingProduct.productName,
                   vngProductId: confirmingProduct.sellingProductID,
-                  price: confirmingProduct.prices.VND.price
+                  price: (confirmingProduct.prices.VND as any).basePrice || confirmingProduct.prices.VND.price
                 },
                 roleId: character.id,
                 roleName: character.name,

@@ -36,11 +36,11 @@ export async function POST(req: Request) {
     // ======== GET CONFIG FOR MARKUP ========
     const configs = await prisma.config.findMany({
       where: {
-        key: { in: ["NAP_GAME_MARKUP", "NAP_GAME_ROUNDING"] }
+        key: { in: ["NAPGAME_MARKUP_PERCENT", "NAPGAME_ROUNDING_ENABLED"] }
       }
     })
-    const markup = Number(configs.find(c => c.key === "NAP_GAME_MARKUP")?.value || "0")
-    const rounding = configs.find(c => c.key === "NAP_GAME_ROUNDING")?.value === "true"
+    const markup = Number(configs.find(c => c.key === "NAPGAME_MARKUP_PERCENT")?.value || "0")
+    const rounding = configs.find(c => c.key === "NAPGAME_ROUNDING_ENABLED")?.value === "true"
 
     if (topupProductId) {
       // Kiem tra san pham tu dong nap co ton tai va dang bat
