@@ -36,6 +36,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "San pham nap tu dong khong ton tai hoac da tat" }, { status: 404 })
     }
 
+    // ======== RATE LIMITING ========
+    // Kiem tra xem user co don hang nap tu dong nao moi tao trong vong 15 giay qua khong
+    const recentOrder = await prisma.topupOrder.findFirst({
+      where: {
+        userId: session.user.id,
+        createdAt: {
+          gte: new Date(Date.now() - 15000) // 15 seconds ago
+        }
+      }
+    })
+
+    if (recentOrder) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Vui long doi 15 giay truoc khi tao don nap tiep theo de tranh spam." 
+      }, { status: 429 })
+    }
+
     // ======== CHECK USER BALANCE ========
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },

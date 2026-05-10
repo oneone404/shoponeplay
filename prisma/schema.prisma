@@ -170,7 +170,7 @@ model Transaction {
   balanceAfter   Float           @default(0)
   type           TransactionType
   description    String?         // Mô tả giao dịch
-  
+
   // Liên kết tới các bảng nghiệp vụ (Optional)
   orderId        String?         // Link tới đơn hàng
   bankDepositId  String?         // Link tới chi tiết nạp bank
@@ -542,7 +542,7 @@ model HackTool {
   totalDownload Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-  
+
   orders           HackOrder[]
   freeKeySessions  FreeKeySession[]
 }
@@ -559,7 +559,7 @@ model FreeKeySession {
   expiresAt     DateTime
 
   hack          HackTool @relation(fields: [hackId], references: [id], onDelete: Cascade)
-  
+
   @@index([token])
   @@index([visitorId])
 }

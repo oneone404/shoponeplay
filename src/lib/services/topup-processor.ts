@@ -193,10 +193,25 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       return { success: false, orderId, status: "REFUNDED", message: "Het thoi gian cho the tu NCC" }
     }
 
-    // Luu thong tin the (trong production nen ma hoa cardPin)
+    // Luu thong tin the (ma hoa PIN truoc khi luu vao DB)
+    let encryptedPin = cardPin
+    try {
+      const crypto = require('crypto')
+      const secretKey = crypto.createHash('sha256').update(String(process.env.NEXTAUTH_SECRET || 'default_secret')).digest('base64').substring(0, 32)
+      const iv = crypto.randomBytes(16)
+      const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(secretKey), iv)
+      let encrypted = cipher.update(cardPin, 'utf8', 'hex')
+      encrypted += cipher.final('hex')
+      encryptedPin = iv.toString('hex') + ':' + encrypted
+    } catch (e) {
+      console.error("[ENCRYPTION_ERROR]", e)
+      // Neu loi ma hoa, fall back de khong luu PIN plain text vao DB nham bao mat
+      encryptedPin = "***" 
+    }
+
     await updateOrderStatus(orderId, "CARD_READY", {
       cardSerial,
-      cardPin, // TODO: Ma hoa truoc khi luu
+      cardPin: encryptedPin, 
     })
     await logStep(orderId, "CARD_READY", "OK", "Da co the, chuan bi nap VNG...")
 
