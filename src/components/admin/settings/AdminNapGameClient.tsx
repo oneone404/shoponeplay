@@ -38,10 +38,9 @@ interface AdminNapGameClientProps {
   initialRounding: boolean
   initialTopupProducts?: TopupProductItem[]
   initialCardConfig?: CardGatewayConfig
-  initialTopupOrders?: any[]
 }
 
-export default function AdminNapGameClient({ initialHotConfig, initialMarkup, initialRounding, initialTopupProducts = [], initialCardConfig, initialTopupOrders = [] }: AdminNapGameClientProps) {
+export default function AdminNapGameClient({ initialHotConfig, initialMarkup, initialRounding, initialTopupProducts = [], initialCardConfig }: AdminNapGameClientProps) {
   const { addMessage } = useUI()
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<HotItem[]>(initialHotConfig.sort((a, b) => a.order - b.order))
@@ -323,54 +322,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
         }} />
       </div>
 
-      {/* ====== TOPUP ORDER HISTORY ====== */}
-      {initialTopupOrders.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-border bg-muted/30">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Lịch Sử Nạp Tự Động (Gần đây)</h3>
-          </div>
-          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-muted/20">
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">Đơn</th>
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">Người dùng</th>
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">Gói nạp</th>
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">Nhân vật</th>
-                  <th className="px-4 py-3 text-right font-bold uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">Giá bán</th>
-                  <th className="px-4 py-3 text-center font-bold uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">Trạng thái</th>
-                  <th className="px-4 py-3 text-right font-bold uppercase tracking-widest text-[9px] text-muted-foreground whitespace-nowrap">Thời gian</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {initialTopupOrders.map((order: any) => (
-                  <tr key={order.id} className="hover:bg-muted/10 transition-colors">
-                    <td className="px-4 py-3 font-mono text-[10px] font-bold">#{order.id.slice(-6).toUpperCase()}</td>
-                    <td className="px-4 py-3 font-medium">{order.user?.name || order.user?.email || "N/A"}</td>
-                    <td className="px-4 py-3 text-primary font-bold">{order.product?.name || "N/A"}</td>
-                    <td className="px-4 py-3">
-                      <p className="font-bold">{order.roleName}</p>
-                      <p className="text-[9px] text-muted-foreground uppercase">{order.serverId} • {order.roleId}</p>
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">{order.amount.toLocaleString()} VND</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-widest border",
-                        order.status === "COMPLETED" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-                        order.status === "ERROR" && "bg-rose-500/10 text-rose-500 border-rose-500/20",
-                        order.status === "REFUNDED" && "bg-amber-500/10 text-amber-600 border-amber-500/20",
-                        order.status === "PENDING" && "bg-blue-500/10 text-blue-600 border-blue-500/20",
-                        !["COMPLETED","ERROR","REFUNDED","PENDING"].includes(order.status) && "bg-muted text-muted-foreground border-border"
-                      )}>{order.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-muted-foreground text-[10px]">{new Date(order.createdAt).toLocaleString("vi-VN")}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }
