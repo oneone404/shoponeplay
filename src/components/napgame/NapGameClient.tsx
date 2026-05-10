@@ -220,9 +220,24 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
 
   // Tim TopupProduct tuong ung voi san pham VNG hien tai bang ten
   const findTopupProduct = useCallback((product: Product) => {
-    return topupProducts.find(tp => 
-      tp.enabled && tp.name.toLowerCase().trim() === product.productName.toLowerCase().trim()
+    const normalize = (s: string) => s.normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim()
+    const targetName = normalize(product.productName)
+    
+    const found = topupProducts.find(tp => 
+      tp.enabled && normalize(tp.name) === targetName
     )
+
+    if (!found) {
+      console.warn(`[NAP_TU_DONG] Khong tim thay goi khop cho: "${product.productName}"`, {
+        targetName: targetName,
+        available: topupProducts.filter(tp => tp.enabled).map(tp => ({
+          original: tp.name,
+          normalized: normalize(tp.name)
+        }))
+      })
+    }
+
+    return found
   }, [topupProducts])
 
   const executePurchase = async () => {
@@ -240,7 +255,7 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
         if (isBulkMode) {
           // Nap nhieu ID
           for (const id of bulkIds) {
-            addMessage({ type: "info", text: `Dang xu ly nap cho ID: ${id}...` })
+            addMessage({ type: "info", text: `Đang xử lý nạp cho ID: ${id}...` })
             if (topupProduct) {
               // Nap tu dong qua API
               const res = await fetch("/api/topup/create-order", {
@@ -256,17 +271,17 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
               })
               const data = await res.json()
               if (data.success) {
-                addMessage({ type: "success", text: `Da gui don nap cho ID ${id}` })
+                addMessage({ type: "success", text: `Đã gửi đơn nạp cho ID ${id}` })
                 setTopupOrderId(data.orderId)
               } else {
-                addMessage({ type: "error", text: `Loi nap ID ${id}: ${data.error}` })
+                addMessage({ type: "error", text: `Lỗi nạp ID ${id}: ${data.error}` })
               }
             }
           }
         } else {
           // Nap 1 ID
           if (topupProduct && character) {
-            addMessage({ type: "info", text: "Dang tao don nap tu dong..." })
+            addMessage({ type: "info", text: "Đang tạo đơn nạp tự động..." })
             const res = await fetch("/api/topup/create-order", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -282,18 +297,18 @@ export default function NapGameClient({ initialHotConfig, logoUrl, topupProducts
             if (data.success) {
               setTopupOrderId(data.orderId)
               setTopupStatus("PENDING")
-              addMessage({ type: "success", text: "Don hang da tao! He thong dang nap tu dong..." })
+              addMessage({ type: "success", text: "Đơn hàng đã tạo! Hệ thống đang nạp tự động..." })
             } else {
-              addMessage({ type: "error", text: data.error || "Loi tao don nap" })
+              addMessage({ type: "error", text: data.error || "Lỗi tạo đơn nạp" })
             }
           } else {
-            addMessage({ type: "warning", text: "San pham nay chua ho tro nap tu dong" })
+            addMessage({ type: "warning", text: "Sản phẩm này chưa hỗ trợ nạp tự động" })
           }
         }
         setConfirmingProduct(null)
         setSelectedProduct(null)
       } catch (error) {
-        addMessage({ type: "error", text: "Da co loi xay ra khi thuc hien nap" })
+        addMessage({ type: "error", text: "Đã có lỗi xảy ra khi thực hiện nạp" })
       }
     })
   }

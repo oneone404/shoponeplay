@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     // ======== AUTH CHECK ========
     const session = await auth()
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Ban can dang nhap de su dung tinh nang nay" }, { status: 401 })
+      return NextResponse.json({ success: false, error: "Bạn cần đăng nhập để sử dụng tính năng này" }, { status: 401 })
     }
 
     const body = await req.json()
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
     // ======== VALIDATION ========
     if (!topupProductId || !roleId || !roleName || !serverId) {
-      return NextResponse.json({ success: false, error: "Thieu thong tin bat buoc" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Thiếu thông tin bắt buộc" }, { status: 400 })
     }
 
     // Kiem tra san pham tu dong nap co ton tai va dang bat
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     })
 
     if (!topupProduct || !topupProduct.enabled) {
-      return NextResponse.json({ success: false, error: "San pham nap tu dong khong ton tai hoac da tat" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Sản phẩm nạp tự động không tồn tại hoặc đã tắt" }, { status: 404 })
     }
 
     // Tinh toan gia se tru: Uu tien gia tu client (da lam tron/markup) nhung phai >= gia goc the de tranh lo
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     if (recentOrder) {
       return NextResponse.json({ 
         success: false, 
-        error: "Vui long doi 15 giay truoc khi tao don nap tiep theo de tranh spam." 
+        error: "Vui lòng đợi 15 giây trước khi tạo đơn nạp tiếp theo để tránh spam." 
       }, { status: 429 })
     }
 
@@ -66,13 +66,13 @@ export async function POST(req: Request) {
     })
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "Khong tim thay tai khoan" }, { status: 404 })
+      return NextResponse.json({ success: false, error: "Không tìm thấy tài khoản" }, { status: 404 })
     }
 
     if (user.balance < chargePrice) {
       return NextResponse.json({ 
         success: false, 
-        error: `So du khong du. Can ${chargePrice.toLocaleString()} VND, hien co ${user.balance.toLocaleString()} VND`
+        error: `Số dư không đủ. Cần ${chargePrice.toLocaleString()} VND, hiện có ${user.balance.toLocaleString()} VND`
       }, { status: 400 })
     }
 
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
           balanceBefore: user.balance,
           balanceAfter: updatedUser.balance,
           type: "PURCHASE",
-          description: `Nap tu dong: ${topupProduct.name} cho ${roleName} (${roleId})`
+          description: `Nạp tự động: ${topupProduct.name} cho ${roleName} (${roleId})`
         }
       })
 

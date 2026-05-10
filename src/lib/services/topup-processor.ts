@@ -186,17 +186,17 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       await logStep(orderId, "CHECK_BALANCE", "OK", `So du dai ly: ${agentBalance.toLocaleString()} VND`)
     } catch (error: any) {
       await logStep(orderId, "CHECK_BALANCE", "ERROR", error.message)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Khong the kiem tra so du dai ly: " + error.message })
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Không thể kiểm tra số dư đại lý: " + error.message })
       await refundUser(orderId)
-      return { success: false, orderId, status: "REFUNDED", message: "Loi kiem tra so du dai ly" }
+      return { success: false, orderId, status: "REFUNDED", message: "Lỗi kiểm tra số dư đại lý" }
     }
 
     if (agentBalance < order.cardValue) {
       await logStep(orderId, "CHECK_BALANCE", "ERROR", `So du khong du: ${agentBalance} < ${order.cardValue}`)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: `So du vi dai ly khong du (${agentBalance.toLocaleString()} VND)` })
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: `Số dư ví đại lý không đủ (${agentBalance.toLocaleString()} VND)` })
       await refundUser(orderId)
-      await sendTopupTelegramAlert(order, "ERROR", `So du vi dai ly khong du: ${agentBalance.toLocaleString()} VND`)
-      return { success: false, orderId, status: "REFUNDED", message: "So du vi dai ly khong du" }
+      await sendTopupTelegramAlert(order, "ERROR", `Số dư ví đại lý không đủ: ${agentBalance.toLocaleString()} VND`)
+      return { success: false, orderId, status: "REFUNDED", message: "Số dư ví đại lý không đủ" }
     }
 
     // ============ STEP 3: Mua the tu NCC ============
@@ -237,17 +237,17 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
       }
     } catch (error: any) {
       await logStep(orderId, "BUY_CARD", "ERROR", error.message)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi mua the: " + error.message })
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi mua thẻ: " + error.message })
       await refundUser(orderId)
-      await sendTopupTelegramAlert(order, "ERROR", `Loi mua the: ${error.message}`)
-      return { success: false, orderId, status: "REFUNDED", message: "Loi mua the tu NCC" }
+      await sendTopupTelegramAlert(order, "ERROR", `Lỗi mua thẻ: ${error.message}`)
+      return { success: false, orderId, status: "REFUNDED", message: "Lỗi mua thẻ từ NCC" }
     }
 
     if (!cardSerial || !cardPin) {
       await logStep(orderId, "BUY_CARD", "ERROR", "Khong nhan duoc the sau 5 lan retry (se doi callback)")
-      await updateOrderStatus(orderId, "WAITING_CARD", { errorMessage: "Dang doi NCC tra the qua callback..." })
+      await updateOrderStatus(orderId, "WAITING_CARD", { errorMessage: "Đang đợi NCC trả thẻ qua callback..." })
       // Khong refund ngay vi status 2 (dang xu ly) thi khong refund duoc, phai doi callback status 3 moi refund
-      return { success: true, orderId, status: "WAITING_CARD", message: "Dang doi the tu NCC" }
+      return { success: true, orderId, status: "WAITING_CARD", message: "Đang đợi thẻ từ NCC" }
     }
 
     // Neu da co the tu buycard hoac redownload, tiep tuc nap VNG
@@ -256,8 +256,8 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
   } catch (error: any) {
     console.error("[TOPUP_PROCESSOR] Unexpected error:", error)
     await logStep(orderId, "SYSTEM", "ERROR", error.message)
-    await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi he thong: " + error.message })
-    return { success: false, orderId, status: "ERROR", message: "Loi he thong khong xac dinh" }
+    await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi hệ thống: " + error.message })
+    return { success: false, orderId, status: "ERROR", message: "Lỗi hệ thống không xác định" }
   }
 }
 
@@ -296,9 +296,9 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
       await logStep(orderId, "VNG_AUTH", "OK", `Xac thuc thanh cong: ${vngSession.roleName} (Server ${vngSession.serverID})`)
     } catch (error: any) {
       await logStep(orderId, "VNG_AUTH", "ERROR", error.message)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi xac thuc VNG: " + error.message })
-      await sendTopupTelegramAlert(order, "ERROR", `Loi xac thuc VNG (the da mua): ${error.message}`)
-      return { success: false, orderId, status: "ERROR", message: "Loi xac thuc VNG" }
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi xác thực VNG: " + error.message })
+      await sendTopupTelegramAlert(order, "ERROR", `Lỗi xác thực VNG (thẻ đã mua): ${error.message}`)
+      return { success: false, orderId, status: "ERROR", message: "Lỗi xác thực VNG" }
     }
 
     // ============ STEP 4: Kiem tra goi kha dung & Tim VNG Product ID ============
@@ -319,9 +319,9 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
       await logStep(orderId, "CHECK_PRODUCT", "OK", `Tim thay goi ${order.product.name} (VNG ID: ${activeVngProductId})`)
     } catch (error: any) {
       await logStep(orderId, "CHECK_PRODUCT", "ERROR", error.message)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi kiem tra goi: " + error.message })
-      await sendTopupTelegramAlert(order, "ERROR", `Loi kiem tra goi (the da mua): ${error.message}`)
-      return { success: false, orderId, status: "ERROR", message: "Goi nap khong kha dung" }
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi kiểm tra gói: " + error.message })
+      await sendTopupTelegramAlert(order, "ERROR", `Lỗi kiểm tra gói (thẻ đã mua): ${error.message}`)
+      return { success: false, orderId, status: "ERROR", message: "Gói nạp không khả dụng" }
     }
 
     // ============ STEP 5: Nap the vao game (createOrder) ============
@@ -345,18 +345,18 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
       if (vngResult.returnCode === 1) {
         // THANH CONG!
         await updateOrderStatus(orderId, "COMPLETED", { completedAt: new Date() })
-        await logStep(orderId, "CREATE_ORDER", "OK", `Nap thanh cong: ${vngResult.message}`)
-        await sendTopupTelegramAlert(order, "SUCCESS", `Nap thanh cong cho ${order.roleName}`)
+        await logStep(orderId, "CREATE_ORDER", "OK", `Nạp thành công: ${vngResult.message}`)
+        await sendTopupTelegramAlert(order, "SUCCESS", `Nạp thành công cho ${order.roleName}`)
 
-        return { success: true, orderId, status: "COMPLETED", message: "Nap thanh cong!" }
+        return { success: true, orderId, status: "COMPLETED", message: "Nạp thành công!" }
       } else {
         throw new Error(`VNG returnCode: ${vngResult.returnCode} - ${vngResult.message}`)
       }
     } catch (error: any) {
       await logStep(orderId, "CREATE_ORDER", "ERROR", error.message)
-      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Loi nap the VNG: " + error.message })
-      await sendTopupTelegramAlert(order, "ERROR", `Loi nap the VNG (the da mua): ${error.message}`)
-      return { success: false, orderId, status: "ERROR", message: "Loi nap the vao game" }
+      await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi nạp thẻ VNG: " + error.message })
+      await sendTopupTelegramAlert(order, "ERROR", `Lỗi nạp thẻ VNG (thẻ đã mua): ${error.message}`)
+      return { success: false, orderId, status: "ERROR", message: "Lỗi nạp thẻ vào game" }
     }
   } catch (error: any) {
     console.error("[TOPUP_PROCESSOR] finishTopupProcess error:", error)

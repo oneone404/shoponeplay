@@ -139,6 +139,7 @@ export async function createTopupProduct(data: {
 
     await prisma.topupProduct.create({ data })
     revalidatePath("/admin/settings/napgame")
+    revalidatePath("/app/napgame")
     return { success: true }
   } catch (error) {
     return { success: false, error: (error as Error).message }
@@ -162,6 +163,7 @@ export async function updateTopupProduct(id: string, data: {
 
     await prisma.topupProduct.update({ where: { id }, data })
     revalidatePath("/admin/settings/napgame")
+    revalidatePath("/app/napgame")
     return { success: true }
   } catch (error) {
     return { success: false, error: (error as Error).message }
@@ -177,6 +179,7 @@ export async function deleteTopupProduct(id: string) {
 
     await prisma.topupProduct.delete({ where: { id } })
     revalidatePath("/admin/settings/napgame")
+    revalidatePath("/app/napgame")
     return { success: true }
   } catch (error) {
     return { success: false, error: (error as Error).message }

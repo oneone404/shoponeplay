@@ -306,14 +306,14 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
             className="px-3 py-1.5 bg-blue-500/10 text-blue-600 border border-blue-500/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500/20 transition-all flex items-center space-x-2"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Check so du</span>
+            <span>Kiểm tra số dư</span>
           </button>
         </div>
 
         <CardGatewayForm initialConfig={initialCardConfig} onSave={async (data) => {
           const result = await updateCardGatewayConfig(data)
-          if (result.success) addMessage({ type: "success", text: "Da luu cau hinh Card Gateway!" })
-          else addMessage({ type: "error", text: result.error || "Loi" })
+          if (result.success) addMessage({ type: "success", text: "Đã lưu cấu hình Card Gateway!" })
+          else addMessage({ type: "error", text: result.error || "Lỗi" })
         }} />
       </div>
 
@@ -321,19 +321,19 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
       {initialTopupOrders.length > 0 && (
         <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-border bg-muted/30">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Lich Su Nap Tu Dong (50 don gan nhat)</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Lịch Sử Nạp Tự Động (50 đơn gần nhất)</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/20">
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Don</th>
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">User</th>
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Goi</th>
-                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Nhan vat</th>
-                  <th className="px-4 py-3 text-right font-bold uppercase tracking-widest text-[9px] text-muted-foreground">So tien</th>
-                  <th className="px-4 py-3 text-center font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Trang thai</th>
-                  <th className="px-4 py-3 text-right font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Thoi gian</th>
+                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Đơn</th>
+                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Người dùng</th>
+                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Gói</th>
+                  <th className="px-4 py-3 text-left font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Nhân vật</th>
+                  <th className="px-4 py-3 text-right font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Số tiền</th>
+                  <th className="px-4 py-3 text-center font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Trạng thái</th>
+                  <th className="px-4 py-3 text-right font-bold uppercase tracking-widest text-[9px] text-muted-foreground">Thời gian</th>
                 </tr>
               </thead>
               <tbody>
@@ -391,17 +391,17 @@ function TopupProductRow({ product, onUpdate, onDelete }: { product: any, onUpda
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <div>
-          <label className="text-[9px] font-bold uppercase text-muted-foreground">VNG Product ID (Khong Bat Buoc)</label>
+          <label className="text-[9px] font-bold uppercase text-muted-foreground">VNG Product ID (Không Bắt Buộc)</label>
           <input value={vngProductId} onChange={e => setVngProductId(e.target.value)} onBlur={() => onUpdate({ vngProductId })}
-            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs" placeholder="Tu dong tim theo ten..." />
+            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs" placeholder="Tự động tìm theo tên..." />
         </div>
         <div>
-          <label className="text-[9px] font-bold uppercase text-muted-foreground">Menh gia the (VND)</label>
+          <label className="text-[9px] font-bold uppercase text-muted-foreground">Mệnh giá thẻ (VND)</label>
           <input type="number" value={cardValue} onChange={e => setCardValue(Number(e.target.value))} onBlur={() => onUpdate({ cardValue })}
             className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs" />
         </div>
         <div>
-          <label className="text-[9px] font-bold uppercase text-muted-foreground">Gia ban (VND)</label>
+          <label className="text-[9px] font-bold uppercase text-muted-foreground">Giá bán (VND)</label>
           <input type="number" value={sellPrice} onChange={e => setSellPrice(Number(e.target.value))} onBlur={() => onUpdate({ sellPrice })}
             className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs" />
         </div>
@@ -445,7 +445,7 @@ function CardGatewayForm({ initialConfig, onSave }: { initialConfig?: CardGatewa
       }} disabled={saving}
         className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center space-x-2">
         {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-        <span>Luu Card Gateway</span>
+        <span>Lưu Card Gateway</span>
       </button>
     </div>
   )
