@@ -83,7 +83,8 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
         
         // Match logic
         const hasMatch = search ? fishData.some((item: FishData) => 
-          item.name.toLowerCase().includes(search.toLowerCase()) || item.id.includes(search)
+          (item.name && item.name.toLowerCase().includes(search.toLowerCase())) || 
+          (item.id && String(item.id).includes(search))
         ) : true;
 
         // If searching and this version has no matches, try the PREVIOUS version recursively
@@ -139,7 +140,8 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
 
     Object.entries(groups).forEach(([id, items]) => {
       const filteredItems = items.filter(item => {
-        const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || id.includes(search);
+        const matchSearch = (item.name && item.name.toLowerCase().includes(search.toLowerCase())) || 
+                           (id && String(id).includes(search));
         const isFish = item.ItemType === 17;
         const matchType = isFish ? showFish : showTrash;
         const matchGrade = selectedGrades.includes(item.grade);
