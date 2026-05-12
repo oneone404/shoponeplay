@@ -66,12 +66,57 @@ export default async function Home() {
     orderBy: { createdAt: 'desc' }
   });
 
-  const notifications = [
-    "User *******123 vừa nạp 100.000 VND thành công",
-    "Chúc mừng user *******789 vừa mua Tài khoản PlayTogether [PLAY TOGETHER VNG]",
-    "User *******456 vừa nạp 500.000 VND qua ATM",
-    "Giao dịch mới: Tài khoản Random Kim Cương đã được bán",
-  ]
+  // --- FETCH REAL TRANSACTIONS FOR TICKER ---
+  const [latestBank, latestCard, latestOrders] = await Promise.all([
+    prisma.bankDeposit.findMany({
+      where: { status: 'COMPLETED' },
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { name: true } } }
+    }),
+    prisma.cardDeposit.findMany({
+      where: { status: 'COMPLETED' },
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { name: true } } }
+    }),
+    prisma.order.findMany({
+      where: { status: 'COMPLETED' },
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: { 
+        user: { select: { name: true } },
+        items: { select: { titleSnapshot: true } }
+      }
+    })
+  ]);
+
+  const realNotifications: string[] = [
+    ...latestBank.map(d => {
+      const name = d.user.name || "Khách"
+      const masked = name.slice(0, 2) + "***" + name.slice(-1)
+      return `User ${masked} vừa nạp ${d.amount.toLocaleString()} VND qua Bank thành công`
+    }),
+    ...latestCard.map(d => {
+      const name = d.user.name || "Khách"
+      const masked = name.slice(0, 2) + "***" + name.slice(-1)
+      return `User ${masked} vừa nạp ${d.amount?.toLocaleString() || d.declaredValue.toLocaleString()} VND từ thẻ ${d.cardType}`
+    }),
+    ...latestOrders.map(o => {
+      const name = o.user.name || "Khách"
+      const masked = name.slice(0, 2) + "***" + name.slice(-1)
+      const productName = o.items[0]?.titleSnapshot || "Sản phẩm"
+      return `Chúc mừng user ${masked} vừa mua ${productName}`
+    })
+  ].sort(() => Math.random() - 0.5); // Shuffle a bit for variety
+
+  // Fallback if no real transactions yet
+  const notifications = realNotifications.length > 0 ? realNotifications : [
+    "Chào mừng bạn đến với ShopOnePlay - Hệ thống bán acc uy tín số 1 VN",
+    "Nạp tiền qua ATM/Momo nhận ngay 100% giá trị nạp",
+    "Hệ thống nạp thẻ tự động cực nhanh, chiết khấu cực thấp",
+    "Giao dịch tự động 24/7 - Bảo mật thông tin tuyệt đối"
+  ];
 
   // Serialize data to plain objects for Client Components (important for Dates)
   const safePlayCategories = playGroup ? JSON.parse(JSON.stringify(playGroup.categories)) : []

@@ -186,8 +186,6 @@ async function main() {
     ]
   })
 
-  // 6. Create Bank Info
-
   const postsData = [
     {
       title: "Cách bảo mật tài khoản Play Together tuyệt đối trong năm 2026",

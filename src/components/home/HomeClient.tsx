@@ -22,12 +22,9 @@ export default function HomeClient({
   const { t } = useLanguage();
   const DEFAULT_BANNER = "https://placehold.co/1920x800/e2e8f0/1e293b?text=No+Image";
 
-  // Map notifications to translations if they match patterns, or use defaults from t.home.notif
-  const displayNotifications = [
-    t.home.notif.deposit_success.replace("{user}", "*******123").replace("{amount}", "100.000"),
-    t.home.notif.buy_success.replace("{user}", "*******789").replace("{product}", "Tài khoản PlayTogether [PLAY TOGETHER VNG]"),
-    t.home.notif.atm_success.replace("{user}", "*******456").replace("{amount}", "500.000"),
-    t.home.notif.new_trade.replace("{product}", "Tài khoản Random Kim Cương"),
+  const displayNotifications = initialNotifications.length > 0 ? initialNotifications : [
+    "Chào mừng bạn đến với ShopOnePlay",
+    "Hệ thống bán acc tự động 24/7"
   ];
 
   return (
