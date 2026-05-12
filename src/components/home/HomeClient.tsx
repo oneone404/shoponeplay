@@ -12,7 +12,7 @@ export default function HomeClient({
   heroTopText,
   heroBottomText
 }: { 
-  notifications: string[],
+  notifications: (string | { text: string, timeAgo: string })[],
   bannerUrl?: string,
   heroTitle?: string,
   heroSub?: string,
@@ -23,12 +23,14 @@ export default function HomeClient({
   const DEFAULT_BANNER = "https://placehold.co/1920x800/e2e8f0/1e293b?text=No+Image";
 
   const displayNotifications = initialNotifications.length > 0 ? initialNotifications : [
-    "Chào mừng bạn đến với ShopOnePlay",
-    "Hệ thống bán acc tự động 24/7"
+    { text: "Chào mừng bạn đến với ShopOnePlay", timeAgo: "" },
+    { text: "Hệ thống bán acc tự động 24/7", timeAgo: "" }
   ];
 
   return (
     <>
+      {/* ... (Banner Section remains same) ... */}
+      {/* (Skipping to notification section for the tool call) */}
       {/* 1. Modular Interactive Banner */}
       <section className="pt-20 px-4 max-w-7xl mx-auto">
         <div className="relative h-[180px] md:h-[400px] w-full rounded-2xl md:rounded-[40px] overflow-hidden group bg-secondary/20 border border-border">
@@ -119,12 +121,25 @@ export default function HomeClient({
               transition={{ ease: "linear", duration: 40, repeat: Infinity }}
               className="flex items-center space-x-12 whitespace-nowrap py-1"
             >
-              {Array(15).fill(displayNotifications).flat().map((note, i) => (
-                <div key={i} className="flex items-center space-x-3 text-[11px] md:text-[13px] font-bold text-foreground/70 uppercase tracking-wide group/note cursor-default">
-                  <Zap className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 text-accent/80 group-hover:note:scale-125 transition-transform" />
-                  <span>{note}</span>
-                </div>
-              ))}
+              {Array(15).fill(displayNotifications).flat().map((note, i) => {
+                const isObject = typeof note === 'object';
+                const text = isObject ? note.text : note;
+                const time = isObject ? note.timeAgo : '';
+
+                return (
+                  <div key={i} className="flex items-center space-x-3 text-[11px] md:text-[13px] font-bold text-foreground/70 uppercase tracking-wide group/note cursor-default">
+                    <Zap className="w-3.5 h-3.5 md:w-3.5 md:h-3.5 text-accent/80 group-hover:note:scale-125 transition-transform" />
+                    <div className="flex items-center gap-2">
+                      <span>{text}</span>
+                      {time && (
+                        <span className="text-[9px] md:text-[10px] font-medium text-foreground/40 lowercase italic">
+                          ({time})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </motion.div>
           </div>
 

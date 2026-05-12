@@ -94,38 +94,43 @@ export default async function Home() {
   const { formatDistanceToNow } = require("date-fns");
   const { vi } = require("date-fns/locale");
 
-  const realNotifications: string[] = [
+  const realNotifications = [
     ...latestBank.map(d => {
       const name = d.user.name || "Khách"
       const masked = name.slice(0, 2) + "***" + name.slice(-1)
       const timeAgo = formatDistanceToNow(new Date(d.createdAt), { addSuffix: true, locale: vi })
-      return `User ${masked} vừa nạp ${d.amount.toLocaleString()} VND qua Bank thành công (${timeAgo})`
+      return {
+        text: `User ${masked} vừa nạp ${d.amount.toLocaleString()} VND qua Bank thành công`,
+        timeAgo: timeAgo
+      }
     }),
     ...latestCard.map(d => {
       const name = d.user.name || "Khách"
       const masked = name.slice(0, 2) + "***" + name.slice(-1)
       const timeAgo = formatDistanceToNow(new Date(d.createdAt), { addSuffix: true, locale: vi })
-      return `User ${masked} vừa nạp ${d.amount?.toLocaleString() || d.declaredValue.toLocaleString()} VND từ thẻ ${d.cardType} (${timeAgo})`
+      return {
+        text: `User ${masked} vừa nạp ${d.amount?.toLocaleString() || d.declaredValue.toLocaleString()} VND từ thẻ ${d.cardType}`,
+        timeAgo: timeAgo
+      }
     }),
     ...latestOrders.map(o => {
       const name = o.user.name || "Khách"
       const masked = name.slice(0, 2) + "***" + name.slice(-1)
       const productName = o.items[0]?.titleSnapshot || "Sản phẩm"
       const timeAgo = formatDistanceToNow(new Date(o.createdAt), { addSuffix: true, locale: vi })
-      return `Chúc mừng user ${masked} vừa mua ${productName} (${timeAgo})`
+      return {
+        text: `Chúc mừng user ${masked} vừa mua ${productName}`,
+        timeAgo: timeAgo
+      }
     })
-  ].sort((a, b) => {
-    // Sort by time (newest first) instead of random, as we have time now
-    return 0.5 - Math.random(); // Keep some randomness but maybe sort would be better? 
-    // Actually, user wants "time after the line", usually people prefer seeing newest first.
-  });
+  ].sort(() => 0.5 - Math.random());
 
   // Fallback if no real transactions yet
   const notifications = realNotifications.length > 0 ? realNotifications : [
-    "Chào mừng bạn đến với ShopOnePlay - Hệ thống bán acc uy tín số 1 VN",
-    "Nạp tiền qua ATM/Momo nhận ngay 100% giá trị nạp",
-    "Hệ thống nạp thẻ tự động cực nhanh, chiết khấu cực thấp",
-    "Giao dịch tự động 24/7 - Bảo mật thông tin tuyệt đối"
+    { text: "Chào mừng bạn đến với ShopOnePlay - Hệ thống bán acc uy tín số 1 VN", timeAgo: "" },
+    { text: "Nạp tiền qua ATM/Momo nhận ngay 100% giá trị nạp", timeAgo: "" },
+    { text: "Hệ thống nạp thẻ tự động cực nhanh, chiết khấu cực thấp", timeAgo: "" },
+    { text: "Giao dịch tự động 24/7 - Bảo mật thông tin tuyệt đối", timeAgo: "" }
   ];
 
   // Serialize data to plain objects for Client Components (important for Dates)
