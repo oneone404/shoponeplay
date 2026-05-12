@@ -1,12 +1,10 @@
-import Pusher from "pusher-js";
+// Dùng require để đảm bảo tương thích hoàn toàn với Next.js/Turbopack
+const Pusher = require("pusher-js");
 
-// Fix for "default is not a constructor" error in Next.js/Turbopack
-const PusherClass = (Pusher as any).default || Pusher;
-
-export const pusherClient = new PusherClass(
+export const pusherClient = new Pusher(
   process.env.NEXT_PUBLIC_PUSHER_KEY!,
   {
     cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-    enabledTransports: ['ws', 'wss'], // Tối ưu cho môi trường web
+    enabledTransports: ['ws', 'wss'],
   }
 );
