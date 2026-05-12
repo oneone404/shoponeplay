@@ -361,6 +361,19 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
           </div>
         </div>
 
+        {/* INSTRUCTION BOX */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 bg-blue-50 border border-blue-100 p-4 rounded-2xl"
+        >
+          <Info className="w-5 h-5 text-blue-600 shrink-0" />
+          <p className="text-[11px] text-blue-900 font-medium leading-relaxed">
+            Hệ thống tự động gộp các vật phẩm có cùng ID vào một hàng. Bạn có thể chọn hàng loạt ID bằng ô Checkbox và nhấn
+            <strong> "Sao Chép ID Đã Lọc"</strong> để dán trực tiếp vào công cụ hack. Click trực tiếp vào cột ID để copy nhanh từng mã.
+          </p>
+        </motion.div>
+
         {/* RESULTS TABLE - Blue Style */}
         <div className="bg-white border border-slate-300 rounded-2xl overflow-hidden shadow-md">
           {loading ? (
@@ -455,12 +468,6 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
           )}
         </div>
 
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 p-6 rounded-2xl">
-          <Info className="w-5 h-5 text-blue-600 shrink-0" />
-          <p className="text-xs text-blue-900 font-medium leading-relaxed">
-            Hệ thống tự động gộp các vật phẩm có cùng ID vào một hàng. Bạn có thể chọn hàng loạt ID bằng ô Checkbox và nhấn
-            <strong> "Sao Chép ID Đã Lọc"</strong> để dán trực tiếp vào công cụ hack. Click trực tiếp vào cột ID để copy nhanh từng mã.
-          </p>
         </div>
       </div>
     </div>
