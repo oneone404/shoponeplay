@@ -182,7 +182,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   }, [groupedData]);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-20 pt-16">
+    <div className="min-h-screen bg-[#f8fafc] pb-20">
       <Navbar logoUrl={logoUrl} />
       <UserPageHeader 
         title="Danh Sách ID Vật Phẩm" 
