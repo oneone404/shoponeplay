@@ -8,7 +8,7 @@ export const TOAST_CONFIG = {
   MAX_TOASTS: 3,
 
   // Thời gian mặc định (ms) trước khi thông báo tự động biến mất
-  DURATION: 3000,
+  DURATION: 5000,
 
   // Vị trí hiển thị (Tailwind CSS classes)
   POSITION: "fixed top-20 right-4 sm:right-6",
