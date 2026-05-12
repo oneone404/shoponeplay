@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search, 
-  Copy, 
-  Check, 
-  Filter, 
-  Fish, 
-  Trash2, 
-  Download, 
+import {
+  Search,
+  Copy,
+  Check,
+  Filter,
+  Fish,
+  Trash2,
+  Download,
   History,
   Layers,
   ChevronDown,
@@ -44,6 +44,8 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   const [selectedGrades, setSelectedGrades] = useState<number[]>([1, 2, 3, 4, 5]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isVersionOpen, setIsVersionOpen] = useState(false);
+  const [dataVersion, setDataVersion] = useState<string>("");
+  const [isFallback, setIsFallback] = useState(false);
 
   // 1. Fetch Versions
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
         const json: VersionsResponse = await res.json();
         setVersions(json.versions);
         setSelectedVersion(json.latest);
+        setDataVersion(json.latest);
       } catch (err) {
         console.error("Failed to fetch versions");
       }
@@ -60,25 +63,46 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
     fetchVersions();
   }, []);
 
-  // 2. Fetch Data when version changes
+  // 2. Data Fetching & Fallback Logic
   useEffect(() => {
-    const fetchData = async () => {
-      if (!selectedVersion) return;
+    if (!selectedVersion) return;
+
+    const fetchData = async (version: string, isAutoFallback = false) => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/tools/fish/data?version=${selectedVersion}`);
-        const json = await res.json();
-        if (Array.isArray(json)) {
-          setData(json);
+        const res = await fetch(`/api/tools/fish/data?version=${version}`);
+        const result = await res.json();
+        const fishData = result.data || [];
+        
+        // If searching and this version has no matches, try the previous version
+        if (search && fishData.length > 0) {
+           const hasMatch = fishData.some((item: FishData) => 
+             item.name.toLowerCase().includes(search.toLowerCase()) || item.id.includes(search)
+           );
+
+           if (!hasMatch && !isAutoFallback) {
+              const currentIdx = versions.indexOf(version);
+              if (currentIdx > 0) {
+                 const prevVersion = versions[currentIdx - 1];
+                 setIsFallback(true);
+                 fetchData(prevVersion, true);
+                 return;
+              }
+           }
         }
+
+        setData(fishData);
+        setDataVersion(version);
+        if (!isAutoFallback) setIsFallback(false);
       } catch (err) {
-        addMessage({ type: "error", text: "Không thể tải dữ liệu ID cá" });
+        addMessage({ type: "error", text: "Lỗi khi tải dữ liệu cá" });
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [selectedVersion, addMessage]);
+
+    fetchData(selectedVersion);
+  }, [selectedVersion, search, versions, addMessage]);
 
   // 3. Group and Filtering Logic
   const groupedData = useMemo(() => {
@@ -91,7 +115,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
 
     // Then filter based on criteria
     const filtered: [string, FishData[]][] = [];
-    
+
     Object.entries(groups).forEach(([id, items]) => {
       const filteredItems = items.filter(item => {
         const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || id.includes(search);
@@ -136,7 +160,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   };
 
   const toggleGrade = (grade: number) => {
-    setSelectedGrades(prev => 
+    setSelectedGrades(prev =>
       prev.includes(grade) ? prev.filter(g => g !== grade) : [...prev, grade]
     );
   };
@@ -164,10 +188,10 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
       case 2: return { background: "#6EE7B7", color: "#065F46" };
       case 3: return { background: "#93C5FD", color: "#1E3A8A" };
       case 4: return { background: "#E9A8F2", color: "#701A75", fontWeight: "bold" };
-      case 5: return { 
-        background: "linear-gradient(135deg, #F9A8D4, #FDE68A, #6EE7B7, #93C5FD, #E9A8F2)", 
-        color: "#1F2937", 
-        fontWeight: "bold" 
+      case 5: return {
+        background: "linear-gradient(135deg, #F9A8D4, #FDE68A, #6EE7B7, #93C5FD, #E9A8F2)",
+        color: "#1F2937",
+        fontWeight: "bold"
       };
       default: return { background: "#E5E7EB", color: "#1F2937" };
     }
@@ -184,44 +208,44 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-20">
       <Navbar logoUrl={logoUrl} />
-      <UserPageHeader 
-        title="Danh Sách ID Vật Phẩm" 
+      <UserPageHeader
+        title="Danh Sách ID Vật Phẩm"
         subtitle="Tra cứu mã ID cá, rác thải và các vật phẩm trong Play Together để cấu hình công cụ."
       />
 
       <div className="max-w-7xl mx-auto px-4 mt-8 space-y-6">
-        
+
         {/* CONTROL BAR */}
         <div className="bg-white border border-slate-300 rounded-2xl p-6 shadow-sm space-y-6">
           <div className="flex flex-wrap items-center justify-center gap-8 py-2">
-             {/* Type Switch Style */}
-             <div className="flex items-center gap-8">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      checked={showFish}
-                      onChange={() => setShowFish(!showFish)}
-                    />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                  </div>
-                  <span className="text-sm font-bold text-slate-700 uppercase">Cá</span>
-                </label>
+            {/* Type Switch Style */}
+            <div className="flex items-center gap-8">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={showFish}
+                    onChange={() => setShowFish(!showFish)}
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </div>
+                <span className="text-sm font-bold text-slate-700 uppercase">Cá</span>
+              </label>
 
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      checked={showTrash}
-                      onChange={() => setShowTrash(!showTrash)}
-                    />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-600"></div>
-                  </div>
-                  <span className="text-sm font-bold text-slate-700 uppercase">Rác</span>
-                </label>
-             </div>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={showTrash}
+                    onChange={() => setShowTrash(!showTrash)}
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-600"></div>
+                </div>
+                <span className="text-sm font-bold text-slate-700 uppercase">Rác</span>
+              </label>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-slate-100">
@@ -229,7 +253,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
               const style = getGradeStyle(g);
               const isActive = selectedGrades.includes(g);
               const labels = ["Trắng", "Xanh Lá", "Xanh Dương", "Tím (VIP)", "Cầu Vồng (VVIP)"];
-              
+
               return (
                 <button
                   key={g}
@@ -240,7 +264,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                     isActive ? "border-black/10 scale-105 shadow-md" : "bg-white border-slate-200 text-slate-400 opacity-60"
                   )}
                 >
-                  {labels[g-1]}
+                  {labels[g - 1]}
                 </button>
               )
             })}
@@ -248,7 +272,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center pt-4 border-t border-slate-100">
             <div className="lg:col-span-4">
-              <button 
+              <button
                 onClick={handleCopyAll}
                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-lg active:scale-95 transition-all"
               >
@@ -257,9 +281,9 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
             </div>
             <div className="lg:col-span-5 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input 
+              <input
                 type="text"
-                placeholder="Tìm kiếm ID hoặc tên cá..."
+                placeholder="Tìm Kiếm ID, Tên..."
                 className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all text-sm font-medium"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -267,7 +291,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
             </div>
             {/* Custom Version Selector */}
             <div className="lg:col-span-3 relative">
-              <button 
+              <button
                 onClick={() => setIsVersionOpen(!isVersionOpen)}
                 className="w-full flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 hover:bg-white hover:border-blue-300 transition-all group"
               >
@@ -282,7 +306,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                 {isVersionOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsVersionOpen(false)} />
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -323,13 +347,29 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
             </div>
           ) : (
             <div className="overflow-x-auto">
+              {isFallback && (
+                <div className="bg-amber-50 border-b border-amber-100 px-6 py-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <History className="w-3 h-3 text-amber-600" />
+                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
+                      Không tìm thấy trong bản {selectedVersion}. Đang hiển thị kết quả từ bản cũ {dataVersion}.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => {setSearch(""); setIsFallback(false); setSelectedVersion(versions[versions.length-1])}}
+                    className="text-[9px] font-black text-amber-800 hover:underline uppercase"
+                  >
+                    Xóa tìm kiếm
+                  </button>
+                </div>
+              )}
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
                   <tr className="bg-blue-700 text-white">
                     <th className="px-4 py-3 border border-blue-800 text-center w-14">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 cursor-pointer accent-blue-500" 
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 cursor-pointer accent-blue-500"
                         checked={checkedIds.size === groupedData.length && groupedData.length > 0}
                         onChange={toggleSelectAll}
                       />
@@ -347,14 +387,14 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                     groupedData.map(([id, items], idx) => (
                       <tr key={id} className={cn("hover:bg-blue-50 transition-colors", idx % 2 === 0 ? "bg-white" : "bg-slate-50")}>
                         <td className="px-4 py-3 border border-slate-200 text-center">
-                          <input 
-                            type="checkbox" 
+                          <input
+                            type="checkbox"
                             className="w-4 h-4 cursor-pointer accent-blue-600"
                             checked={checkedIds.has(id)}
                             onChange={() => toggleCheck(id)}
                           />
                         </td>
-                        <td 
+                        <td
                           className="px-6 py-3 border border-slate-200 font-bold text-blue-800 cursor-pointer hover:bg-blue-100 transition-all relative"
                           onClick={() => handleCopy(id)}
                         >
@@ -366,10 +406,10 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                         {Array.from({ length: maxItemsPerRow }).map((_, i) => {
                           const item = items[i];
                           if (!item) return <td key={i} className="px-6 py-3 border border-slate-200"></td>;
-                          
+
                           return (
-                            <td 
-                              key={i} 
+                            <td
+                              key={i}
                               className="px-6 py-3 border border-slate-200 font-medium whitespace-nowrap"
                               style={getGradeStyle(item.grade)}
                             >
@@ -395,7 +435,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
         <div className="flex items-center gap-3 bg-blue-50 border border-blue-100 p-6 rounded-2xl">
           <Info className="w-5 h-5 text-blue-600 shrink-0" />
           <p className="text-xs text-blue-900 font-medium leading-relaxed">
-            Hệ thống tự động gộp các vật phẩm có cùng ID vào một hàng. Bạn có thể chọn hàng loạt ID bằng ô Checkbox và nhấn 
+            Hệ thống tự động gộp các vật phẩm có cùng ID vào một hàng. Bạn có thể chọn hàng loạt ID bằng ô Checkbox và nhấn
             <strong> "Sao Chép ID Đã Lọc"</strong> để dán trực tiếp vào công cụ hack. Click trực tiếp vào cột ID để copy nhanh từng mã.
           </p>
         </div>
