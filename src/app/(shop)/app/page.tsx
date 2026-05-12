@@ -23,6 +23,13 @@ export default function ToolsLandingPage() {
       icon: <Package className="w-8 h-8" />,
       href: ROUTES.HACKS,
       color: "bg-accent/10 text-accent",
+    },
+    {
+      title: "Danh Sách ID Cá",
+      description: "Tra cứu mã ID cá, vật phẩm để cấu hình các công cụ tự động câu cá.",
+      icon: <Layers className="w-8 h-8" />,
+      href: ROUTES.FISH_ID,
+      color: "bg-indigo-500/10 text-indigo-500",
     }
   ]
   return (

@@ -26,6 +26,10 @@ export const USER_ROUTES = {
     path: "/app/giftcode",
     title: `Nhập Code Game${SUFFIX}`
   },
+  FISH_ID: {
+    path: "/app/fish-id",
+    title: `Danh Sách ID Cá${SUFFIX}`
+  },
 
   HACKS: {
     path: "/app/hacks",
