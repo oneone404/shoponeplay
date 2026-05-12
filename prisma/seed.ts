@@ -317,7 +317,11 @@ async function main() {
       { name: "Chọn công cụ Chào mừng!", order: 4 }
     ])},
     { key: "NAPGAME_MARKUP_PERCENT", value: "20" },
-    { key: "MAINTENANCE_MODE", value: "false" }
+    { key: "MAINTENANCE_MODE", value: "false" },
+    { key: "PUSHER_APP_ID", value: "2033163" },
+    { key: "PUSHER_KEY", value: "bcba1808f86c8b328f4c" },
+    { key: "PUSHER_SECRET", value: "cfcefe0bd62ec56815a9" },
+    { key: "PUSHER_CLUSTER", value: "ap1" }
   ];
 
   for (const config of defaultConfigs) {

@@ -147,12 +147,10 @@ export async function POST(req: Request) {
 
         // 5. Trigger Real-time Notification via Pusher
         try {
-          const { pusherServer } = await import("@/lib/pusher")
-          const maskedName = user.name 
-            ? user.name.slice(0, 2) + "***" + user.name.slice(-1)
-            : "Khách***"
+          const { getPusherServer } = await import("@/lib/pusher")
+          const pusher = await getPusherServer()
           
-          await pusherServer.trigger(`user-${user.id}`, "new-deposit", {
+          await pusher.trigger(`user-${user.id}`, "new-deposit", {
             userName: "Bạn",
             amount: amount,
             time: new Date().toISOString(),

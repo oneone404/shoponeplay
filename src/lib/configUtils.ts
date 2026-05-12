@@ -38,6 +38,10 @@ export interface SiteConfig {
   PAY2S_TOKEN: string;
   LINK4M_API_TOKEN: string;
   MAINTENANCE_MODE: string;
+  PUSHER_APP_ID: string;
+  PUSHER_KEY: string;
+  PUSHER_SECRET: string;
+  PUSHER_CLUSTER: string;
 }
 
 const defaultConfig: SiteConfig = {
@@ -80,7 +84,11 @@ const defaultConfig: SiteConfig = {
   DEPOSIT_MIN_AMOUNT: "10000",
   PAY2S_TOKEN: "",
   LINK4M_API_TOKEN: "",
-  MAINTENANCE_MODE: "false"
+  MAINTENANCE_MODE: "false",
+  PUSHER_APP_ID: "2033163",
+  PUSHER_KEY: "bcba1808f86c8b328f4c",
+  PUSHER_SECRET: "cfcefe0bd62ec56815a9",
+  PUSHER_CLUSTER: "ap1",
 };
 
 export async function getSiteConfig(): Promise<SiteConfig> {

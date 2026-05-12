@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { pusherServer } from "@/lib/pusher";
+import { getPusherServer } from "@/lib/pusher";
 
 export async function GET(req: Request) {
   try {
@@ -20,7 +20,8 @@ export async function GET(req: Request) {
       message: "Bạn vừa nạp thành công 50,000 VND (Giao dịch giả lập)."
     };
 
-    await pusherServer.trigger(`user-${userId}`, "new-deposit", testData);
+    const pusher = await getPusherServer();
+    await pusher.trigger(`user-${userId}`, "new-deposit", testData);
 
     return NextResponse.json({
       success: true,

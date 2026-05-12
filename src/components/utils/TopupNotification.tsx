@@ -22,11 +22,19 @@ export default function TopupNotification() {
     const userId = session.user.id
     let channel: any = null
 
-    // Import động Pusher chỉ ở phía Client
+    // Import động Pusher và lấy cấu hình từ DB
     const initPusher = async () => {
       try {
+        // 1. Lấy cấu hình từ API (DB)
+        const configRes = await fetch("/api/public/config")
+        const config = await configRes.json()
+
+        if (!config.pusherKey || !config.pusherCluster) {
+          console.error("[Pusher] Missing config in DB")
+          return
+        }
+
         const PusherModule = await import("pusher-js")
-        // Xử lý các kiểu export khác nhau của Pusher
         const Pusher = (PusherModule as any).default || PusherModule
         
         if (typeof Pusher !== 'function') {
@@ -35,9 +43,9 @@ export default function TopupNotification() {
         }
 
         const pusher = new Pusher(
-          process.env.NEXT_PUBLIC_PUSHER_KEY!,
+          config.pusherKey,
           {
-            cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+            cluster: config.pusherCluster,
             enabledTransports: ['ws', 'wss'],
           }
         )
