@@ -103,7 +103,7 @@ export default function HomeClient({
 
       {/* 2. Enhanced Notification Marquee */}
       <section className="px-4 max-w-7xl mx-auto mt-6">
-        <div className="relative bg-card/40 backdrop-blur-md border-2 border-border pr-4 flex items-center h-9 md:h-11 overflow-hidden rounded-2xl md:rounded-[24px] group">
+        <div className="relative bg-white border-2 border-border pr-4 flex items-center h-9 md:h-11 overflow-hidden rounded-2xl md:rounded-[24px] group">
 
           {/* Static Shopping Cart Icon Label */}
           <div className="relative z-20 flex items-center h-full pl-5 pr-4 md:pl-7 md:pr-5 bg-gradient-to-r from-accent to-rose-600 text-white skew-x-[-12deg] -ml-1 mr-5 md:mr-7">
