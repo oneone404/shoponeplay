@@ -132,7 +132,7 @@ export default function HomeClient({
                     <div className="flex items-center gap-2">
                       <span>{text}</span>
                       {time && (
-                        <span className="text-[9px] md:text-[10px] font-medium text-foreground/40 lowercase italic">
+                        <span className="text-[9px] md:text-[10px] font-medium text-foreground/40 uppercase italic">
                           ({time})
                         </span>
                       )}
