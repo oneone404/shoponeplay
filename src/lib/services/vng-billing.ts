@@ -41,6 +41,20 @@ const VNG_COMMON_HEADERS = {
   'Sec-Fetch-Site': 'same-site',
 }
 
+const ZALOPAY_INFO_HEADERS = {
+  'Accept': '*/*',
+  'Accept-Language': 'vi-VN,vi;q=0.9,en-GB;q=0.8,en;q=0.7',
+  'Cache-Control': 'no-cache',
+  'Content-Type': 'application/json',
+  'Origin': 'https://gateway.zalopay.vn',
+  'Pragma': 'no-cache',
+  'Referer': 'https://gateway.zalopay.vn/',
+  'Sec-Ch-UA': '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
+  'Sec-Ch-UA-Mobile': '?0',
+  'Sec-Ch-UA-Platform': '"Windows"',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
+}
+
 // ===================== SERVICE =====================
 
 /**
@@ -218,6 +232,31 @@ export async function createOrder(params: {
 }
 
 /**
+ * Lay thong tin chi tiet Bank tu chuoi EMVCo QR (ZaloPay Gateway)
+ */
+async function fetchZaloPayQRInfo(qrCode: string): Promise<any> {
+  try {
+    console.log("[VNG_BILLING] Fetching ZaloPay QR Info for:", qrCode.slice(0, 30) + "...")
+    const response = await fetch("https://zlp-ofp-emvco-gateway.zalopay.vn/v1/emvco/dynamic-qr/info", {
+      method: "POST",
+      headers: ZALOPAY_INFO_HEADERS,
+      body: JSON.stringify({ emvco_qr: qrCode, platform: "" })
+    })
+
+    const data = await response.json()
+    console.log("[VNG_BILLING] ZaloPay API Result:", JSON.stringify(data))
+    
+    if (data.return_code === 1 && data.data) {
+      return data.data
+    }
+    return null
+  } catch (err) {
+    console.error("[VNG_BILLING] fetchZaloPayQRInfo error:", err)
+    return null
+  }
+}
+
+/**
  * Tao don hang VietQR manual tren VNG (Shop VNG logic)
  */
 export async function createVietQROrder(params: {
@@ -228,6 +267,9 @@ export async function createVietQROrder(params: {
   returnCode: number; 
   qrCode?: string; 
   orderNumber?: string;
+  bankAccount?: string;
+  bankName?: string;
+  bankAccountName?: string;
   message: string 
 }> {
   const { session, productId, amount } = params
@@ -299,10 +341,30 @@ export async function createVietQROrder(params: {
     }
 
     if (data.returnCode === 1 && data.data?.payData?.qrCode) {
+      const payData = data.data.payData
       console.log("[VNG_BILLING] createVietQR success:", data.data.orderNumberStr)
+      
+      let bankAccount = payData.bankAccount || payData.bankAccountNumber
+      let bankName = payData.bankName
+      let bankAccountName = payData.bankAccountName
+
+      // Neu thieu thong tin Bank, thu goi ZaloPay API de lay chi tiet
+      if (!bankAccount || !bankName) {
+        const zaloInfo = await fetchZaloPayQRInfo(payData.qrCode)
+        if (zaloInfo) {
+          bankAccount = zaloInfo.receiver_acc || zaloInfo.bank_account_number || zaloInfo.bank_account
+          bankName = zaloInfo.partner_info?.short_name || zaloInfo.bank_name
+          bankAccountName = zaloInfo.receiver_name || zaloInfo.bank_account_name
+          console.log("[VNG_BILLING] ZaloPay Info enriched:", { bankName, bankAccount, bankAccountName })
+        }
+      }
+
       return {
         returnCode: 1,
-        qrCode: data.data.payData.qrCode,
+        qrCode: payData.qrCode,
+        bankAccount,
+        bankName,
+        bankAccountName,
         orderNumber: data.data.orderNumberStr || String(data.data.orderNumber),
         message: "Thành công"
       }

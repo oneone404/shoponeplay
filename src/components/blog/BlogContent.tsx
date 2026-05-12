@@ -8,6 +8,7 @@ import {
   ArrowRight, MessageSquare
 } from "lucide-react";
 import Image from "next/image";
+import UserPageHeader from "@/components/shared/UserPageHeader";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -37,34 +38,14 @@ export default function BlogContent({ initialPosts }: { initialPosts: any[] }) {
   const dateLocale = language === "vi" ? vi : enUS;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 space-y-12">
-      {/* Header Section */}
-      <div className="text-center space-y-4 max-w-2xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">{t.blog.header}</span>
-        </motion.div>
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-4xl md:text-5xl font-bold uppercase tracking-tighter"
-        >
-          {t.blog.title} <span className="text-primary">{t.blog.subtitle}</span>
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-muted-foreground font-medium text-sm md:text-base leading-relaxed"
-        >
-          {t.blog.desc}
-        </motion.p>
-      </div>
+    <div className="bg-background min-h-screen">
+      <UserPageHeader
+        title={t.blog.title}
+        highlightTitle={t.blog.subtitle}
+        subtitle={t.blog.desc}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 py-12 space-y-12">
 
       {/* Search & Filter Bar */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-6 border-b border-border/50">
@@ -235,6 +216,7 @@ export default function BlogContent({ initialPosts }: { initialPosts: any[] }) {
         <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-primary/40 rounded-tl-[40px] opacity-50" />
         <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-primary/40 rounded-br-[40px] opacity-50" />
       </motion.div>
+      </div>
     </div>
   );
 }

@@ -293,6 +293,12 @@ async function main() {
     { key: "DEPOSIT_SUFFIX", value: "chuyen tien" },
     { key: "DEPOSIT_MIN_AMOUNT", value: "10000" },
     { key: "PAY2S_TOKEN", value: "96d615f68f46ac53577295014a0cd8501595572b4d65ec58b8" },
+    { key: "TELEGRAM_TOKEN", value: "7816461580:AAGg4fEoHLEbuEd8uE9l-FsX9pg2VkQUMqk" },
+    { key: "TELEGRAM_ID", value: "5661137513" },
+    { key: "TELEGRAM_ENABLED", value: "true" },
+    { key: "TELEGRAM_NOTIFY_ORDER", value: "true" },
+    { key: "TELEGRAM_NOTIFY_WITHDRAW", value: "true" },
+    { key: "TELEGRAM_NOTIFY_TOPUP_QR", value: "true" },
     { key: "siteLogo", value: "" },
     { key: "siteFavicon", value: "" },
     { key: "siteBanner", value: "/images/hero/banner_bg.png" },
@@ -310,7 +316,8 @@ async function main() {
       { name: "Thành viên Plus (30 Ngày)", order: 3 },
       { name: "Chọn công cụ Chào mừng!", order: 4 }
     ])},
-    { key: "NAPGAME_MARKUP_PERCENT", value: "20" }
+    { key: "NAPGAME_MARKUP_PERCENT", value: "20" },
+    { key: "MAINTENANCE_MODE", value: "false" }
   ];
 
   for (const config of defaultConfigs) {

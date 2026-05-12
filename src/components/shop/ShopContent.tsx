@@ -14,7 +14,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { useCart } from "@/providers/CartProvider"
 import ConfirmBuyModal from "@/components/modals/ConfirmBuyModal"
-import PageHeader from "@/components/shared/PageHeader"
+import UserPageHeader from "@/components/shared/UserPageHeader"
 import { ROUTES } from "@/lib/routes"
 import { useLanguage } from "@/providers/LanguageProvider"
 import ImageLightbox from "@/components/admin/products/ImageLightbox"
@@ -281,19 +281,21 @@ function ShopInner({
         </div>
       </div>
 
-      <section className="pt-24 bg-gradient-to-b from-secondary/30 to-background border-b border-border">
-        <PageHeader
-          subtitle={t.shop.title}
-          title={t.shop.categories}
-          highlightTitle={activeCategoryData?.name || t.shop.all_products}
-          showBackButton={true}
-        >
-          {/* View & Search Controls */}
-          <div className="flex flex-col gap-4 w-full md:w-auto">
-            <div className="flex items-center gap-2">
+      <UserPageHeader
+        subtitle="HỆ THỐNG CUNG CẤP TÀI KHOẢN GAME"
+        title="CỬA HÀNG"
+        highlightTitle="SHOPONEPLAY"
+      />
+
+      {/* Modern Toolbar (Not Sticky) */}
+      <section className="border-b border-border bg-card/5 backdrop-blur-sm relative z-40">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* View & Search Controls */}
+            <div className="flex items-center gap-2 w-full md:w-auto">
               <button
                 onClick={() => setIsFilterOpen(true)}
-                className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-card border border-border rounded-2xl text-xs font-bold uppercase tracking-tighter text-muted-foreground hover:text-primary transition-all"
+                className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-2.5 bg-card border border-border rounded-2xl text-[11px] font-bold uppercase tracking-tighter text-muted-foreground hover:text-primary transition-all shadow-sm"
               >
                 <Filter className="w-4 h-4" />
                 <span>{t.shop.filter_btn}</span>
@@ -304,8 +306,8 @@ function ShopInner({
                 <button
                   onClick={() => setIsSortOpen(!isSortOpen)}
                   className={cn(
-                    "w-full md:w-[200px] flex items-center justify-between space-x-2 px-6 py-3 bg-card border border-border rounded-2xl text-xs font-bold uppercase tracking-tighter transition-all",
-                    isSortOpen ? "border-primary text-primary shadow-sm" : "text-muted-foreground hover:text-primary"
+                    "w-full md:w-[180px] flex items-center justify-between space-x-2 px-6 py-2.5 bg-card border border-border rounded-2xl text-[11px] font-bold uppercase tracking-tighter transition-all shadow-sm",
+                    isSortOpen ? "border-primary text-primary" : "text-muted-foreground hover:text-primary"
                   )}
                 >
                   <div className="flex items-center space-x-2 overflow-hidden">
@@ -349,26 +351,26 @@ function ShopInner({
               </div>
             </div>
 
-            <div className="relative group">
+            <div className="relative group w-full md:w-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <input
                 type="text"
                 placeholder={t.shop.search_placeholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 pr-6 py-3.5 bg-card border border-border rounded-2xl w-full md:w-[320px] outline-none focus:border-primary/50 transition-all font-medium text-sm"
+                className="pl-12 pr-6 py-2.5 bg-card border border-border rounded-2xl w-full md:w-[300px] outline-none focus:border-primary/50 transition-all font-medium text-sm shadow-sm"
               />
             </div>
           </div>
-        </PageHeader>
+        </div>
       </section>
 
       {/* Categories Bar (Sticky) */}
       {!initialSlug && !params?.slug && (
-        <section className="sticky top-16 z-30 bg-card border-y border-border shadow-sm">
-          <div className="max-w-7xl mx-auto flex items-center h-[72px]">
-            <div className="w-full overflow-x-auto no-scrollbar py-4">
-              <div className="inline-flex items-center space-x-4 px-4 md:px-6">
+        <section className="border-b border-border bg-card/10 backdrop-blur-md sticky top-16 z-30">
+          <div className="max-w-7xl mx-auto">
+            <div className="overflow-x-auto no-scrollbar py-2 px-4 flex items-center h-14">
+              <div className="inline-flex items-center space-x-3">
                 {categories
                   .filter(cat => !cat.name.toLowerCase().includes("dịch vụ"))
                   .map((cat) => (
@@ -376,16 +378,16 @@ function ShopInner({
                       key={cat.slug}
                       onClick={() => handleCategoryChange(cat.slug)}
                       className={cn(
-                        "px-6 py-2 rounded-xl border text-xs font-bold uppercase transition-all whitespace-nowrap",
+                        "px-5 py-1.5 rounded-xl border text-[10px] font-bold uppercase transition-all whitespace-nowrap",
                         activeCategory === cat.slug
-                          ? "bg-primary text-white border-primary"
-                          : "bg-background border-border text-foreground hover:border-primary/50 hover:bg-secondary/20"
+                          ? "bg-primary text-white border-primary shadow-sm scale-105"
+                          : "bg-background border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
                       )}
                     >
                       <div className="flex items-center justify-center space-x-1.5">
                         <span>{cat.name}</span>
                         <span className={cn(
-                          "px-1.5 py-0.5 rounded-md text-[9px] font-bold",
+                          "px-1.5 py-0.5 rounded-md text-[9px]",
                           activeCategory === cat.slug
                             ? "bg-white/20 text-white"
                             : "bg-secondary text-muted-foreground"

@@ -6,7 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { USER_ROUTES } from "@/lib/config/user-routes"
 import { cn } from "@/lib/utils"
-import PageHeader from "@/components/shared/PageHeader"
+import UserPageHeader from "@/components/shared/UserPageHeader"
 
 interface HackTool {
   id: string
@@ -20,14 +20,14 @@ interface HackTool {
 
 export default function HacksList({ hacks }: { hacks: HackTool[] }) {
   return (
-    <div className="px-4 max-w-7xl mx-auto pt-24 pb-20">
-      {/* Header Section */}
-      <PageHeader
+    <div className="bg-background min-h-screen">
+      <UserPageHeader
         subtitle="Danh Sách Công Cụ Hỗ Trợ Các Loại Game"
         title="CÔNG CỤ"
         highlightTitle="HỖ TRỢ"
-        className="!px-0"
       />
+
+      <div className="px-4 max-w-7xl mx-auto py-12">
 
       {hacks.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground border-2 border-dashed border-border rounded-2xl">
@@ -97,6 +97,7 @@ export default function HacksList({ hacks }: { hacks: HackTool[] }) {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

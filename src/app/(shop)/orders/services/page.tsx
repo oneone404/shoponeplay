@@ -1,10 +1,11 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { USER_ROUTES } from "@/lib/config/user-routes";
 import ServiceOrdersClient from "@/components/shop/orders/ServiceOrdersClient";
 
 export const metadata = {
-  title: "Lịch sử Dịch vụ | ShopOnePlay",
+  title: USER_ROUTES.HISTORY.SERVICES.title,
 };
 
 export default async function UserServiceOrdersPage() {
@@ -14,23 +15,27 @@ export default async function UserServiceOrdersPage() {
     redirect("/signin");
   }
 
-  const orders = await prisma.serviceOrder.findMany({
-    where: { userId: session.user.id },
-    include: {
-      service: { select: { name: true, thumbnail: true } },
-      option: { select: { name: true } }
-    },
-    orderBy: { createdAt: "desc" }
-  });
+  const [serviceOrders, topupOrders] = await Promise.all([
+    prisma.serviceOrder.findMany({
+      where: { userId: session.user.id },
+      include: {
+        service: { select: { name: true, thumbnail: true } },
+        option: { select: { name: true } }
+      },
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.topupOrder.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" }
+    })
+  ]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-black text-foreground uppercase tracking-tight">Lịch sử <span className="text-primary">Dịch vụ</span></h1>
-        <p className="text-muted-foreground text-sm font-medium italic">Theo dõi trạng thái và tiến độ xử lý yêu cầu của bạn.</p>
-      </div>
-
-      <ServiceOrdersClient initialOrders={orders} />
+    <div className="min-h-screen bg-background pb-20">
+      <ServiceOrdersClient 
+        initialServiceOrders={serviceOrders} 
+        initialTopupOrders={topupOrders}
+      />
     </div>
   );
 }

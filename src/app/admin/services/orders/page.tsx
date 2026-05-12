@@ -41,6 +41,7 @@ export default async function AdminServiceOrdersPage() {
   // Serialize the data for the client
   const serializedOrders = orders.map(order => ({
     ...order,
+    adminNote: order.adminNote as string | null,
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
   }));

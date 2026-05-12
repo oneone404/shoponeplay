@@ -19,6 +19,7 @@ export default function NotificationSettings() {
     TELEGRAM_ENABLED: "false",
     TELEGRAM_NOTIFY_ORDER: "true",
     TELEGRAM_NOTIFY_WITHDRAW: "true",
+    TELEGRAM_NOTIFY_TOPUP_QR: "true",
     BACKUP_ENABLED: "false",
     BACKUP_PASSWORD: ""
   })
@@ -30,7 +31,7 @@ export default function NotificationSettings() {
   const fetchConfigs = async () => {
     setIsLoading(true)
     try {
-      const res = await fetch("/api/admin/config?keys=TELEGRAM_TOKEN,TELEGRAM_ID,TELEGRAM_ENABLED,TELEGRAM_NOTIFY_ORDER,TELEGRAM_NOTIFY_WITHDRAW,BACKUP_ENABLED,BACKUP_PASSWORD")
+      const res = await fetch("/api/admin/config?keys=TELEGRAM_TOKEN,TELEGRAM_ID,TELEGRAM_ENABLED,TELEGRAM_NOTIFY_ORDER,TELEGRAM_NOTIFY_WITHDRAW,TELEGRAM_NOTIFY_TOPUP_QR,BACKUP_ENABLED,BACKUP_PASSWORD")
       const data = await res.json()
       if (res.ok) {
         setFormData({
@@ -39,6 +40,7 @@ export default function NotificationSettings() {
           TELEGRAM_ENABLED: data.TELEGRAM_ENABLED || "false",
           TELEGRAM_NOTIFY_ORDER: data.TELEGRAM_NOTIFY_ORDER || "true",
           TELEGRAM_NOTIFY_WITHDRAW: data.TELEGRAM_NOTIFY_WITHDRAW || "true",
+          TELEGRAM_NOTIFY_TOPUP_QR: data.TELEGRAM_NOTIFY_TOPUP_QR || "true",
           BACKUP_ENABLED: data.BACKUP_ENABLED || "false",
           BACKUP_PASSWORD: data.BACKUP_PASSWORD || ""
         })
@@ -98,17 +100,19 @@ export default function NotificationSettings() {
     setIsSettingUpVPS(true)
     try {
       const res = await fetch("/api/admin/system/setup-backup", {
-        method: "POST"
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
       })
 
       const data = await res.json()
       if (res.ok) {
-        addMessage({ type: 'success', text: "Cài đặt tự động thành công! Script đã được tạo và đăng ký Cron Job." })
+        addMessage({ type: 'success', text: "Đã thực hiện setup Backup tự động thành công!" })
       } else {
-        throw new Error(data.error || "Lỗi khi cài đặt VPS")
+        throw new Error(data.error || "Lỗi khi setup VPS")
       }
     } catch (err: any) {
-      addMessage({ type: 'error', text: err.message || "Không thể cài đặt tự động. Có thể VPS không hỗ trợ hoặc lỗi quyền hạn." })
+      addMessage({ type: 'error', text: err.message || "Không thể setup VPS. Hãy kiểm tra lại cấu hình." })
     } finally {
       setIsSettingUpVPS(false)
     }
@@ -116,37 +120,38 @@ export default function NotificationSettings() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Đang tải cấu hình...</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-6">
-        {/* Card 1: Telegram Bot Connection Config */}
+    <div className="space-y-6 max-w-5xl mx-auto pb-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Card 1: Bot Config */}
         <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border bg-muted/30 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <MessageSquare className="w-4 h-4 text-blue-500" />
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Cấu hình kết nối Telegram Bot</h3>
+              <MessageSquare className="w-4 h-4 text-primary" />
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Cấu hình Telegram Bot</h3>
             </div>
             <button
               onClick={() => handleSave({
                 TELEGRAM_TOKEN: formData.TELEGRAM_TOKEN,
                 TELEGRAM_ID: formData.TELEGRAM_ID
-              }, "kết nối Bot")}
+              }, "cấu hình Bot")}
               disabled={!!savingSection}
-              title="Lưu cấu hình kết nối"
               className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-lg border border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+              title="Lưu cấu hình Bot"
             >
-              {savingSection === "kết nối Bot" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {savingSection === "cấu hình Bot" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </button>
           </div>
-
+          
           <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Telegram Bot Token</label>
                 <input
@@ -178,6 +183,7 @@ export default function NotificationSettings() {
                 >
                   <option value="withdraw">Test Rút Tiền</option>
                   <option value="order">Test Đơn Hàng</option>
+                  <option value="topup_qr">Test Nạp Gói (QR)</option>
                 </select>
                 <button
                   type="button"
@@ -204,7 +210,8 @@ export default function NotificationSettings() {
               onClick={() => handleSave({
                 TELEGRAM_ENABLED: formData.TELEGRAM_ENABLED,
                 TELEGRAM_NOTIFY_ORDER: formData.TELEGRAM_NOTIFY_ORDER,
-                TELEGRAM_NOTIFY_WITHDRAW: formData.TELEGRAM_NOTIFY_WITHDRAW
+                TELEGRAM_NOTIFY_WITHDRAW: formData.TELEGRAM_NOTIFY_WITHDRAW,
+                TELEGRAM_NOTIFY_TOPUP_QR: formData.TELEGRAM_NOTIFY_TOPUP_QR
               }, "loại thông báo")}
               disabled={!!savingSection}
               title="Lưu lựa chọn thông báo"
@@ -274,6 +281,27 @@ export default function NotificationSettings() {
                 {formData.TELEGRAM_NOTIFY_ORDER === "true" ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                 <span className="text-[10px] font-bold uppercase tracking-widest">
                   {formData.TELEGRAM_NOTIFY_ORDER === "true" ? "BẬT" : "TẮT"}
+                </span>
+              </button>
+            </div>
+
+            {/* Topup QR Toggle */}
+            <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-2xl border border-border/50">
+              <div className="space-y-1">
+                <h4 className="text-[11px] font-bold uppercase tracking-wide">Thông báo nạp gói (Manual QR)</h4>
+                <p className="text-[10px] text-muted-foreground">Nhận tin nhắn kèm mã QR khi có khách yêu cầu nạp gói game.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, TELEGRAM_NOTIFY_TOPUP_QR: prev.TELEGRAM_NOTIFY_TOPUP_QR === "true" ? "false" : "true" }))}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all",
+                  formData.TELEGRAM_NOTIFY_TOPUP_QR === "true" ? "bg-green-500/10 text-green-500" : "bg-muted text-muted-foreground"
+                )}
+              >
+                {formData.TELEGRAM_NOTIFY_TOPUP_QR === "true" ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                <span className="text-[10px] font-bold uppercase tracking-widest">
+                  {formData.TELEGRAM_NOTIFY_TOPUP_QR === "true" ? "BẬT" : "TẮT"}
                 </span>
               </button>
             </div>

@@ -7,20 +7,89 @@ async function getTelegramConfig() {
   const configs = await prisma.config.findMany({
     where: {
       key: {
-        in: ["TELEGRAM_TOKEN", "TELEGRAM_ID", "TELEGRAM_ENABLED", "TELEGRAM_NOTIFY_ORDER", "TELEGRAM_NOTIFY_WITHDRAW"]
+        in: ["TELEGRAM_TOKEN", "TELEGRAM_ID", "TELEGRAM_ENABLED", "TELEGRAM_NOTIFY_ORDER", "TELEGRAM_NOTIFY_WITHDRAW", "TELEGRAM_NOTIFY_TOPUP_QR"]
       }
     }
   });
 
+  console.log("[TELEGRAM_DEBUG] Found config keys:", configs.map(c => c.key));
+
   const configMap = new Map(configs.map(c => [c.key, c.value]));
 
   return {
-    token: configMap.get("TELEGRAM_TOKEN"),
-    chatId: configMap.get("TELEGRAM_ID"),
+    token: configMap.get("TELEGRAM_TOKEN") || "",
+    chatId: configMap.get("TELEGRAM_ID") || "",
     isEnabled: configMap.get("TELEGRAM_ENABLED") === "true",
     notifyOrder: configMap.get("TELEGRAM_NOTIFY_ORDER") === "true",
-    notifyWithdraw: configMap.get("TELEGRAM_NOTIFY_WITHDRAW") === "true"
+    notifyWithdraw: configMap.get("TELEGRAM_NOTIFY_WITHDRAW") === "true",
+    notifyTopupQr: configMap.get("TELEGRAM_NOTIFY_TOPUP_QR") === "true"
   };
+}
+
+/**
+ * Gửi ảnh dạng Buffer (để tránh lỗi Telegram crawler), fallback sang text nếu lỗi tải ảnh
+ */
+async function sendTelegramPhotoWithFallback(
+  config: { token: string; chatId: string },
+  photoUrl: string,
+  message: string,
+  replyMarkup?: any
+) {
+  try {
+    const res = await fetch(photoUrl);
+    if (!res.ok) throw new Error(`Lỗi tải ảnh: HTTP ${res.status}`);
+
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("image")) {
+      throw new Error(`Định dạng không phải ảnh: ${contentType}`);
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: contentType });
+
+    const formData = new FormData();
+    formData.append("chat_id", config.chatId);
+    formData.append("caption", message);
+    formData.append("parse_mode", "HTML");
+    if (replyMarkup) formData.append("reply_markup", JSON.stringify(replyMarkup));
+    formData.append("photo", blob, "qrcode.png");
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+
+    const tgRes = await fetch(`https://api.telegram.org/bot${config.token}/sendPhoto`, {
+      method: "POST",
+      body: formData,
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    const tgData = await tgRes.json();
+    if (!tgData.ok) {
+      if (tgData.error_code === 429) {
+        throw new Error(`RATE_LIMIT:${tgData.parameters?.retry_after || 5}`);
+      }
+      throw new Error(`Lỗi Telegram: ${tgData.description}`);
+    }
+    return tgData;
+  } catch (error: any) {
+    if (error.message?.startsWith("RATE_LIMIT:")) throw error;
+
+    console.warn("[TELEGRAM_PHOTO_FAILED] Fallback to text:", error.message || error);
+    const textUrl = `https://api.telegram.org/bot${config.token}/sendMessage`;
+    const textRes = await fetch(textUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: config.chatId,
+        text: message + "\n\n⚠️ <i>(Ảnh QR tạm thời không khả dụng, hãy nhập thủ công hoặc tạo mã thủ công)</i>",
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+        reply_markup: replyMarkup
+      })
+    });
+    return await textRes.json();
+  }
 }
 
 /**
@@ -94,76 +163,28 @@ ${isTest ? "⚠️ <b>[TEST MESSAGE]</b>\n" : ""}🔔 <b>YÊU CẦU RÚT TIỀN 
     };
 
     const bankId = bankMapping[bankShortName.toLowerCase()] || bankShortName.toUpperCase().replace(/\s+/g, "");
-    
+
     // URL Encode all parameters for safety
     const addInfo = encodeURIComponent(`RT ${details.userId.slice(-6).toUpperCase()}`);
     const accountName = encodeURIComponent(details.accountName.toUpperCase());
-    const qrUrl = `https://img.vietqr.io/image/${bankId}-${details.accountNumber}-compact2.jpg?amount=${details.amount}&addInfo=${addInfo}&accountName=${accountName}`;
+    const qrUrl = `https://qr.sepay.vn/img?acc=${details.accountNumber}&bank=${bankId}&amount=${details.amount}&des=${addInfo}`;
 
-    // Try sending photo first
-    try {
-      const url = `https://api.telegram.org/bot${config.token}/sendPhoto`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: config.chatId,
-          photo: qrUrl,
-          caption: message,
-          parse_mode: "HTML",
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { 
-                  text: "✅ HOÀN THÀNH", 
-                  callback_data: isTest ? "test_done" : `wd_done_${details.withdrawalId}` 
-                },
-                { 
-                  text: "❌ HUỶ BỎ", 
-                  callback_data: isTest ? "test_cancel" : `wd_cancel_${details.withdrawalId}` 
-                }
-              ]
-            ]
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          {
+            text: "✅ HOÀN THÀNH",
+            callback_data: isTest ? "test_done" : `wd_done_${details.withdrawalId}`
+          },
+          {
+            text: "❌ HUỶ BỎ",
+            callback_data: isTest ? "test_cancel" : `wd_cancel_${details.withdrawalId}`
           }
-        })
-      });
+        ]
+      ]
+    };
 
-      const result = await res.json();
-      if (result.ok) return result;
-      
-      // If photo fails, log it and fall through to sendMessage
-      console.warn("[TELEGRAM_PHOTO_FAILED]", result);
-    } catch (err) {
-      console.error("[TELEGRAM_PHOTO_EXCEPTION]", err);
-    }
-
-    // Fallback to text message if photo fails
-    const textUrl = `https://api.telegram.org/bot${config.token}/sendMessage`;
-    const textRes = await fetch(textUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: config.chatId,
-        text: message + "\n\n⚠️ (Không thể tạo mã QR, vui lòng chuyển khoản thủ công)",
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { 
-                text: "✅ HOÀN THÀNH", 
-                callback_data: isTest ? "test_done" : `wd_done_${details.withdrawalId}` 
-              },
-              { 
-                text: "❌ HUỶ BỎ", 
-                callback_data: isTest ? "test_cancel" : `wd_cancel_${details.withdrawalId}` 
-              }
-            ]
-          ]
-        }
-      })
-    });
-
-    return await textRes.json();
+    return await sendTelegramPhotoWithFallback(config as { token: string; chatId: string }, qrUrl, message, replyMarkup);
   } catch (error) {
     console.error("[TELEGRAM_WITHDRAW_EXCEPTION]", error);
     throw error;
@@ -287,9 +308,10 @@ export async function sendTopupQRNotification(orderId: string) {
   try {
     const config = await getTelegramConfig();
     console.log("[TELEGRAM_QR] Notification attempt:", { orderId, hasToken: !!config.token, hasChatId: !!config.chatId });
-    
-    if (!config.token || !config.chatId) {
-      console.warn("[TELEGRAM_QR] Aborted: Config missing");
+
+    // Check if enabled
+    if (!config.isEnabled || !config.notifyTopupQr || !config.token || !config.chatId) {
+      console.warn("[TELEGRAM_QR] Aborted: Disabled or Config missing");
       return;
     }
 
@@ -302,43 +324,132 @@ export async function sendTopupQRNotification(orderId: string) {
       return;
     }
 
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(order.vngQrCode)}&size=400x400`;
-    
+    let qrImageUrl = "";
+    let bankInfoText = "";
+
+    // Thu bóc tách JSON de lay STK/Ngan hang (VietQR)
+    try {
+      if (order.vngQrCode?.startsWith("{")) {
+        const qrData = JSON.parse(order.vngQrCode);
+        const bankMapping: Record<string, string> = {
+          "vietcombank": "VCB", "vcb": "VCB", "ngoai thuong": "VCB",
+          "vietinbank": "ICB", "icb": "ICB", "cong thuong": "ICB",
+          "bidv": "BIDV", "dau tu": "BIDV",
+          "agribank": "VBA", "vba": "VBA", "nong nghiep": "VBA",
+          "mbbank": "MB", "mb": "MB", "quan doi": "MB",
+          "techcombank": "TCB", "tcb": "TCB", "ky thuong": "TCB",
+          "acb": "ACB", "a chau": "ACB",
+          "tpbank": "TPB", "tien phong": "TPB",
+          "sacombank": "STB", "stb": "STB",
+          "vpbank": "VPB", "thinh vuong": "VPB",
+          "msb": "MSB", "hang hai": "MSB",
+          "shb": "SHB",
+          "hdbank": "HDB", "hdb": "HDB",
+          "ocb": "OCB", "phuong dong": "OCB",
+          "vib": "VIB",
+        };
+
+        const bankShortName = qrData.bankName?.toLowerCase() || "";
+        // Tim bankId tu mapping hoac lay chu dau tien (vi du: "Vietcombank (VCB)" -> "Vietcombank")
+        const bankId = bankMapping[bankShortName] ||
+          bankMapping[bankShortName.split(" ")[0]] ||
+          bankShortName.toUpperCase().replace(/\s+/g, "");
+
+        const amount = order.cardValue;
+        const addInfo = encodeURIComponent(order.vngOrderNumber || `TOPUP ${order.id.slice(-6)}`);
+
+        if (qrData.bankAccount && bankId) {
+          // Luon dung SePay QR
+          qrImageUrl = `https://qr.sepay.vn/img?acc=${qrData.bankAccount}&bank=${bankId}&amount=${amount}&des=${addInfo}`;
+
+          bankInfoText = `
+🏦 <b>NGÂN HÀNG:</b> <code>${qrData.bankName}</code>
+💳 <b>SỐ TÀI KHOẢN:</b> <code>${qrData.bankAccount}</code>
+👤 <b>CHỦ TÀI KHOẢN:</b> <code>${qrData.bankAccountName}</code>`;
+        }
+      }
+    } catch (e) {
+      console.error("[TELEGRAM_QR] Bank info extraction failed:", e);
+    }
+
+    // Neu khong co anh VietQR thi thong bao loi (Khong dung QR den trang nua)
+    if (!qrImageUrl) {
+      console.error("[TELEGRAM_QR] Could not generate VietQR image - Missing Bank Info");
+      // Co the fallback ve text thong bao thieu thong tin
+      qrImageUrl = "https://placehold.co/400x400?text=LOI+TAO+MA+QR+BANK";
+    }
+
     const caption = `
 🔔 <b>ĐƠN NẠP MANUAL (VIETQR)</b>
+${bankInfoText}
+💰 <b>SỐ TIỀN:</b> <code>${order.cardValue.toLocaleString()} VND</code>
+---------------------------
+👤 <b>KHÁCH HÀNG:</b> ${order.user.name || "N/A"}
+🎮 <b>NHÂN VẬT:</b> ${order.roleName} (ID: ${order.roleId})
+🎁 <b>GÓI NẠP:</b> ${order.productName || "N/A"}
+📅 <b>NGÀY TẠO:</b> <code>${order.createdAt.toLocaleString("vi-VN")}</code>
+🔖 <b>MÃ ĐƠN VNG:</b> <code>${order.vngOrderNumber || "N/A"}</code>
 
-<b>KHÁCH HÀNG:</b> ${order.user.name || "N/A"}
-<b>NHÂN VẬT:</b> ${order.roleName} (ID: ${order.roleId})
-<b>GÓI NẠP:</b> ${order.productName || "N/A"}
-<b>SỐ TIỀN:</b> <code>${order.amount.toLocaleString()} VND</code>
-<b>MÃ ĐƠN VNG:</b> <code>${order.vngOrderNumber || "N/A"}</code>
+⚠️ <i>Mã QR Sử Dụng Đến: ${order.vngQrExpiredAt?.toLocaleTimeString("vi-VN")}</i>
+#ID:<code>${order.id}</code>`.trim();
 
-⚠️ <i>Mã QR này sẽ hết hạn vào lúc: ${order.vngQrExpiredAt?.toLocaleTimeString("vi-VN")}</i>
-Dùng App Ngân hàng quét mã dưới đây để thanh toán. Sau khi thanh toán xong hãy nhấn nút xác nhận.
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: "✅ ĐÃ THANH TOÁN", callback_data: `topqr_done_${order.id}` },
+          { text: "🔄 TẠO LẠI QR", callback_data: `topqr_retry_${order.id}` }
+        ]
+      ]
+    };
+
+    const sendWithRetry = async (attempt = 1): Promise<void> => {
+      console.log(`[TELEGRAM_QR] Attempt ${attempt}...`);
+      try {
+        await sendTelegramPhotoWithFallback(config as { token: string; chatId: string }, qrImageUrl, caption, replyMarkup);
+      } catch (err: any) {
+        if (err.message?.startsWith("RATE_LIMIT:") && attempt < 3) {
+          const retryAfter = parseInt(err.message.split(":")[1] || "5") * 1000;
+          await new Promise(resolve => setTimeout(resolve, retryAfter));
+          return sendWithRetry(attempt + 1);
+        }
+        throw err;
+      }
+    };
+
+    await sendWithRetry();
+    return { ok: true };
+  } catch (error: any) {
+    console.error("[TELEGRAM_QR_EXCEPTION]", error.message || error);
+    return { ok: false, description: error.message };
+  }
+}
+
+/**
+ * Gửi thông báo test mã QR
+ */
+export async function sendTestTopupQRNotification(configOverride?: { token: string; chatId: string }) {
+  try {
+    const config = configOverride || await getTelegramConfig();
+    if (!config.token || !config.chatId) return { ok: false, description: "Thiếu config" };
+
+    // Mã QR mẫu (VietQR định dạng cơ bản)
+    const testQrCode = "00020101021238540010A000000727012400069704070110842247960208QRIBFTTA5204739953037045405100005802VN6304D19E";
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(testQrCode)}`;
+
+    const caption = `
+🔔 <b>[TEST] THÔNG BÁO NẠP GÓI QR</b>
+
+<b>KHÁCH HÀNG:</b> Admin Test
+<b>NHÂN VẬT:</b> KAIA3QZ6Q6 (ID: EKEF-XUZL-LMGU)
+<b>GÓI NẠP:</b> Gói 100,000 Kim Cương (Test)
+<b>SỐ TIỀN TRỪ USER:</b> <code>120,000 VND</code>
+<b>TIỀN THỰC CHUYỂN:</b> <code>100,000 VND</code>
+
+Đây là tin nhắn thử nghiệm hệ thống nạp QR.
     `.trim();
 
-    const url = `https://api.telegram.org/bot${config.token}/sendPhoto`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: config.chatId,
-        photo: qrImageUrl,
-        caption: caption,
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: "✅ ĐÃ THANH TOÁN", callback_data: `topqr_done_${order.id}` },
-              { text: "🔄 TẠO LẠI QR", callback_data: `topqr_retry_${order.id}` }
-            ]
-          ]
-        }
-      })
-    });
-    const result = await response.json();
-    console.log("[TELEGRAM_QR] send result:", result);
-  } catch (error) {
-    console.error("[TELEGRAM_QR_EXCEPTION]", error);
+    return await sendTelegramPhotoWithFallback(config as { token: string; chatId: string }, qrImageUrl, caption);
+  } catch (error: any) {
+    return { ok: false, description: error.message };
   }
 }

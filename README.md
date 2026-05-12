@@ -95,3 +95,14 @@ Sau đó truy cập: `http://localhost:3000`
 
 ---
 *Chúc bạn có trải nghiệm tuyệt vời với ShopOnePlay!*
+
+## ✅ Nhật ký cập nhật UI/UX Premium (11/05/2026)
+
+- **Premium UI Standardization**:
+    - **UserPageHeader Architecture**: Phát triển component `UserPageHeader` dùng chung, thống nhất giao diện Premium Full-width cho hơn 15 trang chức năng (Giftcode, Nạp Game, Hacks, Lịch sử các loại, Blog, Giỏ hàng).
+    - **Aesthetic Refinements**: Tối ưu hóa khoảng cách (Padding), áp dụng bố cục căn giữa (Centered layout) và tinh chỉnh kích thước chữ (Typography) để tạo cảm giác chuyên nghiệp, thanh thoát.
+    - **Sticky Toolbars**: Chuyển các bộ lọc và tìm kiếm xuống thanh Toolbar riêng biệt (Sticky) để giữ cho Header luôn sạch sẽ và tăng trải nghiệm người dùng khi cuộn trang.
+- **System Optimization**:
+    - **Metadata Consistency**: Tích hợp `USER_ROUTES` để tự động hóa tiêu đề trang và metadata, đảm bảo SEO và tính nhất quán.
+    - **Route Optimization**: Loại bỏ các đường dẫn viết cứng (hardcoded), đồng bộ hóa hệ thống Navigation (BottomNav, Navbar) theo cấu hình Route tập trung.
+    - **Dọn dẹp mã nguồn**: Loại bỏ hoàn toàn các lệnh import dư thừa và tối ưu hóa cấu trúc component giúp tăng hiệu năng render.

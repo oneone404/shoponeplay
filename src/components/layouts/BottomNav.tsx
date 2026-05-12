@@ -3,7 +3,8 @@
 import Link from "next/link"
 import {
   Home, LayoutGrid, Plus, Terminal, User, Wrench, Settings,
-  CreditCard, KeyRound, History, Package, FileSearch, Headphones, Gamepad2
+  CreditCard, KeyRound, History, Package, FileSearch, Headphones, Gamepad2,
+  Download, Zap, Ticket
 } from "lucide-react"
 import { useState, useCallback } from "react"
 import { cn } from "@/lib/utils"
@@ -32,8 +33,9 @@ export default function BottomNav() {
   }, [setToolsOpen])
 
   const tools = [
-    { icon: <Package className="w-[20px] h-[20px]" />, label: "Hacks", action: () => router.push(ROUTES.HACKS) },
-    { icon: <Gamepad2 className="w-[20px] h-[20px]" />, label: "Nạp Gói", action: () => router.push(ROUTES.NAPGAME) },
+    { icon: <Download className="w-[20px] h-[20px]" />, label: "Tải Hack", action: () => router.push(ROUTES.HACKS) },
+    { icon: <Zap className="w-[20px] h-[20px]" />, label: "Nạp Gói", action: () => router.push(ROUTES.NAPGAME) },
+    { icon: <Ticket className="w-[20px] h-[20px]" />, label: "Nhập Code", action: () => router.push(ROUTES.GIFTCODE) },
   ]
 
   // If in admin or seller panel, or if deposit modal is open, do not render BottomNav
@@ -46,7 +48,7 @@ export default function BottomNav() {
       <div
         onClick={closeTools}
         className={cn(
-          "fixed inset-0 z-30 bg-black/50 md:hidden transition-opacity duration-300 ease-out",
+          "fixed inset-0 z-[60] bg-black/50 md:hidden transition-opacity duration-300 ease-out",
           toolsOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
       />
@@ -54,7 +56,7 @@ export default function BottomNav() {
       {/* Panel */}
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-40",
+          "fixed inset-x-0 bottom-0 z-[70]",
           "rounded-t-[32px] bg-card px-4 pt-3 shadow-2xl md:hidden",
           "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]",
           "border-t border-border",
@@ -81,7 +83,7 @@ export default function BottomNav() {
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary/50 text-foreground group-active:scale-95 group-active:bg-secondary/80 transition-all duration-200 shadow-sm border border-border/10">
                 {tool.icon}
               </div>
-              <span className="text-[9px] font-bold text-muted-foreground group-active:text-foreground transition-colors leading-tight uppercase tracking-wide">{tool.label}</span>
+              <span className="text-[9px] font-bold text-muted-foreground group-active:text-foreground transition-colors leading-tight tracking-wide">{tool.label}</span>
             </button>
           ))}
         </div>

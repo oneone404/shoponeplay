@@ -41,20 +41,35 @@ interface AdminNapGameClientProps {
 }
 
 export default function AdminNapGameClient({ initialHotConfig, initialMarkup, initialRounding, initialTopupProducts = [], initialCardConfig }: AdminNapGameClientProps) {
-  const { addMessage } = useUI()
-  const [loading, setLoading] = useState(false)
-  const [checkingBalance, setCheckingBalance] = useState(false)
-  const [items, setItems] = useState<HotItem[]>(initialHotConfig.sort((a, b) => a.order - b.order))
-  const [markup, setMarkup] = useState<number>(initialMarkup)
-  const [rounding, setRounding] = useState<boolean>(initialRounding)
+    const { addMessage } = useUI()
+    const [loading, setLoading] = useState(false)
+    const [checkingBalance, setCheckingBalance] = useState(false)
+    const [items, setItems] = useState<HotItem[]>(initialHotConfig.sort((a, b) => a.order - b.order))
+    const [markup, setMarkup] = useState<number>(initialMarkup)
+    const [rounding, setRounding] = useState<boolean>(initialRounding)
+    const [topupProducts, setTopupProducts] = useState<TopupProductItem[]>(initialTopupProducts)
 
-  const addItem = () => {
-    setItems([...items, { name: "", order: items.length + 1 }])
-  }
+    const addItem = () => {
+      setItems([...items, { name: "", order: items.length + 1 }])
+    }
 
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index))
-  }
+    const addTopupProduct = () => {
+      const newTempProduct: TopupProductItem = {
+        id: `temp-${Date.now()}`,
+        name: "",
+        vngProductId: "",
+        cardValue: 20000,
+        serviceCode: "ZING",
+        sellPrice: 25000,
+        enabled: false,
+        sortOrder: topupProducts.length
+      }
+      setTopupProducts([newTempProduct, ...topupProducts])
+    }
+
+    const removeItem = (index: number) => {
+      setItems(items.filter((_, i) => i !== index))
+    }
 
   const updateItem = (index: number, name: string) => {
     const newItems = [...items]
@@ -227,23 +242,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Quản Lý Sản Phẩm Nạp Tự Động</h3>
           </div>
           <button
-            onClick={async () => {
-              const result = await createTopupProduct({
-                name: "Gói mới",
-                vngProductId: "",
-                cardValue: 20000,
-                serviceCode: "ZING",
-                sellPrice: 25000,
-                enabled: false,
-                sortOrder: initialTopupProducts.length
-              })
-              if (result.success) {
-                addMessage({ type: "success", text: "Đã thêm sản phẩm mới!" })
-                window.location.reload()
-              } else {
-                addMessage({ type: "error", text: result.error || "Lỗi" })
-              }
-            }}
+            onClick={addTopupProduct}
             className="px-3 py-1.5 bg-white text-muted-foreground border border-border rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/50 transition-all flex items-center space-x-2"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -252,7 +251,7 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
         </div>
 
         <div className="p-6">
-          {initialTopupProducts.length === 0 ? (
+          {topupProducts.length === 0 ? (
             <div className="text-center py-12 border-2 border-dashed border-border rounded-xl opacity-50">
               <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
               <p className="text-xs font-bold uppercase tracking-widest">Chưa có sản phẩm nạp tự động</p>
@@ -260,26 +259,45 @@ export default function AdminNapGameClient({ initialHotConfig, initialMarkup, in
             </div>
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {initialTopupProducts.map((tp) => (
+              {topupProducts.map((tp) => (
                 <TopupProductCard 
                   key={tp.id} 
                   product={tp} 
                   onUpdate={async (data) => {
-                    const result = await updateTopupProduct(tp.id, data)
-                    if (result.success) {
-                      addMessage({ type: "success", text: "Đã cập nhật sản phẩm!" })
-                      return true
+                    if (tp.id.startsWith('temp-')) {
+                      const result = await createTopupProduct({ ...data, sortOrder: tp.sortOrder })
+                      if (result.success) {
+                        addMessage({ type: "success", text: "Đã thêm sản phẩm mới!" })
+                        // Replace temp with real data
+                        setTopupProducts(prev => prev.map(p => p.id === tp.id ? (result as any).product : p))
+                        return true
+                      } else {
+                        addMessage({ type: "error", text: result.error || "Lỗi" })
+                        return false
+                      }
                     } else {
-                      addMessage({ type: "error", text: result.error || "Lỗi" })
-                      return false
+                      const result = await updateTopupProduct(tp.id, data)
+                      if (result.success) {
+                        addMessage({ type: "success", text: "Đã cập nhật sản phẩm!" })
+                        // Update state
+                        setTopupProducts(prev => prev.map(p => p.id === tp.id ? { ...p, ...data } : p))
+                        return true
+                      } else {
+                        addMessage({ type: "error", text: result.error || "Lỗi" })
+                        return false
+                      }
                     }
                   }} 
                   onDelete={async () => {
+                    if (tp.id.startsWith('temp-')) {
+                      setTopupProducts(prev => prev.filter(p => p.id !== tp.id))
+                      return
+                    }
                     if (!confirm("Xác nhận xóa sản phẩm này?")) return
                     const result = await deleteTopupProduct(tp.id)
                     if (result.success) { 
                       addMessage({ type: "success", text: "Đã xóa sản phẩm!" })
-                      window.location.reload() 
+                      setTopupProducts(prev => prev.filter(p => p.id !== tp.id))
                     } else {
                       addMessage({ type: "error", text: result.error || "Lỗi" })
                     }

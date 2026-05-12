@@ -4,7 +4,7 @@ import React from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Gamepad2, Package, ChevronRight, Zap, ShieldCheck, Clock, ArrowRightLeft } from "lucide-react"
-import PageHeader from "@/components/shared/PageHeader"
+import UserPageHeader from "@/components/shared/UserPageHeader"
 import { ROUTES } from "@/lib/routes"
 
 export default function ToolsLandingPage() {
@@ -25,13 +25,14 @@ export default function ToolsLandingPage() {
       color: "bg-accent/10 text-accent",
     }
   ]
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
-      <PageHeader 
+    <div className="min-h-screen bg-background">
+      <UserPageHeader 
         title="Trung Tâm Công Cụ" 
         subtitle="Tổng hợp các tiện ích hỗ trợ chơi game và dịch vụ nạp game chuyên nghiệp"
       />
+
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-12">
 
       {/* Grid of Tools */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -94,6 +95,7 @@ export default function ToolsLandingPage() {
           title="Hỗ Trợ 24/7"
           desc="Đội ngũ kỹ thuật hỗ trợ giải đáp mọi thắc mắc."
         />
+      </div>
       </div>
     </div>
   )

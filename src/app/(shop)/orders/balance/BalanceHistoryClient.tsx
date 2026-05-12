@@ -20,7 +20,7 @@ import { format } from "date-fns"
 import { vi } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import Navbar from "@/components/layouts/Navbar"
-import PageHeader from "@/components/shared/PageHeader"
+import UserPageHeader from "@/components/shared/UserPageHeader"
 
 interface Transaction {
   id: string
@@ -89,13 +89,13 @@ export default function BalanceHistoryClient() {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="pt-24 pb-20 px-4 max-w-6xl mx-auto space-y-6">
-        <PageHeader
-          subtitle="Theo Dõi Biến Động Tài Khoản"
-          title="BIẾN ĐỘNG"
-          highlightTitle="SỐ DƯ"
-          className="!px-0"
-        />
+      <UserPageHeader
+        subtitle="Theo Dõi Biến Động Tài Khoản"
+        title="BIẾN ĐỘNG"
+        highlightTitle="SỐ DƯ"
+      />
+
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

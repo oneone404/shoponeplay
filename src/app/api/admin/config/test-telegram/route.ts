@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { sendWithdrawalNotification, sendOrderNotification } from "@/lib/telegram"
+import { sendWithdrawalNotification, sendOrderNotification, sendTestTopupQRNotification } from "@/lib/telegram"
 
 export async function POST(req: Request) {
   try {
@@ -34,6 +34,8 @@ export async function POST(req: Request) {
         ],
         createdAt: new Date()
       }, configOverride)
+    } else if (testType === "topup_qr") {
+      result = await sendTestTopupQRNotification(configOverride)
     } else {
       // Mặc định test withdrawal
       result = await sendWithdrawalNotification({

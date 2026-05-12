@@ -37,26 +37,32 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const showLoader = process.env.NEXT_PUBLIC_SHOW_LOADER_DEBUG === 'true';
-
   const config = await getSiteConfig();
+  const showLoader = config.MAINTENANCE_MODE === 'true';
 
   return (
     <html lang="vi" className="light" suppressHydrationWarning>
       <body className={`${inter.className} ${luckiestGuy.variable} antialiased min-h-screen flex flex-col font-sans`}>
-        {showLoader && <PremiumLoader />}
-        <ZoomControl />
-        <AppProviders>
-          <div className="flex-1">
-            <Suspense fallback={null}>
-              <PageLoader />
-            </Suspense>
-            {children}
+        {showLoader ? (
+          <div className="fixed inset-0 z-[999999]">
+            <PremiumLoader />
           </div>
-          <Footer logoUrl={config.siteFooterLogo} />
-          <BottomNav />
-          <ChatWidget />
-        </AppProviders>
+        ) : (
+          <>
+            <ZoomControl />
+            <AppProviders>
+              <div className="flex-1">
+                <Suspense fallback={null}>
+                  <PageLoader />
+                </Suspense>
+                {children}
+              </div>
+              <Footer logoUrl={config.siteFooterLogo} />
+              <BottomNav />
+              <ChatWidget />
+            </AppProviders>
+          </>
+        )}
       </body>
     </html>
   );

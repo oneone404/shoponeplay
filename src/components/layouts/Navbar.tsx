@@ -150,11 +150,10 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                   </button>
                 )}
 
-                {/* Backdrop & Dropdown with High-Performance CSS Transitions */}
                 {/* Backdrop - Dimmed click catcher */}
                 <div
                   className={cn(
-                    "fixed inset-0 z-10 bg-black/50 transition-opacity duration-300 ease-out",
+                    "fixed inset-0 z-[60] bg-black/50 transition-opacity duration-300 ease-out",
                     profileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                   )}
                   onClick={() => setProfileOpen(false)}
@@ -163,7 +162,7 @@ export default function Navbar({ logoUrl }: { logoUrl?: string }) {
                 {/* Dropdown Menu */}
                 <div
                   className={cn(
-                    "absolute right-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-20 py-1 origin-top-right overflow-hidden transition-all duration-[400ms] will-change-transform",
+                    "absolute right-0 mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl z-[70] py-1 origin-top-right overflow-hidden transition-all duration-[400ms] will-change-transform",
                     profileOpen
                       ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
                       : "opacity-0 -translate-y-2 scale-95 pointer-events-none"

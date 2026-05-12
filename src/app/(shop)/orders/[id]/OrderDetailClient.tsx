@@ -23,7 +23,7 @@ import { useUI } from "@/providers/UIProvider"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import PageHeader from "@/components/shared/PageHeader"
+import UserPageHeader from "@/components/shared/UserPageHeader"
 
 interface OrderDetailClientProps {
   order: any
@@ -96,30 +96,29 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <main className="pt-24 pb-20 px-4 max-w-6xl mx-auto space-y-6">
-        {/* Header Section */}
-        <PageHeader 
-          subtitle={`Mã giao dịch: #${order.id.slice(-12).toUpperCase()}`}
-          title="CHI TIẾT"
-          highlightTitle="ĐƠN HÀNG"
-          showBackButton={true}
-          className="!px-0"
-        >
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={copyAllAccounts}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-xl font-bold text-xs md:text-sm hover:bg-secondary active:scale-95 transition-all whitespace-nowrap shadow-sm"
-            >
-              <Copy className="w-4 h-4" /> COPY TẤT CẢ
-            </button>
-            <button 
-              onClick={exportToFile}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold text-xs md:text-sm hover:bg-primary/90 active:scale-95 transition-all whitespace-nowrap shadow-lg shadow-primary/20"
-            >
-              <Download className="w-4 h-4" /> XUẤT FILE TXT
-            </button>
-          </div>
-        </PageHeader>
+      <UserPageHeader 
+        subtitle={`Mã giao dịch: #${order.id.slice(-12).toUpperCase()}`}
+        title="CHI TIẾT"
+        highlightTitle="ĐƠN HÀNG"
+        showBackButton={true}
+      >
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={copyAllAccounts}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-background border border-border text-foreground rounded-xl font-bold text-xs md:text-sm hover:bg-secondary active:scale-95 transition-all whitespace-nowrap shadow-sm"
+              >
+                <Copy className="w-4 h-4" /> COPY TẤT CẢ
+              </button>
+              <button 
+                onClick={exportToFile}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-bold text-xs md:text-sm hover:bg-primary/90 active:scale-95 transition-all whitespace-nowrap shadow-lg shadow-primary/20"
+              >
+                <Download className="w-4 h-4" /> XUẤT FILE TXT
+              </button>
+            </div>
+          </UserPageHeader>
+
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
 
         {/* Stats Cards Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

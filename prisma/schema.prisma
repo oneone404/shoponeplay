@@ -68,176 +68,134 @@ model User {
   totalDeposited       Float                @default(0)
   twoFactorEnabled     Boolean              @default(false)
   twoFactorSecret      String?
-  sellerBankName       String?              // Ngân hàng rút tiền mặc định
-  sellerAccountNumber  String?              // Số tài khoản rút tiền
-  sellerAccountName    String?              // Tên chủ tài khoản
+  sellerBankName       String?
+  sellerAccountNumber  String?
+  sellerAccountName    String?
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
   lastIP               String?
+  accountId            String?
+  savedAccountIds      Json                 @default("[]")
   accounts             Account[]
   accountExportBatches AccountExportBatch[]
-  cartItems            CartItem[]
-  transactions         Transaction[]        @relation("UserTransactions")
+  uploadedSecrets      AccountSecret[]      @relation("SecretUploader")
   bankDeposits         BankDeposit[]        @relation("UserBankDeposits")
   cardDeposits         CardDeposit[]        @relation("UserCardDeposits")
+  cartItems            CartItem[]
+  hackOrders           HackOrder[]
   orders               Order[]
   posts                Post[]
-  sessions             Session[]
-  activities           UserActivity[]
   uploadedProducts     Product[]            @relation("ProductUploader")
-  uploadedSecrets      AccountSecret[]      @relation("SecretUploader")
-  withdrawals          Withdrawal[]
   serviceOrders        ServiceOrder[]
-  hackOrders           HackOrder[]
+  sessions             Session[]
   topupOrders          TopupOrder[]
-  accountId            String?              // Game Account ID mac dinh cho dich vu nap game
-  savedAccountIds      Json                 @default("[]") // Danh sách các ID đã lưu [{id, name}]
-}
-
-// --- NEW: Game Services Models ---
-
-enum ServiceType {
-  LEVELING
-  TOPUP
-  OTHER
-}
-
-enum ServiceStatus {
-  ACTIVE
-  MAINTENANCE
-  HIDDEN
-}
-
-enum ServiceOrderStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  CANCELLED
+  transactions         Transaction[]        @relation("UserTransactions")
+  activities           UserActivity[]
+  withdrawals          Withdrawal[]
+  giftcodeHistories    GiftcodeHistory[]
+  config               UserConfig?
 }
 
 model GameService {
-  id          String        @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
-  slug        String        @unique
+  slug        String          @unique
   thumbnail   String
-  description String?       @db.Text
-  type        ServiceType   @default(LEVELING)
-  status      ServiceStatus @default(ACTIVE)
-  fields      Json?         // Định dạng các ô input khách cần điền
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  description String?
+  type        ServiceType     @default(LEVELING)
+  status      ServiceStatus   @default(ACTIVE)
+  fields      Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   options     ServiceOption[]
   orders      ServiceOrder[]
 }
 
 model ServiceOption {
-  id          String        @id @default(cuid())
+  id          String         @id @default(cuid())
   serviceId   String
   name        String
   price       Float
   thumbnail   String?
-  description String?       @db.Text
-  status      ServiceStatus @default(ACTIVE)
-  service     GameService   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  description String?
+  status      ServiceStatus  @default(ACTIVE)
+  service     GameService    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   orders      ServiceOrder[]
 }
 
 model ServiceOrder {
-  id              String             @id @default(cuid())
-  serviceId       String
-  optionId        String
-  userId          String
-  customerData    Json               // Lưu dữ liệu khách điền (TK, MK, Server...)
-  totalAmount     Float
-  status          ServiceOrderStatus @default(PENDING)
-  adminNote       String?            @db.Text
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  service         GameService        @relation(fields: [serviceId], references: [id])
-  option          ServiceOption      @relation(fields: [optionId], references: [id])
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String             @id @default(cuid())
+  serviceId    String
+  optionId     String
+  userId       String
+  customerData Json
+  totalAmount  Float
+  status       ServiceOrderStatus @default(PENDING)
+  adminNote    Json               @default("[]")
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  option       ServiceOption      @relation(fields: [optionId], references: [id])
+  service      GameService        @relation(fields: [serviceId], references: [id])
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
 }
 
-// Bảng Sổ Cái (Ledger) - Lưu mọi biến động số dư
 model Transaction {
-  id             String          @id @default(cuid())
-  userId         String
-  amount         Float           // Số tiền biến động (+/-)
-  balanceBefore  Float           @default(0)
-  balanceAfter   Float           @default(0)
-  type           TransactionType
-  description    String?         // Mô tả giao dịch
-
-  // Liên kết tới các bảng nghiệp vụ (Optional)
-  orderId        String?         // Link tới đơn hàng
-  bankDepositId  String?         // Link tới chi tiết nạp bank
-  cardDepositId  String?         // Link tới chi tiết nạp thẻ
-  adminId        String?         // ID Admin (nếu là giao dịch thủ công)
-
-  createdAt      DateTime        @default(now())
-  user           User            @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
+  id            String          @id @default(cuid())
+  userId        String
+  amount        Float
+  balanceBefore Float           @default(0)
+  balanceAfter  Float           @default(0)
+  type          TransactionType
+  description   String?
+  orderId       String?
+  bankDepositId String?
+  cardDepositId String?
+  adminId       String?
+  createdAt     DateTime        @default(now())
+  user          User            @relation("UserTransactions", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
   @@index([createdAt])
 }
 
-// Chi tiết nạp tiền qua Ngân hàng
 model BankDeposit {
-  id            String            @id @default(cuid())
+  id            String        @id @default(cuid())
   userId        String
-  amount        Float             // Số tiền khách nạp
-  bankName      String            // VCB, MB, MOMO...
-  transactionId String?           @unique // Mã GD bank
-  description   String?           // Nội dung chuyển khoản
-  status        DepositStatus     @default(PENDING)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  user          User              @relation("UserBankDeposits", fields: [userId], references: [id], onDelete: Cascade)
+  amount        Float
+  bankName      String
+  transactionId String?       @unique
+  description   String?
+  status        DepositStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation("UserBankDeposits", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
 }
 
-// Chi tiết nạp tiền qua Thẻ cào
 model CardDeposit {
-  id             String            @id @default(cuid())
-  userId         String
-  cardType       String            // VIETTEL, MOBI...
-  serial         String
-  pin            String
-  declaredValue  Float             // Mệnh giá khai báo
-  realValue      Float?            // Mệnh giá thực từ API
-  amount         Float?            // Tiền thực cộng (sau chiết khấu)
-  requestId      String            @unique // Mã đơn gửi API
-  status         DepositStatus     @default(PENDING)
-  note           String?           // Ghi chú lỗi (nếu có)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  user           User              @relation("UserCardDeposits", fields: [userId], references: [id], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  userId        String
+  cardType      String
+  serial        String
+  pin           String
+  declaredValue Float
+  realValue     Float?
+  amount        Float?
+  requestId     String        @unique
+  status        DepositStatus @default(PENDING)
+  note          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation("UserCardDeposits", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
-}
-
-enum TransactionType {
-  DEPOSIT       // Nạp tiền (chung)
-  PURCHASE      // Mua hàng
-  REFUND        // Hoàn tiền
-  ADMIN_ADD     // Admin cộng tiền
-  ADMIN_SUB     // Admin trừ tiền
-  WITHDRAW      // Rút tiền
-  SALE_REVENUE  // Doanh thu bán hàng
-}
-
-enum DepositStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  CANCELLED
 }
 
 model Account {
@@ -355,11 +313,11 @@ model AccountExportBatch {
 }
 
 model Order {
-  id          String      @id @default(cuid())
+  id          String        @id @default(cuid())
   userId      String
   totalAmount Float
-  status      OrderStatus @default(COMPLETED)
-  createdAt   DateTime    @default(now())
+  status      OrderStatus   @default(COMPLETED)
+  createdAt   DateTime      @default(now())
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       OrderItem[]
   profit      SystemProfit?
@@ -375,7 +333,7 @@ model OrderItem {
   typeSnapshot     String
   deliveredSecrets AccountSecret[]
   order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product          Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product          Product?        @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
@@ -446,6 +404,175 @@ model UserActivity {
   @@index([createdAt])
 }
 
+model Withdrawal {
+  id            String         @id @default(cuid())
+  userId        String
+  amount        Float
+  bankName      String
+  accountNumber String
+  accountName   String
+  status        WithdrawStatus @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model SystemProfit {
+  id        String   @id @default(cuid())
+  amount    Float
+  type      String   @default("ORDER_FEE")
+  orderId   String?  @unique
+  note      String?
+  createdAt DateTime @default(now())
+  order     Order?   @relation(fields: [orderId], references: [id])
+}
+
+model HackTool {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  version         String
+  description     String?
+  thumbnail       String?
+  fileName        String?
+  fileSize        String?
+  features        Json?
+  requirements    String?
+  videoUrl        String?
+  status          HackStatus       @default(ACTIVE)
+  totalDownload   Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  prices          Json?
+  externalId      Int?
+  changelog       Json?
+  downloadUrl     Json?
+  freeKeySessions FreeKeySession[]
+  orders          HackOrder[]
+}
+
+model FreeKeySession {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  hackId      String
+  sessionCode String?
+  visitorId   String?
+  status      String   @default("PENDING")
+  key         String?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  hack        HackTool @relation(fields: [hackId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([visitorId])
+}
+
+model HackOrder {
+  id         String   @id @default(cuid())
+  userId     String
+  hackId     String
+  duration   String
+  machines   Int      @default(1)
+  totalPrice Float
+  key        String?
+  status     String   @default("COMPLETED")
+  createdAt  DateTime @default(now())
+  hack       HackTool @relation(fields: [hackId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([hackId])
+}
+
+model TopupProduct {
+  id           String       @id @default(cuid())
+  name         String
+  vngProductId String?
+  cardValue    Int
+  serviceCode  String       @default("ZING")
+  sellPrice    Int
+  enabled      Boolean      @default(true)
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  orders       TopupOrder[]
+}
+
+model TopupOrder {
+  id             String           @id @default(cuid())
+  userId         String
+  productId      String?
+  roleId         String
+  roleName       String
+  serverId       String
+  amount         Int
+  cardValue      Int
+  cardRequestId  String?
+  cardOrderCode  String?
+  cardSerial     String?
+  cardPin        String?
+  vngProductId   String?
+  vngUserId      String?
+  vngReturnCode  Int?
+  status         TopupOrderStatus @default(PENDING)
+  retryCount     Int              @default(0)
+  maxRetries     Int              @default(5)
+  errorMessage   String?
+  statusLog      Json             @default("[]")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  completedAt    DateTime?
+  productName    String?
+  vngOrderNumber String?
+  vngQrCode      String?
+  vngQrExpiredAt DateTime?
+  adminNote      Json             @default("[]")
+  product        TopupProduct?    @relation(fields: [productId], references: [id])
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ServiceType {
+  LEVELING
+  TOPUP
+  OTHER
+}
+
+enum ServiceStatus {
+  ACTIVE
+  MAINTENANCE
+  HIDDEN
+}
+
+enum ServiceOrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum TransactionType {
+  DEPOSIT
+  PURCHASE
+  REFUND
+  ADMIN_ADD
+  ADMIN_SUB
+  WITHDRAW
+  SALE_REVENUE
+}
+
+enum DepositStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
 enum ProductType {
   PLAY
   RANDOM
@@ -482,31 +609,6 @@ enum AccountExportAction {
   EXPORT_AND_DISABLE
 }
 
-model Withdrawal {
-  id            String         @id @default(cuid())
-  userId        String
-  amount        Float
-  bankName      String
-  accountNumber String
-  accountName   String
-  status        WithdrawStatus @default(PENDING)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model SystemProfit {
-  id        String   @id @default(cuid())
-  amount    Float
-  type      String   @default("ORDER_FEE")
-  orderId   String?  @unique
-  order     Order?   @relation(fields: [orderId], references: [id])
-  note      String?
-  createdAt DateTime @default(now())
-}
-
 enum WithdrawStatus {
   PENDING
   COMPLETED
@@ -514,147 +616,52 @@ enum WithdrawStatus {
   REJECTED
 }
 
-// --- Hack Tools ---
-
 enum HackStatus {
   ACTIVE
   MAINTENANCE
   HIDDEN
 }
 
-model HackTool {
-  id            String      @id @default(cuid())
-  name          String
-  slug          String      @unique
-  version       String
-  description   String?     @db.Text
-  externalId    Int?                            // ID Game trên HackViet.io
-  thumbnail     String?
-  downloadUrl   Json?
-  fileName      String?
-  fileSize      String?
-  features      Json?                           // [{name, category, icon}]
-  requirements  String?     @db.Text
-  changelog     Json?                           // [{version, content, date}]
-  prices        Json?                           // [{label: "1 Ngày", price: 10000}]
-  videoUrl      String?
-  status        HackStatus  @default(ACTIVE)
-  totalDownload Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  orders           HackOrder[]
-  freeKeySessions  FreeKeySession[]
-}
-
-model FreeKeySession {
-  id            String   @id @default(cuid())
-  token         String   @unique                 // Token nội bộ gửi cho Link4M
-  hackId        String
-  sessionCode   String?                          // session_code từ HackViet
-  visitorId     String?                          // Định danh trình duyệt
-  status        String   @default("PENDING")     // PENDING, VERIFIED, CLAIMED
-  key           String?                          // Key nhận được sau khi hoàn tất
-  createdAt     DateTime @default(now())
-  expiresAt     DateTime
-
-  hack          HackTool @relation(fields: [hackId], references: [id], onDelete: Cascade)
-
-  @@index([token])
-  @@index([visitorId])
-}
-
-model HackOrder {
-  id          String    @id @default(cuid())
-  userId      String
-  hackId      String
-  duration    String    // Ví dụ: "1 Ngày", "1 Tuần"
-  machines    Int       @default(1)
-  totalPrice  Float
-  key         String?   // Key sau khi mua thành công (giả lập hoặc sinh ra)
-  status      String    @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
-  createdAt   DateTime  @default(now())
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hack        HackTool  @relation(fields: [hackId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([hackId])
-}
-
-// --- Auto Topup System ---
-
 enum TopupOrderStatus {
-  PENDING          // Vua tao, chua xu ly
-  WAITING_STOCK    // NCC het hang, dang doi thu lai
-  WAITING_ADMIN_PAY // Cho Admin quet ma QR thanh toan manual
-  BUYING_CARD      // Dang mua the tu NCC
-  WAITING_CARD     // NCC dang xu ly (status=2), dang retry
-  CARD_READY       // Da co the, chuan bi nap VNG
-  PROCESSING_VNG   // Dang nap vao VNG
-  COMPLETED        // Nap thanh cong
-  ERROR            // Loi (can admin kiem tra)
-  REFUNDED         // Da hoan tien cho user
+  PENDING
+  BUYING_CARD
+  WAITING_CARD
+  CARD_READY
+  PROCESSING_VNG
+  COMPLETED
+  ERROR
+  REFUNDED
+  WAITING_STOCK
+  WAITING_ADMIN_PAY
 }
 
-model TopupProduct {
-  id              String        @id @default(cuid())
-  name            String                                // Ten hien thi va cung la ten de khop voi VNG: "Gói Ngày", "Gói Tuần PLUS"
-  vngProductId    String?                               // Product ID tren VNG (co the de trong, se tu lay theo name)
-  cardValue       Int                                   // Menh gia the Zing can mua (VND): 20000, 100000
-  serviceCode     String        @default("ZING")        // Loai the: ZING, GARENA...
-  sellPrice       Int                                   // Gia ban cho user (Gia niem yet)
-  enabled         Boolean       @default(true)          // Bat/tat san pham
-  sortOrder       Int           @default(0)             // Thu tu hien thi
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  orders          TopupOrder[]
-}
-
-model TopupOrder {
-  id              String           @id @default(cuid())
-  userId          String
-  productId       String?
-  productName     String?                               // Ten goi nap (Snapshot)
-
-  // Thong tin nhan vat
-  roleId          String                                // Player ID
-  roleName        String                                // Ten nhan vat
-  serverId        String                                // Server ID
-
-  // Thong tin thanh toan
-  amount          Int                                   // So tien user tra
-  cardValue       Int                                   // Menh gia the mua tu NCC
-
-  // Thong tin the (tu NCC)
-  cardRequestId   String?                               // request_id gui cho NCC
-  cardOrderCode   String?                               // order_code tu NCC
-  cardSerial      String?                               // Serial the
-  cardPin         String?                               // PIN the (ma hoa truoc khi luu)
-
-  // Thong tin VNG
-  vngProductId    String?                               // Product ID VNG
-  vngUserId       String?                               // VNG userID
-  vngReturnCode   Int?                                  // Return code tu VNG createOrder
-  vngQrCode       String?                               // Ma VietQR tu VNG
-  vngOrderNumber  String?                               // So don hang tu VNG (Manual)
-  vngQrExpiredAt  DateTime?                             // Thoi gian het han QR (15p)
-
-  // Trang thai & Log
-  status          TopupOrderStatus @default(PENDING)
-  retryCount      Int              @default(0)          // So lan retry redownload
-  maxRetries      Int              @default(5)          // Toi da retry
-  errorMessage    String?                               // Thong bao loi (neu co)
-  statusLog       Json             @default("[]")       // Log tung buoc: [{step, status, time, detail}]
-
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  completedAt     DateTime?
-
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product         TopupProduct?    @relation(fields: [productId], references: [id])
+model GiftcodeHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  code      String
+  status    String   // SUCCESS, FAILED
+  message   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([status])
-  @@index([createdAt])
+  @@index([code])
+}
+
+model UserConfig {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  autoGiftcode Boolean  @default(false)
+  settings     Json     @default("{}") // Cho các cấu hình mở rộng sau này
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GlobalGiftcode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  gameCode  String   @default("661")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 }

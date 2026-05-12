@@ -137,10 +137,10 @@ export async function createTopupProduct(data: {
       return { success: false, error: "Khong co quyen" }
     }
 
-    await prisma.topupProduct.create({ data })
+    const product = await prisma.topupProduct.create({ data })
     revalidatePath("/admin/settings/napgame")
     revalidatePath("/app/napgame")
-    return { success: true }
+    return { success: true, product }
   } catch (error) {
     return { success: false, error: (error as Error).message }
   }
@@ -161,10 +161,10 @@ export async function updateTopupProduct(id: string, data: {
       return { success: false, error: "Khong co quyen" }
     }
 
-    await prisma.topupProduct.update({ where: { id }, data })
+    const product = await prisma.topupProduct.update({ where: { id }, data })
     revalidatePath("/admin/settings/napgame")
     revalidatePath("/app/napgame")
-    return { success: true }
+    return { success: true, product }
   } catch (error) {
     return { success: false, error: (error as Error).message }
   }

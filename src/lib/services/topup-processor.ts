@@ -39,7 +39,7 @@ export function encryptPin(pin: string): string {
 export function decryptPin(encryptedPin: string): string {
   try {
     if (!encryptedPin || encryptedPin === "***" || !encryptedPin.includes(':')) return encryptedPin
-    
+
     const [ivHex, encrypted] = encryptedPin.split(':')
     const secretKey = crypto.createHash('sha256').update(String(process.env.NEXTAUTH_SECRET || 'default_secret')).digest('base64').substring(0, 32)
     const iv = Buffer.from(ivHex, 'hex')
@@ -163,16 +163,16 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
     try {
       const vngSession = await quickAuth(order.roleId)
       const products = await getProducts(vngSession)
-      
+
       const productName = order.productName || order.product?.name || ""
-      const targetProductEntry = Object.entries(products).find(([id, p]) => 
+      const targetProductEntry = Object.entries(products).find(([id, p]) =>
         p.productName.toLowerCase().trim() === productName.toLowerCase().trim() && p.enable === 1
       )
 
       if (!targetProductEntry) {
         throw new Error(`Gói "${productName}" không khả dụng trên VNG cho nhân vật này.`)
       }
-      
+
       await prisma.topupOrder.update({
         where: { id: orderId },
         data: { vngUserId: vngSession.userID, vngProductId: targetProductEntry[0] }
@@ -187,7 +187,7 @@ export async function processTopupOrder(orderId: string): Promise<ProcessResult>
 
     // ============ STEP 2: Kiem tra so du dai ly ============
     await logStep(orderId, "CHECK_BALANCE", "OK", "Kiem tra so du dai ly NCC...")
-    
+
     let agentBalance: number
     try {
       const balanceResult = await getAgentBalance()
@@ -355,9 +355,9 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
     let activeVngProductId = order.product?.vngProductId || ""
     try {
       const products = await getProducts(vngSession)
-      
+
       const productName = order.productName || order.product?.name || ""
-      const targetProductEntry = Object.entries(products).find(([id, p]) => 
+      const targetProductEntry = Object.entries(products).find(([id, p]) =>
         p.productName.toLowerCase().trim() === productName.toLowerCase().trim() && p.enable === 1
       )
 
@@ -366,7 +366,7 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
       }
 
       activeVngProductId = targetProductEntry[0]
-      
+
       await logStep(orderId, "CHECK_PRODUCT", "OK", `Tim thay goi ${productName} (VNG ID: ${activeVngProductId})`)
     } catch (error: any) {
       await logStep(orderId, "CHECK_PRODUCT", "ERROR", error.message)
@@ -405,7 +405,7 @@ export async function finishTopupProcess(orderId: string, cardSerial: string, ca
     } catch (error: any) {
       await logStep(orderId, "VNG_ERROR", "ERROR", error.message)
       await updateOrderStatus(orderId, "ERROR", { errorMessage: "Lỗi nạp vào VNG: " + error.message })
-      
+
       // Thong bao Telegram
       await sendTopupNotification({ order, type: "ERROR", detail: `Lỗi nạp vào VNG (thẻ đã mua): ${error.message}` })
 
@@ -475,9 +475,9 @@ export async function retryTopupOrder(orderId: string): Promise<ProcessResult> {
   const order = await prisma.topupOrder.findUnique({
     where: { id: orderId }
   })
-  
+
   if (!order) throw new Error("Đơn hàng không tồn tại")
-  
+
   // Nếu đơn hàng đã hoàn thành hoặc đang chờ thì không cho retry
   if (["COMPLETED", "REFUNDED"].includes(order.status)) {
     throw new Error("Đơn hàng đã ở trạng thái cuối cùng, không thể thử lại")
@@ -488,7 +488,7 @@ export async function retryTopupOrder(orderId: string): Promise<ProcessResult> {
     const rawPin = decryptPin(order.cardPin)
     return finishTopupProcess(orderId, order.cardSerial, rawPin)
   }
-  
+
   // Nếu chưa có thẻ -> Chạy lại từ đầu (processTopupOrder)
   return processTopupOrder(orderId)
 }
@@ -505,7 +505,7 @@ async function processManualQRTopup(orderId: string): Promise<ProcessResult> {
   await logStep(orderId, "AUTH_VNG", "OK", "Xác thực nhân vật VNG...")
   try {
     const vngSession = await quickAuth(order.roleId)
-    
+
     await logStep(orderId, "CREATE_QR", "OK", "Đang tạo mã QR VNG...")
     const qrResult = await createVietQROrder({
       session: vngSession,
@@ -517,13 +517,20 @@ async function processManualQRTopup(orderId: string): Promise<ProcessResult> {
       throw new Error(qrResult.message || "Không thể tạo mã QR từ VNG")
     }
 
-    // Luu thong tin QR
+    // Luu thong tin QR (Luu dang JSON de bóc tách STK/Ngan hang cho VietQR)
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 phut
+    const qrData = JSON.stringify({
+      qrCode: qrResult.qrCode,
+      bankAccount: qrResult.bankAccount,
+      bankName: qrResult.bankName,
+      bankAccountName: qrResult.bankAccountName
+    })
+
     await prisma.topupOrder.update({
       where: { id: orderId },
       data: {
         status: "WAITING_ADMIN_PAY",
-        vngQrCode: qrResult.qrCode,
+        vngQrCode: qrData,
         vngOrderNumber: qrResult.orderNumber,
         vngQrExpiredAt: expiresAt,
         vngUserId: vngSession.userID
@@ -535,11 +542,11 @@ async function processManualQRTopup(orderId: string): Promise<ProcessResult> {
     // Gui Telegram cho Admin
     await sendTopupQRNotification(orderId)
 
-    return { 
-      success: true, 
-      orderId, 
-      status: "WAITING_ADMIN_PAY", 
-      message: "Đơn hàng đang chờ Admin thanh toán qua QR." 
+    return {
+      success: true,
+      orderId,
+      status: "WAITING_ADMIN_PAY",
+      message: "Đơn hàng đang chờ Admin thanh toán qua QR."
     }
 
   } catch (error: any) {
@@ -571,29 +578,34 @@ export async function processTopupQRAction(params: {
   if (!order) throw new Error("Đơn hàng không tồn tại")
 
   if (action === "done") {
-    if (order.status === "COMPLETED") return { success: true, message: "Đơn hàng đã hoàn thành trước đó" }
+    if (order.status === "COMPLETED") return { success: true, message: "Đơn Hàng Đã Được Xử Lý Trước Đó" }
 
+    const now = new Date()
     await prisma.topupOrder.update({
       where: { id: orderId },
       data: {
         status: "COMPLETED",
-        completedAt: new Date()
+        completedAt: now
       }
     })
 
-    await logStep(orderId, "MANUAL_PAY", "OK", `Admin ${adminName} xác nhận đã nạp tiền qua QR.`)
+    await logStep(orderId, "MANUAL_PAY", "OK", `Admin ${adminName} Xác Nhận Đã Nạp Tiền Qua QR.`)
 
-    return { success: true, message: `✅ Đã xác nhận nạp tiền cho đơn #${orderId.slice(-8).toUpperCase()}` }
+    const timeStr = now.toLocaleString("vi-VN")
+    return { 
+      success: true, 
+      message: `✅ Đã Xác Nhận Nạp Tiền Qua Đơn #${orderId.slice(-8).toUpperCase()}\n📅 HOÀN THÀNH: ${timeStr}` 
+    }
   }
 
   if (action === "retry") {
     // Regenerate QR
-    await logStep(orderId, "RETRY_QR", "OK", `Admin ${adminName} yêu cầu tạo lại mã QR.`)
-    
+    await logStep(orderId, "RETRY_QR", "OK", `Admin ${adminName} Yêu Cầu Tạo Lại Mã QR.`)
+
     // Luu y: processManualQRTopup se tu dong gui tin nhan Tele moi
     await processManualQRTopup(orderId)
 
-    return { success: true, message: `🔄 Đang tạo lại mã QR mới cho đơn #${orderId.slice(-8).toUpperCase()}...` }
+    return { success: true, message: "QR regenerated" }
   }
 
   throw new Error("Hành động không hợp lệ")

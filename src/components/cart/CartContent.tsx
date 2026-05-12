@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation"
 import { useUI } from "@/providers/UIProvider"
 import CartItemCard from "./CartItemCard"
 import CartFloatingSummary from "./CartFloatingSummary"
-import PageHeader from "@/components/shared/PageHeader"
+import UserPageHeader from "@/components/shared/UserPageHeader"
 import { ROUTES } from "@/lib/routes"
 import { useLanguage } from "@/providers/LanguageProvider"
 import { cn } from "@/lib/utils"
@@ -82,22 +82,22 @@ export default function CartContent() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="pt-24 pb-32">
-        <PageHeader 
-          subtitle={t.cart.header}
-          title={t.cart.title}
-          highlightTitle={t.cart.subtitle}
+      <main className="pb-32">
+        <UserPageHeader 
+          subtitle="QUẢN LÝ DANH SÁCH SẢN PHẨM"
+          title="GIỎ HÀNG"
+          highlightTitle="CỦA BẠN"
           showBackButton={true}
         >
           <div className="flex items-center space-x-2 bg-secondary/50 px-4 py-2 rounded-xl border border-border/50 shadow-sm backdrop-blur-md w-fit">
             <ShoppingBag className="w-4 h-4 text-primary" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {t.cart.items_count.replace("{count}", items.length.toString())}
+              CÓ {items.length} SẢN PHẨM
             </span>
           </div>
-        </PageHeader>
+        </UserPageHeader>
 
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-5xl mx-auto px-4 py-12">
 
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center space-y-4">

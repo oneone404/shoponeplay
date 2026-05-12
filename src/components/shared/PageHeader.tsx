@@ -10,6 +10,7 @@ interface PageHeaderProps {
   highlightTitle?: string
   showBackButton?: boolean
   className?: string
+  centered?: boolean
   children?: React.ReactNode // Right side actions
 }
 
@@ -19,20 +20,35 @@ export default function PageHeader({
   highlightTitle,
   showBackButton = false,
   className,
+  centered = false,
   children
 }: PageHeaderProps) {
   const router = useRouter()
 
   return (
-    <div className={cn("mb-8 px-4 max-w-7xl mx-auto w-full", className)}>
+    <div className={cn(
+      "mb-8 px-4 max-w-7xl mx-auto w-full",
+      centered && "flex flex-col items-center text-center",
+      className
+    )}>
       {/* Small Label with Line */}
-      <div className="flex items-center space-x-2 text-primary font-bold uppercase tracking-widest text-[10px] md:text-[11px] mb-2">
+      <div className={cn(
+        "flex items-center space-x-2 text-primary font-bold uppercase tracking-widest text-[10px] md:text-[11px] mb-2",
+        centered && "justify-center"
+      )}>
         <span className="w-8 h-[2px] bg-primary rounded-full"></span>
         <span className="opacity-80">{subtitle}</span>
+        {centered && <span className="w-8 h-[2px] bg-primary rounded-full"></span>}
       </div>
 
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-        <div className="flex items-center space-x-4">
+      <div className={cn(
+        "flex flex-col gap-6",
+        centered ? "items-center" : "md:flex-row md:items-start justify-between"
+      )}>
+        <div className={cn(
+          "flex items-center space-x-4",
+          centered && "justify-center"
+        )}>
           {showBackButton && (
             <button
               onClick={() => router.back()}
@@ -42,14 +58,17 @@ export default function PageHeader({
               <ChevronLeft className="w-4 h-4 md:w-5 h-5" />
             </button>
           )}
-          <h1 className="text-xl md:text-3xl font-bold uppercase tracking-tighter leading-tight">
+          <h1 className="text-lg md:text-2xl font-bold uppercase tracking-tighter leading-tight">
             {title} {highlightTitle && <span className="text-primary">{highlightTitle}</span>}
           </h1>
         </div>
 
         {/* Right side content (Filters, Badges, etc) */}
         {children && (
-          <div className="w-full md:w-auto">
+          <div className={cn(
+            "w-full md:w-auto",
+            centered && "flex justify-center"
+          )}>
             {children}
           </div>
         )}

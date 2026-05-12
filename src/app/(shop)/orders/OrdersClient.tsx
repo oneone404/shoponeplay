@@ -23,7 +23,7 @@ import { useLanguage } from "@/providers/LanguageProvider"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import PageHeader from "@/components/shared/PageHeader"
+import UserPageHeader from "@/components/shared/UserPageHeader"
 
 interface Order {
   id: string
@@ -94,14 +94,13 @@ export default function OrdersClient() {
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <main className="pt-24 pb-20 px-4 max-w-6xl mx-auto space-y-6">
-        {/* Header Section */}
-        <PageHeader
-          subtitle=" Quản Lý Đơn Hàng Đã Mua"
-          title="ĐƠN HÀNG"
-          highlightTitle="ĐÃ MUA"
-          className="!px-0"
-        />
+      <UserPageHeader
+        subtitle="Quản Lý Đơn Hàng Đã Mua"
+        title="ĐƠN HÀNG"
+        highlightTitle="ĐÃ MUA"
+      />
+
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-6">
 
         {/* Summary Cards - Admin Style */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

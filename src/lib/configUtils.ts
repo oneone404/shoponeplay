@@ -37,6 +37,7 @@ export interface SiteConfig {
   DEPOSIT_MIN_AMOUNT: string;
   PAY2S_TOKEN: string;
   LINK4M_API_TOKEN: string;
+  MAINTENANCE_MODE: string;
 }
 
 const defaultConfig: SiteConfig = {
@@ -78,7 +79,8 @@ const defaultConfig: SiteConfig = {
   DEPOSIT_SUFFIX: "chuyen tien",
   DEPOSIT_MIN_AMOUNT: "10000",
   PAY2S_TOKEN: "",
-  LINK4M_API_TOKEN: ""
+  LINK4M_API_TOKEN: "",
+  MAINTENANCE_MODE: "false"
 };
 
 export async function getSiteConfig(): Promise<SiteConfig> {

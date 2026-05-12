@@ -22,6 +22,10 @@ export const USER_ROUTES = {
     path: "/app/napgame",
     title: `Nạp Gói Game${SUFFIX}`
   },
+  GIFTCODE: {
+    path: "/app/giftcode",
+    title: `Nhập Code Game${SUFFIX}`
+  },
 
   HACKS: {
     path: "/app/hacks",
