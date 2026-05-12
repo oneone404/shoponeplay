@@ -1,7 +1,10 @@
-// Dùng require để đảm bảo tương thích hoàn toàn với Next.js/Turbopack
+// Cách import an toàn nhất cho Next.js 16 / Turbopack
 const Pusher = require("pusher-js");
 
-export const pusherClient = new Pusher(
+// Đảm bảo lấy đúng constructor dù bundler có bọc hay không
+const PusherConstructor = Pusher.default || Pusher;
+
+export const pusherClient = new PusherConstructor(
   process.env.NEXT_PUBLIC_PUSHER_KEY!,
   {
     cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
