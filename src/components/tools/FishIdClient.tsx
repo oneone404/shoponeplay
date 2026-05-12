@@ -41,6 +41,7 @@ export default function FishIdClient() {
   const [filterType, setFilterType] = useState<"all" | "fish" | "trash">("all");
   const [selectedGrades, setSelectedGrades] = useState<number[]>([1, 2, 3, 4, 5]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isVersionOpen, setIsVersionOpen] = useState(false);
 
   // 1. Fetch Versions
   useEffect(() => {
@@ -260,17 +261,51 @@ export default function FishIdClient() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="lg:col-span-3 flex items-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
-              <History className="w-4 h-4 text-slate-400 mr-3" />
-              <select 
-                className="bg-transparent w-full text-xs font-bold uppercase outline-none cursor-pointer"
-                value={selectedVersion}
-                onChange={(e) => setSelectedVersion(e.target.value)}
+            {/* Custom Version Selector */}
+            <div className="lg:col-span-3 relative">
+              <button 
+                onClick={() => setIsVersionOpen(!isVersionOpen)}
+                className="w-full flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 hover:bg-white hover:border-blue-300 transition-all group"
               >
-                {versions.map(v => (
-                  <option key={v} value={v}>VER: {v} {v === versions[versions.length-1] ? "(LATEST)" : ""}</option>
-                ))}
-              </select>
+                <div className="flex items-center gap-3">
+                  <History className="w-4 h-4 text-slate-400 group-hover:text-blue-500" />
+                  <span className="text-xs font-bold text-slate-700">{selectedVersion}</span>
+                </div>
+                <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", isVersionOpen && "rotate-180")} />
+              </button>
+
+              <AnimatePresence>
+                {isVersionOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsVersionOpen(false)} />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden max-h-60 overflow-y-auto"
+                    >
+                      {versions.map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => {
+                            setSelectedVersion(v);
+                            setIsVersionOpen(false);
+                          }}
+                          className={cn(
+                            "w-full text-left px-4 py-3 text-xs font-bold transition-colors flex items-center justify-between",
+                            selectedVersion === v ? "bg-blue-50 text-blue-700" : "hover:bg-slate-50 text-slate-600"
+                          )}
+                        >
+                          <span>{v}</span>
+                          {v === versions[versions.length - 1] && (
+                            <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded uppercase tracking-tighter">Mới nhất</span>
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
