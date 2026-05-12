@@ -114,8 +114,8 @@ export default function HomeClient({
             <div className="absolute inset-0 bg-white/20 animate-pulse mix-blend-overlay" />
           </div>
 
-          {/* Marquee Content with Mask Fade */}
-          <div className="relative flex-1 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+          {/* Marquee Content without Mask Fade */}
+          <div className="relative flex-1 overflow-hidden">
             <motion.div
               animate={{ x: [0, -2000] }}
               transition={{ ease: "linear", duration: 40, repeat: Infinity }}
