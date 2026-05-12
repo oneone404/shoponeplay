@@ -348,7 +348,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                           )}
                         >
                           <span>{v}</span>
-                          {v === versions[versions.length - 1] && (
+                          {v === versions[0] && (
                             <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded uppercase tracking-tighter">Mới nhất</span>
                           )}
                         </button>
