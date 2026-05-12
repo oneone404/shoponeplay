@@ -42,7 +42,8 @@ export async function GET(req: Request) {
 
     // 3. Save to local cache for next time
     // Only cache if data seems valid (has items)
-    if (data && data.data && data.data.length > 0) {
+    const hasData = Array.isArray(data) ? data.length > 0 : (data && data.data && data.data.length > 0);
+    if (hasData) {
       await fs.writeFile(cachePath, JSON.stringify(data), "utf-8");
     }
 

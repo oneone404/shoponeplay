@@ -72,7 +72,9 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
       try {
         const res = await fetch(`/api/tools/fish/data?version=${version}`);
         const result = await res.json();
-        const fishData = result.data || [];
+        
+        // Handle both object with data property or flat array
+        const fishData = Array.isArray(result) ? result : (result.data || []);
         
         // If searching and this version has no matches, try the previous version
         if (search && fishData.length > 0) {
