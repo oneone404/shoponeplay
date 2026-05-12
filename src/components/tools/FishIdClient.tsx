@@ -53,7 +53,9 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
       try {
         const res = await fetch("/api/tools/fish/versions");
         const json: VersionsResponse = await res.json();
-        setVersions(json.versions);
+        // Sort versions descending (newest first)
+        const sorted = [...json.versions].sort((a, b) => b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' }));
+        setVersions(sorted);
         setSelectedVersion(json.latest);
         setDataVersion(json.latest);
       } catch (err) {
@@ -66,45 +68,57 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   // 2. Data Fetching & Fallback Logic
   useEffect(() => {
     if (!selectedVersion) return;
+    
+    const controller = new AbortController();
 
     const fetchData = async (version: string, isAutoFallback = false) => {
-      setLoading(true);
+      if (!isAutoFallback) setLoading(true);
+      
       try {
-        const res = await fetch(`/api/tools/fish/data?version=${version}`);
+        const res = await fetch(`/api/tools/fish/data?version=${version}`, { signal: controller.signal });
         const result = await res.json();
         
         // Handle both object with data property or flat array
         const fishData = Array.isArray(result) ? result : (result.data || []);
         
         // If searching and this version has no matches, try the previous version
-        if (search && fishData.length > 0) {
-           const hasMatch = fishData.some((item: FishData) => 
-             item.name.toLowerCase().includes(search.toLowerCase()) || item.id.includes(search)
-           );
-
-           if (!hasMatch && !isAutoFallback) {
-              const currentIdx = versions.indexOf(version);
-              if (currentIdx > 0) {
-                 const prevVersion = versions[currentIdx - 1];
-                 setIsFallback(true);
-                 fetchData(prevVersion, true);
-                 return;
-              }
+        if (search && fishData.length === 0 && !isAutoFallback) {
+           const currentIdx = versions.indexOf(version);
+           // versions is sorted DESC (e.g. ["2.26.1", "2.26.0", ...])
+           // prev is currentIdx + 1
+           if (currentIdx !== -1 && currentIdx < versions.length - 1) {
+              const prevVersion = versions[currentIdx + 1];
+              setIsFallback(true);
+              fetchData(prevVersion, true);
+              return;
            }
         }
 
         setData(fishData);
         setDataVersion(version);
-        if (!isAutoFallback) setIsFallback(false);
-      } catch (err) {
-        addMessage({ type: "error", text: "Lỗi khi tải dữ liệu cá" });
-      } finally {
-        setLoading(false);
+        if (!isAutoFallback) {
+           setIsFallback(false);
+           setLoading(false);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+           console.error("Fetch error:", err);
+           // addMessage({ type: "error", text: "Lỗi khi tải dữ liệu cá" });
+           setLoading(false);
+        }
       }
     };
 
-    fetchData(selectedVersion);
-  }, [selectedVersion, search, versions, addMessage]);
+    // Use a small delay for search to avoid spamming
+    const timer = setTimeout(() => {
+      fetchData(selectedVersion);
+    }, search ? 300 : 0);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [selectedVersion, search, versions]);
 
   // 3. Group and Filtering Logic
   const groupedData = useMemo(() => {
