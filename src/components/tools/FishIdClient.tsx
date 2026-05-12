@@ -68,22 +68,22 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   // 2. Data Fetching & Fallback Logic
   useEffect(() => {
     if (!selectedVersion || versions.length === 0) return;
-    
+
     const controller = new AbortController();
 
     const fetchData = async (version: string, isAutoFallback = false) => {
       // Only show main loading on the first request
       if (!isAutoFallback) setLoading(true);
-      
+
       try {
         const res = await fetch(`/api/tools/fish/data?version=${version}`, { signal: controller.signal });
         const result = await res.json();
-        
+
         const fishData = Array.isArray(result) ? result : (result.data || []);
-        
+
         // Match logic
-        const hasMatch = search ? fishData.some((item: FishData) => 
-          (item.name && item.name.toLowerCase().includes(search.toLowerCase())) || 
+        const hasMatch = search ? fishData.some((item: FishData) =>
+          (item.name && item.name.toLowerCase().includes(search.toLowerCase())) ||
           (item.id && String(item.id).includes(search))
         ) : true;
 
@@ -140,7 +140,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
 
     Object.entries(groups).forEach(([id, items]) => {
       const filteredItems = items.filter(item => {
-        const matchSearch = (item.name && item.name.toLowerCase().includes(search.toLowerCase())) || 
+        const matchSearch = (item.name && item.name.toLowerCase().includes(search.toLowerCase())) ||
                            (id && String(id).includes(search));
         const isFish = item.ItemType === 17;
         const matchType = isFish ? showFish : showTrash;
@@ -239,7 +239,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
       <div className="max-w-7xl mx-auto px-4 mt-8 space-y-6">
 
         {/* CONTROL BAR */}
-        <div className="bg-white border border-slate-300 rounded-2xl p-6 shadow-sm space-y-6">
+        <div className="bg-white border border-slate-300 rounded-2xl p-6 space-y-6">
           <div className="flex flex-wrap items-center justify-center gap-8 py-2">
             {/* Type Switch Style */}
             <div className="flex items-center gap-8">
@@ -284,7 +284,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                   style={isActive ? style : {}}
                   className={cn(
                     "px-4 py-2 rounded-xl text-[11px] font-bold uppercase transition-all border-2",
-                    isActive ? "border-black/10 scale-105 shadow-md" : "bg-white border-slate-200 text-slate-400 opacity-60"
+                    isActive ? "border-black/10 scale-105" : "bg-white border-slate-200 text-slate-400 opacity-60"
                   )}
                 >
                   {labels[g - 1]}
@@ -297,7 +297,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
             <div className="lg:col-span-4">
               <button
                 onClick={handleCopyAll}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-lg active:scale-95 transition-all"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs active:scale-95 transition-all"
               >
                 <Copy className="w-4 h-4" /> Sao Chép ID Đã Lọc ({checkedIds.size})
               </button>
@@ -333,7 +333,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden max-h-60 overflow-y-auto"
+                      className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-none overflow-hidden max-h-60 overflow-y-auto"
                     >
                       {versions.map((v) => (
                         <button
@@ -362,20 +362,20 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
         </div>
 
         {/* INSTRUCTION BOX */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 bg-blue-50 border border-blue-100 p-4 rounded-2xl"
         >
           <Info className="w-5 h-5 text-blue-600 shrink-0" />
           <p className="text-[11px] text-blue-900 font-medium leading-relaxed">
-            Hệ thống tự động gộp các vật phẩm có cùng ID vào một hàng. Bạn có thể chọn hàng loạt ID bằng ô Checkbox và nhấn
+            Bạn có thể chọn hàng loạt ID bằng ô Checkbox và nhấn
             <strong> "Sao Chép ID Đã Lọc"</strong> để dán trực tiếp vào công cụ hack. Click trực tiếp vào cột ID để copy nhanh từng mã.
           </p>
         </motion.div>
 
         {/* RESULTS TABLE - Blue Style */}
-        <div className="bg-white border border-slate-300 rounded-2xl overflow-hidden shadow-md">
+        <div className="bg-white border border-slate-300 rounded-2xl overflow-hidden">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center space-y-4">
               <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -391,7 +391,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                       Không tìm thấy trong bản {selectedVersion}. Đang hiển thị kết quả từ bản cũ {dataVersion}.
                     </p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {setSearch(""); setIsFallback(false); setSelectedVersion(versions[versions.length-1])}}
                     className="text-[9px] font-black text-amber-800 hover:underline uppercase"
                   >
