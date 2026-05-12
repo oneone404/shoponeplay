@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useUI } from "@/providers/UIProvider";
 import UserPageHeader from "@/components/shared/UserPageHeader";
+import Navbar from "@/components/layouts/Navbar";
 
 interface FishData {
   id: string;
@@ -31,7 +32,7 @@ interface VersionsResponse {
   latest: string;
 }
 
-export default function FishIdClient() {
+export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   const { addMessage } = useUI();
   const [data, setData] = useState<FishData[]>([]);
   const [versions, setVersions] = useState<string[]>([]);
@@ -179,7 +180,8 @@ export default function FishIdClient() {
   }, [groupedData]);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] pb-20">
+    <div className="min-h-screen bg-[#f8fafc] pb-20 pt-16">
+      <Navbar logoUrl={logoUrl} />
       <UserPageHeader 
         title="Danh Sách ID Vật Phẩm" 
         subtitle="Tra cứu mã ID cá, rác thải và các vật phẩm trong Play Together để cấu hình công cụ."
