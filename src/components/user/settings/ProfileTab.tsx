@@ -28,6 +28,7 @@ export default function ProfileTab({ session, update }: ProfileTabProps) {
   const [verificationCode, setVerificationCode] = useState("");
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [name, setName] = useState(session?.user?.name || "");
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -70,6 +71,34 @@ export default function ProfileTab({ session, update }: ProfileTabProps) {
     } catch (error) {
       addMessage({ type: "error", text: t.common.error });
       setVerificationStatus("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!name || name.trim().length < 2) {
+      addMessage({ type: "error", text: "Tên phải có ít nhất 2 ký tự" });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch("/api/user/profile", {
+        method: "POST",
+        body: JSON.stringify({ name }),
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        await update();
+        addMessage({ type: "success", text: t.common.success });
+      } else {
+        addMessage({ type: "error", text: data.error || t.common.error });
+      }
+    } catch (error) {
+      addMessage({ type: "error", text: t.common.error });
     } finally {
       setLoading(false);
     }
@@ -186,7 +215,9 @@ export default function ProfileTab({ session, update }: ProfileTabProps) {
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">{t.settings.profile.display_name}</label>
           <input
             type="text"
-            defaultValue={session?.user?.name || ""}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Họ và tên"
             className="w-full bg-secondary/30 border border-border rounded-xl px-4 py-3 outline-none focus:border-primary/40 transition-all font-bold text-sm"
           />
         </div>
@@ -200,7 +231,7 @@ export default function ProfileTab({ session, update }: ProfileTabProps) {
               defaultValue={session?.user?.email || ""}
               onChange={(e) => setNewEmail(e.target.value)}
               className={cn(
-                "w-full bg-secondary/30 border border-border rounded-xl px-4 py-3 outline-none font-bold text-sm transition-all",
+                "w-full bg-secondary/30 border border-border rounded-xl pl-4 pr-36 py-3 outline-none font-bold text-sm transition-all",
                 isChangingEmail ? "focus:border-primary/40 border-primary/30 ring-2 ring-primary/5" : "opacity-60 cursor-not-allowed"
               )}
             />
@@ -323,7 +354,12 @@ export default function ProfileTab({ session, update }: ProfileTabProps) {
       </AnimatePresence>
 
       <div className="flex justify-end pt-4">
-        <button className="px-8 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary/90 active:scale-95 transition-all border border-primary/20">
+        <button 
+          onClick={handleSaveProfile}
+          disabled={loading}
+          className="px-8 py-3 bg-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-primary/90 active:scale-95 disabled:opacity-50 transition-all border border-primary/20 flex items-center gap-2"
+        >
+          {loading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
           {t.common.save}
         </button>
       </div>
