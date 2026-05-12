@@ -111,10 +111,11 @@ export async function POST(req: Request) {
             ? deposit.user.name.slice(0, 2) + "***" + deposit.user.name.slice(-1)
             : "Khách***"
           
-          await pusherServer.trigger("topup-channel", "new-deposit", {
-            userName: maskedName,
+          await pusherServer.trigger(`user-${deposit.userId}`, "new-deposit", {
+            userName: "Bạn",
             amount: receivedAmount,
-            time: new Date().toISOString()
+            time: new Date().toISOString(),
+            message: `Bạn vừa nạp thành công ${receivedAmount.toLocaleString()} VND từ thẻ cào ${deposit.cardType}.`
           })
         } catch (pusherError) {
           console.error("[CARD_WEBHOOK] Pusher trigger error:", pusherError)

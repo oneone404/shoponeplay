@@ -4,19 +4,25 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { CreditCard, DollarSign, X } from "lucide-react"
 import { pusherClient } from "@/lib/pusher-client"
+import { useSession } from "next-auth/react"
 
 interface TopupData {
   userName: string
   amount: number
   time: string
+  message?: string
 }
 
 export default function TopupNotification() {
+  const { data: session } = useSession()
   const [notification, setNotification] = useState<TopupData | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
-    const channel = pusherClient.subscribe("topup-channel")
+    if (!session?.user?.id) return
+
+    const userId = session.user.id
+    const channel = pusherClient.subscribe(`user-${userId}`)
     
     channel.bind("new-deposit", (data: TopupData) => {
       setNotification(data)
@@ -31,9 +37,9 @@ export default function TopupNotification() {
     })
 
     return () => {
-      pusherClient.unsubscribe("topup-channel")
+      pusherClient.unsubscribe(`user-${userId}`)
     }
-  }, [])
+  }, [session?.user?.id])
 
   if (!notification) return null
 
