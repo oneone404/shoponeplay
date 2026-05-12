@@ -26,14 +26,14 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
 
   return (
     <aside className="lg:col-span-4 space-y-6">
-      <div>
-        <div className="px-1 mb-3">
+      {/* Unified Account Card */}
+      <div className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.common.account}</p>
         </div>
-
-        {/* Unified Account Card */}
-        <div className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden">
-          {tabs.map((tab, idx) => (
+        
+        <div className="divide-y divide-slate-100">
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -41,8 +41,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                 "w-full flex items-center space-x-4 px-6 py-4 transition-all duration-200 group relative",
                 activeTab === tab.id
                   ? "bg-slate-50 text-slate-900"
-                  : "bg-white text-slate-500 hover:bg-slate-50/50",
-                idx !== tabs.length - 1 && "border-b border-slate-100"
+                  : "bg-white text-slate-500 hover:bg-slate-50/30"
               )}
             >
               {/* Active Indicator Bar */}
