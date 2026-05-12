@@ -370,12 +370,10 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                           return (
                             <td 
                               key={i} 
-                              className="px-6 py-3 border border-slate-200 font-medium min-w-[150px] max-w-[200px]"
+                              className="px-6 py-3 border border-slate-200 font-medium whitespace-nowrap"
                               style={getGradeStyle(item.grade)}
                             >
-                              <div className="line-clamp-1 overflow-x-auto whitespace-nowrap leading-snug custom-scrollbar">
-                                {item.name}
-                              </div>
+                              {item.name}
                             </td>
                           );
                         })}
