@@ -32,7 +32,7 @@ export default function SettingsClient() {
               key={activeTab}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-card border border-border rounded-[32px] p-6 md:p-10 shadow-sm min-h-[600px]"
+              className="bg-white border-2 border-slate-200 rounded-2xl p-6 md:p-10 min-h-[600px]"
             >
               {activeTab === "profile" && (
                 <ProfileTab 
