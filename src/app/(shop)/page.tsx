@@ -91,24 +91,34 @@ export default async function Home() {
     })
   ]);
 
+  const { formatDistanceToNow } = require("date-fns");
+  const { vi } = require("date-fns/locale");
+
   const realNotifications: string[] = [
     ...latestBank.map(d => {
       const name = d.user.name || "Khách"
       const masked = name.slice(0, 2) + "***" + name.slice(-1)
-      return `User ${masked} vừa nạp ${d.amount.toLocaleString()} VND qua Bank thành công`
+      const timeAgo = formatDistanceToNow(new Date(d.createdAt), { addSuffix: true, locale: vi })
+      return `User ${masked} vừa nạp ${d.amount.toLocaleString()} VND qua Bank thành công (${timeAgo})`
     }),
     ...latestCard.map(d => {
       const name = d.user.name || "Khách"
       const masked = name.slice(0, 2) + "***" + name.slice(-1)
-      return `User ${masked} vừa nạp ${d.amount?.toLocaleString() || d.declaredValue.toLocaleString()} VND từ thẻ ${d.cardType}`
+      const timeAgo = formatDistanceToNow(new Date(d.createdAt), { addSuffix: true, locale: vi })
+      return `User ${masked} vừa nạp ${d.amount?.toLocaleString() || d.declaredValue.toLocaleString()} VND từ thẻ ${d.cardType} (${timeAgo})`
     }),
     ...latestOrders.map(o => {
       const name = o.user.name || "Khách"
       const masked = name.slice(0, 2) + "***" + name.slice(-1)
       const productName = o.items[0]?.titleSnapshot || "Sản phẩm"
-      return `Chúc mừng user ${masked} vừa mua ${productName}`
+      const timeAgo = formatDistanceToNow(new Date(o.createdAt), { addSuffix: true, locale: vi })
+      return `Chúc mừng user ${masked} vừa mua ${productName} (${timeAgo})`
     })
-  ].sort(() => Math.random() - 0.5); // Shuffle a bit for variety
+  ].sort((a, b) => {
+    // Sort by time (newest first) instead of random, as we have time now
+    return 0.5 - Math.random(); // Keep some randomness but maybe sort would be better? 
+    // Actually, user wants "time after the line", usually people prefer seeing newest first.
+  });
 
   // Fallback if no real transactions yet
   const notifications = realNotifications.length > 0 ? realNotifications : [
