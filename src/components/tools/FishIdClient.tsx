@@ -467,8 +467,6 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
             </div>
           )}
         </div>
-
-        </div>
       </div>
     </div>
   );
