@@ -247,9 +247,9 @@ export default function FishIdClient() {
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   <AnimatePresence mode="popLayout">
-                    {filteredData.map((item) => (
+                    {filteredData.map((item, idx) => (
                       <motion.tr 
-                        key={item.id}
+                        key={`${item.id}-${idx}`}
                         layout
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
