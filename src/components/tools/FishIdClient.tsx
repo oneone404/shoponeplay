@@ -39,7 +39,8 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
   const [selectedVersion, setSelectedVersion] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "fish" | "trash">("all");
+  const [showFish, setShowFish] = useState(true);
+  const [showTrash, setShowTrash] = useState(true);
   const [selectedGrades, setSelectedGrades] = useState<number[]>([1, 2, 3, 4, 5]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isVersionOpen, setIsVersionOpen] = useState(false);
@@ -94,7 +95,8 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
     Object.entries(groups).forEach(([id, items]) => {
       const filteredItems = items.filter(item => {
         const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) || id.includes(search);
-        const matchType = filterType === "all" ? true : (filterType === "fish" ? item.ItemType === 17 : item.ItemType === 9);
+        const isFish = item.ItemType === 17;
+        const matchType = isFish ? showFish : showTrash;
         const matchGrade = selectedGrades.includes(item.grade);
         return matchSearch && matchType && matchGrade;
       });
@@ -199,8 +201,8 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                     <input 
                       type="checkbox" 
                       className="sr-only peer" 
-                      checked={filterType === "fish" || filterType === "all"}
-                      onChange={() => setFilterType(prev => prev === "fish" ? "trash" : (prev === "trash" ? "all" : "fish"))}
+                      checked={showFish}
+                      onChange={() => setShowFish(!showFish)}
                     />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                   </div>
@@ -212,10 +214,10 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                     <input 
                       type="checkbox" 
                       className="sr-only peer" 
-                      checked={filterType === "trash" || filterType === "all"}
-                      onChange={() => setFilterType(prev => prev === "trash" ? "fish" : (prev === "fish" ? "all" : "trash"))}
+                      checked={showTrash}
+                      onChange={() => setShowTrash(!showTrash)}
                     />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-600"></div>
                   </div>
                   <span className="text-sm font-bold text-slate-700 uppercase">Rác</span>
                 </label>
@@ -368,10 +370,12 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                           return (
                             <td 
                               key={i} 
-                              className="px-6 py-3 border border-slate-200 font-medium"
+                              className="px-6 py-3 border border-slate-200 font-medium min-w-[150px] max-w-[200px]"
                               style={getGradeStyle(item.grade)}
                             >
-                              {item.name}
+                              <div className="line-clamp-2 overflow-y-auto max-h-[40px] leading-snug">
+                                {item.name}
+                              </div>
                             </td>
                           );
                         })}
