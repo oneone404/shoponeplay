@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const version = searchParams.get("version");
-    
+
     if (!version) {
        return NextResponse.json({ error: "Version is required" }, { status: 400 });
     }
@@ -35,9 +35,9 @@ export async function GET(req: Request) {
     // 2. Fetch from remote API if cache miss
     const apiUrl = `https://hackviet.io/api/fish?version=${version}`;
     const response = await fetch(apiUrl);
-    
+
     if (!response.ok) throw new Error("API responded with error");
-    
+
     const data = await response.json();
 
     // 3. Save to local cache for next time
