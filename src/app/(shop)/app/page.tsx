@@ -3,7 +3,7 @@
 import React from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { Gamepad2, Package, ChevronRight, Zap, ShieldCheck, Clock, ArrowRightLeft } from "lucide-react"
+import { Gamepad2, Package, ChevronRight, Zap, ShieldCheck, Clock, ArrowRightLeft, Layers } from "lucide-react"
 import UserPageHeader from "@/components/shared/UserPageHeader"
 import { ROUTES } from "@/lib/routes"
 

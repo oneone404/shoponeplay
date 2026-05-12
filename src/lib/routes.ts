@@ -22,6 +22,7 @@ export const ROUTES = {
   TRACK: USER_ROUTES.TRACK.path,
   NAPGAME: USER_ROUTES.NAPGAME.path,
   GIFTCODE: USER_ROUTES.GIFTCODE.path,
+  FISH_ID: USER_ROUTES.FISH_ID.path,
   
   // User Pages
   USER: {
