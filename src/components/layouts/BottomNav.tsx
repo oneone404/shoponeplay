@@ -4,7 +4,7 @@ import Link from "next/link"
 import {
   Home, LayoutGrid, Plus, Terminal, User, Wrench, Settings,
   CreditCard, KeyRound, History, Package, FileSearch, Headphones, Gamepad2,
-  Download, Zap, Ticket
+  Download, Zap, Ticket, Layers
 } from "lucide-react"
 import { useState, useCallback } from "react"
 import { cn } from "@/lib/utils"
@@ -36,6 +36,7 @@ export default function BottomNav() {
     { icon: <Download className="w-[20px] h-[20px]" />, label: "Tải Hack", action: () => router.push(ROUTES.HACKS) },
     { icon: <Zap className="w-[20px] h-[20px]" />, label: "Nạp Gói", action: () => router.push(ROUTES.NAPGAME) },
     { icon: <Ticket className="w-[20px] h-[20px]" />, label: "Nhập Code", action: () => router.push(ROUTES.GIFTCODE) },
+    { icon: <Layers className="w-[20px] h-[20px]" />, label: "ID Cá", action: () => router.push(ROUTES.FISH_ID) },
   ]
 
   // If in admin or seller panel, or if deposit modal is open, do not render BottomNav
