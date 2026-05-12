@@ -144,6 +144,22 @@ export async function POST(req: Request) {
             details: `Nạp Thành Công ${amount.toLocaleString()} VND Qua Bank (Mã GD: ${id})`
           }
         })
+
+        // 5. Trigger Real-time Notification via Pusher
+        try {
+          const { pusherServer } = await import("@/lib/pusher")
+          const maskedName = user.name 
+            ? user.name.slice(0, 2) + "***" + user.name.slice(-1)
+            : "Khách***"
+          
+          await pusherServer.trigger("topup-channel", "new-deposit", {
+            userName: maskedName,
+            amount: amount,
+            time: new Date().toISOString()
+          })
+        } catch (pusherError) {
+          console.error("[BANK WEBHOOK] Pusher trigger error:", pusherError)
+        }
       })
 
       processedIds.push(id)

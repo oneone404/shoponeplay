@@ -30,6 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 import ChatWidget from "@/components/utils/ChatWidget";
+import TopupNotification from "@/components/utils/TopupNotification";
 
 
 export default async function RootLayout({
@@ -60,6 +61,7 @@ export default async function RootLayout({
               <Footer logoUrl={config.siteFooterLogo} />
               <BottomNav />
               <ChatWidget />
+              <TopupNotification />
             </AppProviders>
           </>
         )}

@@ -103,6 +103,22 @@ export async function POST(req: Request) {
             details: `Nạp thành công thẻ ${deposit.cardType} ${realValue}đ (Nhận ${receivedAmount}đ)`
           }
         })
+
+        // Trigger Real-time Notification via Pusher
+        try {
+          const { pusherServer } = await import("@/lib/pusher")
+          const maskedName = deposit.user.name 
+            ? deposit.user.name.slice(0, 2) + "***" + deposit.user.name.slice(-1)
+            : "Khách***"
+          
+          await pusherServer.trigger("topup-channel", "new-deposit", {
+            userName: maskedName,
+            amount: receivedAmount,
+            time: new Date().toISOString()
+          })
+        } catch (pusherError) {
+          console.error("[CARD_WEBHOOK] Pusher trigger error:", pusherError)
+        }
       })
 
       return NextResponse.json({ message: "Processed successfully" }, { status: 200 })
