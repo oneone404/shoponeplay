@@ -333,7 +333,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-none overflow-hidden max-h-60 overflow-y-auto"
+                      className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden max-h-60 overflow-y-auto"
                     >
                       {versions.map((v) => (
                         <button
