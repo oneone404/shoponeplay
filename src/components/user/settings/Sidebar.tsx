@@ -66,19 +66,19 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         </div>
       </div>
 
-      <div className="pt-2">
-        <div className="px-1 mb-3 flex items-center justify-between">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.common.support}</p>
+      {/* Unified Support Card */}
+      <div className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t.common.support}</p>
           <div className="flex items-center space-x-1.5">
             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
             <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-tighter">{t.common.online}</span>
           </div>
         </div>
 
-        {/* Separate Support Card */}
         <button
           onClick={() => setChatOpen(true)}
-          className="w-full flex items-center space-x-4 px-6 py-4 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 hover:text-slate-900 rounded-2xl transition-all group"
+          className="w-full flex items-center space-x-4 px-6 py-4 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-900 transition-all group"
         >
           <Headset className="w-4 h-4 transition-transform group-hover:rotate-12" />
           <span className="text-[11px] font-bold uppercase tracking-widest">{t.settings.sidebar.support_chat}</span>
