@@ -67,49 +67,54 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
 
   // 2. Data Fetching & Fallback Logic
   useEffect(() => {
-    if (!selectedVersion) return;
+    if (!selectedVersion || versions.length === 0) return;
     
     const controller = new AbortController();
 
     const fetchData = async (version: string, isAutoFallback = false) => {
+      // Only show main loading on the first request
       if (!isAutoFallback) setLoading(true);
       
       try {
         const res = await fetch(`/api/tools/fish/data?version=${version}`, { signal: controller.signal });
         const result = await res.json();
         
-        // Handle both object with data property or flat array
         const fishData = Array.isArray(result) ? result : (result.data || []);
         
-        // If searching and this version has no matches, try the previous version
-        if (search && fishData.length === 0 && !isAutoFallback) {
+        // Match logic
+        const hasMatch = search ? fishData.some((item: FishData) => 
+          item.name.toLowerCase().includes(search.toLowerCase()) || item.id.includes(search)
+        ) : true;
+
+        // If searching and this version has no matches, try the PREVIOUS version recursively
+        if (search && !hasMatch) {
            const currentIdx = versions.indexOf(version);
-           // versions is sorted DESC (e.g. ["2.26.1", "2.26.0", ...])
-           // prev is currentIdx + 1
+           // versions is sorted DESC (newest first), so older is at idx + 1
            if (currentIdx !== -1 && currentIdx < versions.length - 1) {
-              const prevVersion = versions[currentIdx + 1];
+              const nextOlderVersion = versions[currentIdx + 1];
               setIsFallback(true);
-              fetchData(prevVersion, true);
+              setDataVersion(nextOlderVersion); // Update UI to show we are looking deeper
+              fetchData(nextOlderVersion, true);
               return;
            }
         }
 
+        // Found match or reached the end of versions
         setData(fishData);
         setDataVersion(version);
-        if (!isAutoFallback) {
-           setIsFallback(false);
+        if (!isAutoFallback || hasMatch || versions.indexOf(version) === versions.length - 1) {
+           // We only stop the "main" loading if we found something or gave up
+           setIsFallback(version !== selectedVersion);
            setLoading(false);
         }
       } catch (err: any) {
         if (err.name !== 'AbortError') {
            console.error("Fetch error:", err);
-           // addMessage({ type: "error", text: "Lỗi khi tải dữ liệu cá" });
            setLoading(false);
         }
       }
     };
 
-    // Use a small delay for search to avoid spamming
     const timer = setTimeout(() => {
       fetchData(selectedVersion);
     }, search ? 300 : 0);
