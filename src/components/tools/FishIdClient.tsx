@@ -107,7 +107,7 @@ export default function FishIdClient({ logoUrl }: { logoUrl?: string }) {
     });
 
     return filtered.sort((a, b) => Number(a[0]) - Number(b[0]));
-  }, [data, search, filterType, selectedGrades]);
+  }, [data, search, showFish, showTrash, selectedGrades]);
 
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
